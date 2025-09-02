@@ -4,6 +4,7 @@ import com.adventure4d.computation.modules.Vector4D;
 import com.adventure4d.computation.modules.World;
 import com.adventure4d.computation.modules.Player;
 import com.adventure4d.rendering.modules.Renderer;
+import com.adventure4d.rendering.modules.Camera;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -17,12 +18,13 @@ public class Game {
     private static final String VERSION = "0.1.0";
     
     // Window dimensions
-    private static final int WIDTH = 1024;
-    private static final int HEIGHT = 768;
+    private static final int WIDTH = 1400;
+    private static final int HEIGHT = 1000;
     
     private World world;
     private Player player;
     private Renderer renderer;
+    private Camera camera;
     private boolean running;
     
     /**
@@ -34,8 +36,11 @@ public class Game {
         // Create a new world
         world = new World("Test World", System.currentTimeMillis());
         
-        // Create a player at position (0, 10, 0, 0)
-        player = world.createPlayer("Player1", new Vector4D(0, 10, 0, 0));
+        // Create a player at a fixed center position (camera will handle world positioning)
+        player = world.createPlayer("Player1", new Vector4D(0, 1, 0, 0));
+        
+        // Create a camera starting at the player's initial world position
+        camera = new Camera(new Vector4D(0, 1, 0, 0));
         
         // Initialize the renderer
         renderer = new Renderer(WIDTH, HEIGHT, GAME_TITLE + " v" + VERSION);
@@ -67,56 +72,47 @@ public class Game {
         });
     }
     
+    // Movement state tracking
+    private boolean[] keys = new boolean[256];
+    
     /**
      * Handles key press events.
      * 
      * @param keyCode The key code
      */
     private void handleKeyPress(int keyCode) {
-        Vector4D movement = new Vector4D(0, 0, 0, 0);
-        double speed = 0.5;
+        keys[keyCode] = true;
         
+        // Handle immediate actions
         switch (keyCode) {
-            // X-Y movement (2D plane)
-            case KeyEvent.VK_W:
-                movement = movement.add(new Vector4D(0, -speed, 0, 0));
-                break;
-            case KeyEvent.VK_S:
-                movement = movement.add(new Vector4D(0, speed, 0, 0));
-                break;
-            case KeyEvent.VK_A:
-                movement = movement.add(new Vector4D(-speed, 0, 0, 0));
-                break;
-            case KeyEvent.VK_D:
-                movement = movement.add(new Vector4D(speed, 0, 0, 0));
-                break;
-                
-            // Z movement (3rd dimension)
-            case KeyEvent.VK_Q:
-                movement = movement.add(new Vector4D(0, 0, -speed, 0));
-                break;
-            case KeyEvent.VK_E:
-                movement = movement.add(new Vector4D(0, 0, speed, 0));
-                break;
-                
-            // W movement (4th dimension)
-            case KeyEvent.VK_Z:
-                movement = movement.add(new Vector4D(0, 0, 0, -speed));
-                break;
-            case KeyEvent.VK_C:
-                movement = movement.add(new Vector4D(0, 0, 0, speed));
-                break;
-                
-            // Exit the game
             case KeyEvent.VK_ESCAPE:
                 stop();
                 break;
+            case KeyEvent.VK_SPACE:
+                // Set jumping flag
+                updateMovementInput();
+                break;
         }
         
-        // Apply movement
-        if (!movement.equals(new Vector4D(0, 0, 0, 0))) {
-            player.move(movement, world);
-        }
+        // Update movement input
+        updateMovementInput();
+    }
+    
+    /**
+     * Updates the player's movement input based on current key states.
+     */
+    private void updateMovementInput() {
+        boolean movingLeft = keys[KeyEvent.VK_A];
+        boolean movingRight = keys[KeyEvent.VK_D];
+        boolean movingForward = keys[KeyEvent.VK_W];
+        boolean movingBackward = keys[KeyEvent.VK_S];
+        boolean movingUp = keys[KeyEvent.VK_E];     // Z+ movement
+        boolean movingDown = keys[KeyEvent.VK_Q];   // Z- movement
+        boolean jumping = keys[KeyEvent.VK_SPACE];
+        
+        // Set the movement input on the player
+        player.setMovementInput(movingLeft, movingRight, movingForward, movingBackward, 
+                               movingUp, movingDown, jumping);
     }
     
     /**
@@ -125,7 +121,10 @@ public class Game {
      * @param keyCode The key code
      */
     private void handleKeyRelease(int keyCode) {
-        // Currently not used
+        keys[keyCode] = false;
+        
+        // Update movement input
+        updateMovementInput();
     }
     
     /**
@@ -183,12 +182,24 @@ public class Game {
         cleanup();
     }
     
+
+    
     /**
      * Updates the game state.
      * 
      * @param deltaTime The time elapsed since the last update in seconds
      */
     private void update(double deltaTime) {
+        // Update movement input continuously for smooth movement
+        updateMovementInput();
+        
+        // Update player physics (gravity, collision detection, etc.)
+        player.update(deltaTime, world);
+        
+        // Sync camera to follow player - keep player centered
+        Vector4D playerPos = player.getPosition();
+        camera.setWorldOffset(playerPos);
+        
         // Update the world
         world.update(deltaTime);
     }
@@ -197,8 +208,8 @@ public class Game {
      * Renders the game.
      */
     private void render() {
-        // Render the world using our renderer
-        renderer.render(world, player);
+        // Render the world using our renderer with camera and player
+        renderer.render(world, camera, player);
     }
     
     /**

@@ -60,6 +60,9 @@ public class Renderer {
         panel.setPreferredSize(new Dimension(width, height));
         frame.add(panel);
         
+        // Set up dynamic block sizing
+        SliceRenderer.setDynamicBlockSize(width, height);
+        
         // Create the grid renderer
         gridRenderer = new GridRenderer();
         
@@ -91,25 +94,26 @@ public class Renderer {
      * Renders the world using the 2D grid of 2D grids approach.
      * 
      * @param world The world to render
-     * @param player The player
+     * @param camera The camera to use for rendering
+     * @param player The player to render
      */
-    public void render(World world, Player player) {
+    public void render(World world, Camera camera, com.adventure4d.computation.modules.Player player) {
         // Clear the buffer
         graphics.setColor(Color.BLACK);
         graphics.fillRect(0, 0, width, height);
         
         // Render the grid of slices
-        BufferedImage gridImage = gridRenderer.renderGrid(world, player.getPosition());
+        BufferedImage gridImage = gridRenderer.renderGrid(world, camera, player);
         
         // Calculate the position to center the grid
-        int gridX = (width - GridRenderer.getGridSizePixels()) / 2;
-        int gridY = (height - GridRenderer.getGridSizePixels()) / 2;
+        int gridX = (width - gridRenderer.getGridSizePixels()) / 2;
+        int gridY = (height - gridRenderer.getGridSizePixels()) / 2;
         
         // Draw the grid
         graphics.drawImage(gridImage, gridX, gridY, null);
         
-        // Render the HUD
-        hud.render(graphics, player);
+        // Render the HUD (we'll need to update this to show camera position)
+        hud.render(graphics, camera);
         
         // Update the display
         frame.repaint();

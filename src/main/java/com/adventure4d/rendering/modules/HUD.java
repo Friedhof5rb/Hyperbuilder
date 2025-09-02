@@ -35,9 +35,9 @@ public class HUD {
      * Renders the HUD.
      * 
      * @param g The graphics context
-     * @param player The player
+     * @param camera The camera
      */
-    public void render(Graphics2D g, Player player) {
+    public void render(Graphics2D g, Camera camera) {
         // Save the original font and color
         Font originalFont = g.getFont();
         Color originalColor = g.getColor();
@@ -46,14 +46,10 @@ public class HUD {
         g.setFont(new Font("Monospaced", Font.BOLD, 14));
         g.setColor(Color.WHITE);
         
-        // Draw the player coordinates
-        drawCoordinates(g, player);
+        // Draw camera coordinates (world position)
+        drawCoordinates(g, camera);
         
-        // Draw the player health
-        drawHealth(g, player);
-        
-        // Draw the current w-slice
-        drawWSlice(g, player);
+        // W-slice bar removed for cleaner display
         
         // Restore the original font and color
         g.setFont(originalFont);
@@ -61,13 +57,13 @@ public class HUD {
     }
     
     /**
-     * Draws the player coordinates.
+     * Draws the camera coordinates (world position).
      * 
      * @param g The graphics context
-     * @param player The player
+     * @param camera The camera
      */
-    private void drawCoordinates(Graphics2D g, Player player) {
-        Vector4D position = player.getPosition();
+    private void drawCoordinates(Graphics2D g, Camera camera) {
+        Vector4D position = camera.getWorldOffset();
         
         // Create the coordinate strings
         String xCoord = "X: " + df.format(position.getX());
@@ -86,45 +82,7 @@ public class HUD {
         g.drawString(wCoord, x, y + 3 * lineHeight);
     }
     
-    /**
-     * Draws the player health.
-     * 
-     * @param g The graphics context
-     * @param player The player
-     */
-    private void drawHealth(Graphics2D g, Player player) {
-        // Get the player health
-        double health = player.getHealth();
-        double maxHealth = player.getMaxHealth();
-        
-        // Calculate the health percentage
-        int healthPercentage = (int) (health / maxHealth * 100);
-        
-        // Draw the health bar in the top-right corner
-        int barWidth = 150;
-        int barHeight = 20;
-        int x = width - barWidth - 10;
-        int y = 20;
-        
-        // Draw the background
-        g.setColor(Color.DARK_GRAY);
-        g.fillRect(x, y, barWidth, barHeight);
-        
-        // Draw the health
-        g.setColor(getHealthColor(healthPercentage));
-        g.fillRect(x, y, (int) (barWidth * health / maxHealth), barHeight);
-        
-        // Draw the border
-        g.setColor(Color.WHITE);
-        g.drawRect(x, y, barWidth, barHeight);
-        
-        // Draw the text
-        String healthText = "Health: " + healthPercentage + "%";
-        FontMetrics fm = g.getFontMetrics();
-        int textX = x + (barWidth - fm.stringWidth(healthText)) / 2;
-        int textY = y + barHeight / 2 + fm.getAscent() / 2;
-        g.drawString(healthText, textX, textY);
-    }
+
     
     /**
      * Draws the current w-slice.
@@ -160,19 +118,5 @@ public class HUD {
         g.drawString(sliceText, x, y - 10);
     }
     
-    /**
-     * Gets the color for the health bar based on the health percentage.
-     * 
-     * @param percentage The health percentage
-     * @return The color
-     */
-    private Color getHealthColor(int percentage) {
-        if (percentage > 70) {
-            return Color.GREEN;
-        } else if (percentage > 30) {
-            return Color.YELLOW;
-        } else {
-            return Color.RED;
-        }
-    }
+
 }

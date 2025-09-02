@@ -44,9 +44,12 @@ public class Player extends Entity {
         this.username = username;
         this.inventory = new Inventory(36); // 36 slots (9x4)
         this.selectedSlot = 0;
-        this.onGround = false;
+        this.onGround = false; // Start in air so gravity applies immediately
         this.health = 20;
         this.maxHealth = 20;
+        
+        // Ensure gravity is enabled
+        setGravity(true);
     }
     
     /**
@@ -163,6 +166,53 @@ public class Player extends Entity {
      */
     @Override
     public void update(double deltaTime) {
+        // This method is called without world access, so we can't do collision detection here
+        // Movement with collision detection should be handled through the move() method
+        
+        // Calculate movement direction based on input
+        Vector4D movement = new Vector4D();
+        
+        if (movingRight) movement = movement.add(new Vector4D(1, 0, 0, 0));
+        if (movingLeft) movement = movement.add(new Vector4D(-1, 0, 0, 0));
+        if (movingForward) movement = movement.add(new Vector4D(0, 0, 1, 0));
+        if (movingBackward) movement = movement.add(new Vector4D(0, 0, -1, 0));
+        if (movingUp) movement = movement.add(new Vector4D(0, 0, 0, 1));
+        if (movingDown) movement = movement.add(new Vector4D(0, 0, 0, -1));
+        
+        // Normalize movement if needed
+        if (movement.magnitude() > 0) {
+            movement = movement.normalize().scale(WALK_SPEED * deltaTime);
+        }
+        
+        // Apply gravity
+        Vector4D velocity = getVelocity();
+        velocity = velocity.add(new Vector4D(0, GRAVITY_FORCE * deltaTime, 0, 0));
+        
+        // Handle jumping
+        if (jumping && onGround) {
+            velocity = new Vector4D(velocity.getX(), JUMP_FORCE, velocity.getZ(), velocity.getW());
+            onGround = false;
+        }
+        
+        // Update velocity
+        setVelocity(velocity);
+        
+        // Update position (without collision detection - this will be handled in Game class)
+        Vector4D currentPos = getPosition();
+        Vector4D newPos = currentPos.add(velocity.scale(deltaTime));
+        setPosition(newPos);
+        
+        // Reset jumping input
+        jumping = false;
+    }
+    
+    /**
+     * Updates the player's state with world collision detection.
+     * 
+     * @param deltaTime The time elapsed since the last update in seconds
+     * @param world The world to check collisions against
+     */
+    public void update(double deltaTime, World world) {
         // Calculate movement direction based on input
         Vector4D movement = new Vector4D();
         
@@ -188,8 +238,8 @@ public class Player extends Entity {
             onGround = false;
         }
         
-        // Apply gravity
-        if (hasGravity() && !onGround) {
+        // Apply gravity (always apply if not on ground, regardless of hasGravity check)
+        if (!onGround) {
             velocity = new Vector4D(
                 velocity.getX(),
                 velocity.getY() + GRAVITY_FORCE * deltaTime,
@@ -201,10 +251,29 @@ public class Player extends Entity {
         // Update velocity
         setVelocity(velocity);
         
-        // Update position
-        Vector4D position = getPosition();
-        position = position.add(velocity.scale(deltaTime));
-        setPosition(position);
+        // Update position with collision detection
+        Vector4D currentPos = getPosition();
+        Vector4D newPos = currentPos.add(velocity.scale(deltaTime));
+        
+        // Check for ground collision
+        if (velocity.getY() < 0) { // Falling
+            // Check if we would hit the ground
+            Vector4D testPos = new Vector4D(newPos.getX(), newPos.getY(), newPos.getZ(), newPos.getW());
+            if (checkGroundCollision(testPos, world)) {
+                // Stop at ground level
+                newPos = new Vector4D(newPos.getX(), Math.floor(newPos.getY()) + 1, newPos.getZ(), newPos.getW());
+                velocity = new Vector4D(velocity.getX(), 0, velocity.getZ(), velocity.getW());
+                setVelocity(velocity);
+                onGround = true;
+            } else {
+                onGround = false;
+            }
+        } else {
+            onGround = false;
+        }
+        
+        // Apply the new position
+        setPosition(newPos);
         
         // Reset jumping input
         jumping = false;
@@ -291,6 +360,40 @@ public class Player extends Entity {
         
         // No collision
         return false;
+    }
+    
+    /**
+     * Checks if the player would collide with the ground at the given position.
+     * 
+     * @param position The position to check
+     * @param world The world to check against
+     * @return true if there would be a ground collision, false otherwise
+     */
+    private boolean checkGroundCollision(Vector4D position, World world) {
+        // Calculate player bounding box bottom
+        double minX = position.getX() - (PLAYER_SIZE_X / 2);
+        double maxX = position.getX() + (PLAYER_SIZE_X / 2);
+        double minZ = position.getZ() - (PLAYER_SIZE_Z / 2);
+        double maxZ = position.getZ() + (PLAYER_SIZE_Z / 2);
+        double minW = position.getW() - (PLAYER_SIZE_W / 2);
+        double maxW = position.getW() + (PLAYER_SIZE_W / 2);
+        
+        // Check blocks just below the player's feet
+        int groundY = (int) Math.floor(position.getY());
+        
+        for (int x = (int) Math.floor(minX); x <= (int) Math.floor(maxX); x++) {
+            for (int z = (int) Math.floor(minZ); z <= (int) Math.floor(maxZ); z++) {
+                for (int w = (int) Math.floor(minW); w <= (int) Math.floor(maxW); w++) {
+                    Vector4DInt blockPos = new Vector4DInt(x, groundY, z, w);
+                    Block block = world.getBlock(blockPos);
+                    if (block != null && !block.isAir()) {
+                        return true; // Ground collision detected
+                    }
+                }
+            }
+        }
+        
+        return false; // No ground collision
     }
     
     /**
