@@ -32,7 +32,7 @@ public class SliceRenderer {
     
     /**
      * Sets the block size based on window dimensions.
-     * This ensures the 7x7 grid of slices fits properly in the window.
+     * This ensures the 7x7 grid of slices fills as much of the window as possible.
      * 
      * @param windowWidth The width of the window
      * @param windowHeight The height of the window
@@ -40,12 +40,12 @@ public class SliceRenderer {
     public static void setDynamicBlockSize(int windowWidth, int windowHeight) {
         // Calculate the available space for the 7x7 grid (maximize window usage)
         int availableWidth = (int)(windowWidth * 0.98); // 98% of window width
-        int availableHeight = (int)(windowHeight * 0.95); // 95% of window height (minimal HUD space)
+        int availableHeight = windowHeight - 20; // Reserve minimal 20 pixels for HUD at top
         
         // Calculate block size based on the smaller dimension to ensure everything fits
-        // Use smaller padding (3 instead of 5) to make slices bigger
-        int maxBlockSizeFromWidth = availableWidth / (7 * SLICE_SIZE + 6 * 3); // 7 slices + 6 paddings
-        int maxBlockSizeFromHeight = availableHeight / (7 * SLICE_SIZE + 6 * 3); // 7 slices + 6 paddings
+        // Remove padding entirely to maximize block size
+        int maxBlockSizeFromWidth = availableWidth / (7 * SLICE_SIZE); // 7 slices, no padding
+        int maxBlockSizeFromHeight = availableHeight / (7 * SLICE_SIZE); // 7 slices, no padding
         
         BLOCK_SIZE = Math.min(maxBlockSizeFromWidth, maxBlockSizeFromHeight);
         
@@ -53,6 +53,13 @@ public class SliceRenderer {
         if (BLOCK_SIZE < 8) {
             BLOCK_SIZE = 8;
         }
+        
+        System.out.println("Window size: " + windowWidth + "x" + windowHeight);
+        System.out.println("Available space: " + availableWidth + "x" + availableHeight);
+        System.out.println("Max block size from width: " + maxBlockSizeFromWidth);
+        System.out.println("Max block size from height: " + maxBlockSizeFromHeight);
+        System.out.println("Dynamic block size calculated: " + BLOCK_SIZE + " pixels");
+        System.out.println("Total grid size will be: " + (7 * SLICE_SIZE * BLOCK_SIZE) + " pixels");
     }
     
     // Graphics context for drawing

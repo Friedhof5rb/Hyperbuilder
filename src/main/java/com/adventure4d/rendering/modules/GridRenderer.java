@@ -13,8 +13,8 @@ public class GridRenderer {
     // The size of the grid (7x7)
     private static final int GRID_SIZE = 7;
     
-    // The padding between slices
-    private static final int SLICE_PADDING = 3;
+    // The padding between slices (minimal padding to maximize slice size)
+    private static final int SLICE_PADDING = 0;
     
     // The slice renderer
     private SliceRenderer sliceRenderer;
