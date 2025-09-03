@@ -9,9 +9,13 @@ com\adventure4d\Game$1.class
 com\adventure4d\rendering\modules\HUD.class
 com\adventure4d\rendering\modules\Renderer.class
 com\adventure4d\computation\modules\World.class
+com\adventure4d\Game$2.class
 com\adventure4d\computation\modules\Player.class
 com\adventure4d\computation\modules\Inventory.class
 com\adventure4d\computation\modules\Vector4D.class
 com\adventure4d\computation\modules\Vector4DInt.class
+com\adventure4d\rendering\modules\Hotbar.class
+com\adventure4d\rendering\modules\Camera.class
+com\adventure4d\Game$3.class
 com\adventure4d\rendering\modules\Renderer$1.class
 com\adventure4d\rendering\modules\GridRenderer.class

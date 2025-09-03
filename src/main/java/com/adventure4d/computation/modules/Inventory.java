@@ -101,6 +101,23 @@ public class Inventory {
     }
     
     /**
+     * Adds an item to the inventory by type and count.
+     * Convenience method that creates an Item object internally.
+     * 
+     * @param type The item type
+     * @param count The number of items to add
+     * @return true if the item was added, false if there was no room
+     */
+    public boolean addItem(byte type, int count) {
+        if (count <= 0) {
+            return true;
+        }
+        
+        Item item = new Item(type, count);
+        return addItem(item);
+    }
+    
+    /**
      * Removes an item from the inventory.
      * 
      * @param item The item to remove
@@ -132,6 +149,23 @@ public class Inventory {
         
         // Return true if we removed all requested items
         return remainingToRemove == 0;
+    }
+    
+    /**
+     * Removes an item from the inventory by type and count.
+     * Convenience method that creates an Item object internally.
+     * 
+     * @param type The item type
+     * @param count The number of items to remove
+     * @return true if the item was removed, false otherwise
+     */
+    public boolean removeItem(byte type, int count) {
+        if (count <= 0) {
+            return true;
+        }
+        
+        Item item = new Item(type, count);
+        return removeItem(item);
     }
     
     /**

@@ -145,8 +145,9 @@ public abstract class Entity {
      * Updates this entity's state for the current tick.
      * 
      * @param deltaTime The time elapsed since the last update in seconds
+     * @param world The world to interact with during the update
      */
-    public abstract void update(double deltaTime);
+    public abstract void update(double deltaTime, World world);
     
     /**
      * Gets the chunk position of this entity.

@@ -268,32 +268,47 @@ public class SliceRenderer {
         }
     }
     
-    /**
-     * Draws the player at their exact position within the slice.
-     */
-    private void drawPlayer(Vector4D playerPos) {
-        drawPlayerOnGraphics(graphics, playerPos);
-    }
+ 
     
     /**
-     * Draws the player at their exact position within the slice using the provided graphics context.
+     * Draws the player on the graphics context.
      * 
      * @param g The graphics context to draw on
-     * @param playerPos The player's position (unused - player is always centered)
+     * @param playerViewPos The player's position in view coordinates
      */
-    private void drawPlayerOnGraphics(Graphics2D g, Vector4D playerPos) {
-        // Player is always drawn at the center of the slice (position 3,3)
-        // This ensures the player never moves visually - only the world moves around them
-        int pixelX = (int)(3.5 * BLOCK_SIZE); // Center of the middle block
-        int pixelY = (int)(3.5 * BLOCK_SIZE); // Center of the middle block
+    private void drawPlayerOnGraphics(Graphics2D g, Vector4D playerViewPos) {
+        // Calculate the player's position within the slice
+        // The slice center is at (3, 3) in slice coordinates
+        // Player position is relative to the slice center
+        double relativeX = playerViewPos.getX() - Math.floor(playerViewPos.getX());
+        double relativeY = playerViewPos.getY() - Math.floor(playerViewPos.getY());
         
-        // Draw the player as a red circle
+        // Convert to pixel coordinates within the slice
+        // Add 3.5 to center in the slice, then add the fractional offset
+        double pixelX = (3.5 + relativeX) * BLOCK_SIZE;
+        double pixelY = (3.5 - relativeY) * BLOCK_SIZE; // Subtract because Y is flipped in screen coordinates
+        
+        // Player hitbox is 0.5x0.5 blocks, so draw circle to match this size
+        // Convert player size (0.5 blocks) to pixels
+        int playerSizePixels = (int)(0.5 * BLOCK_SIZE);
+        
+        // Draw the player as a red circle centered at the calculated position
+        // The position represents the center of the player (matching collision detection)
         g.setColor(Color.RED);
         g.fillOval(
-            pixelX - BLOCK_SIZE / 4, 
-            pixelY - BLOCK_SIZE / 4, 
-            BLOCK_SIZE / 2, 
-            BLOCK_SIZE / 2
+            (int)(pixelX - playerSizePixels / 2), 
+            (int)(pixelY - playerSizePixels / 2), 
+            playerSizePixels, 
+            playerSizePixels
+        );
+        
+        // Draw a small black dot at the exact center position for precise visualization
+        g.setColor(Color.BLACK);
+        g.fillOval(
+            (int)(pixelX - 1), 
+            (int)(pixelY - 1), 
+            2, 
+            2
         );
     }
     

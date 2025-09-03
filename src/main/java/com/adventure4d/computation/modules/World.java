@@ -249,9 +249,9 @@ public class World {
     public void update(double deltaTime) {
         // Update all entities
         for (Entity entity : entities.values()) {
-            entity.update(deltaTime);
+            if(!(entity instanceof Player)){
+                entity.update(deltaTime, this);
+            }
         }
-        
-        // TODO: Handle entity movement and collision
     }
 }

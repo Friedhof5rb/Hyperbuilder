@@ -17,6 +17,9 @@ public class HUD {
     // Formatting for coordinates
     private final DecimalFormat df;
     
+    // Hotbar component
+    private final Hotbar hotbar;
+    
     /**
      * Creates a new HUD with the specified dimensions.
      * 
@@ -29,6 +32,9 @@ public class HUD {
         
         // Format coordinates to 2 decimal places
         this.df = new DecimalFormat("0.00");
+        
+        // Initialize hotbar
+        this.hotbar = new Hotbar(width, height);
     }
     
     /**
@@ -36,8 +42,22 @@ public class HUD {
      * 
      * @param g The graphics context
      * @param camera The camera
+     * @param player The player
      */
-    public void render(Graphics2D g, Camera camera) {
+    public void render(Graphics2D g, Camera camera, Player player) {
+        render(g, camera, player, 0, 0);
+    }
+    
+    /**
+     * Renders the HUD.
+     * 
+     * @param g The graphics context
+     * @param camera The camera
+     * @param player The player
+     * @param mouseX The current mouse X coordinate
+     * @param mouseY The current mouse Y coordinate
+     */
+    public void render(Graphics2D g, Camera camera, Player player, int mouseX, int mouseY) {
         // Save the original font and color
         Font originalFont = g.getFont();
         Color originalColor = g.getColor();
@@ -49,11 +69,26 @@ public class HUD {
         // Draw camera coordinates (world position)
         drawCoordinates(g, camera);
         
+        // Draw hotbar
+        hotbar.render(g, player.getInventory());
+        
         // W-slice bar removed for cleaner display
+        
+        // Draw mouse crosshair for debugging
+        drawMouseCrosshair(g, mouseX, mouseY);
         
         // Restore the original font and color
         g.setFont(originalFont);
         g.setColor(originalColor);
+    }
+    
+    /**
+     * Gets the hotbar component.
+     * 
+     * @return The hotbar
+     */
+    public Hotbar getHotbar() {
+        return hotbar;
     }
     
     /**
@@ -116,6 +151,49 @@ public class HUD {
         // Draw the text
         String sliceText = "W-Slice: " + df.format(position.getW());
         g.drawString(sliceText, x, y - 10);
+    }
+    
+    /**
+     * Draws a crosshair at the mouse position for debugging.
+     * 
+     * @param g The graphics context
+     * @param mouseX The mouse X coordinate
+     * @param mouseY The mouse Y coordinate
+     */
+    private void drawMouseCrosshair(Graphics2D g, int mouseX, int mouseY) {
+        if (mouseX == 0 && mouseY == 0) {
+            return; // Don't draw if no mouse position is set
+        }
+        
+        // Save original stroke and color
+        Stroke originalStroke = g.getStroke();
+        Color originalColor = g.getColor();
+        
+        // Set crosshair style
+        g.setStroke(new BasicStroke(2));
+        g.setColor(Color.RED);
+        
+        // Draw crosshair lines
+        int crosshairSize = 10;
+        
+        // Horizontal line
+        g.drawLine(mouseX - crosshairSize, mouseY, mouseX + crosshairSize, mouseY);
+        
+        // Vertical line
+        g.drawLine(mouseX, mouseY - crosshairSize, mouseX, mouseY + crosshairSize);
+        
+        // Draw a small circle at the center
+        g.drawOval(mouseX - 2, mouseY - 2, 4, 4);
+        
+        // Draw mouse coordinates text
+        g.setColor(Color.YELLOW);
+        g.setFont(new Font("Monospaced", Font.BOLD, 12));
+        String coordText = "Mouse: (" + mouseX + ", " + mouseY + ")";
+        g.drawString(coordText, mouseX + 15, mouseY - 5);
+        
+        // Restore original stroke and color
+        g.setStroke(originalStroke);
+        g.setColor(originalColor);
     }
     
 

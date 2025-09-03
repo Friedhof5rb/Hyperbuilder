@@ -91,6 +91,24 @@ public class Renderer {
     }
     
     /**
+     * Gets the HUD for accessing UI components.
+     * 
+     * @return The HUD
+     */
+    public HUD getHUD() {
+        return hud;
+    }
+    
+    /**
+     * Gets the grid renderer component.
+     * 
+     * @return The grid renderer component
+     */
+    public GridRenderer getGridRenderer() {
+        return gridRenderer;
+    }
+    
+    /**
      * Renders the world using the 2D grid of 2D grids approach.
      * 
      * @param world The world to render
@@ -98,6 +116,19 @@ public class Renderer {
      * @param player The player to render
      */
     public void render(World world, Camera camera, com.adventure4d.computation.modules.Player player) {
+        render(world, camera, player, 0, 0);
+    }
+    
+    /**
+     * Renders the world using the 2D grid of 2D grids approach.
+     * 
+     * @param world The world to render
+     * @param camera The camera to use for rendering
+     * @param player The player to render
+     * @param mouseX The current mouse X coordinate
+     * @param mouseY The current mouse Y coordinate
+     */
+    public void render(World world, Camera camera, com.adventure4d.computation.modules.Player player, int mouseX, int mouseY) {
         // Clear the buffer
         graphics.setColor(Color.BLACK);
         graphics.fillRect(0, 0, width, height);
@@ -112,8 +143,8 @@ public class Renderer {
         // Draw the grid
         graphics.drawImage(gridImage, gridX, gridY, null);
         
-        // Render the HUD (we'll need to update this to show camera position)
-        hud.render(graphics, camera);
+        // Render the HUD
+        hud.render(graphics, camera, player, mouseX, mouseY);
         
         // Update the display
         frame.repaint();
