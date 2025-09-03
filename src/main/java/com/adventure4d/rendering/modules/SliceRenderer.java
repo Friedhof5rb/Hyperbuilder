@@ -292,6 +292,7 @@ public class SliceRenderer {
         // Convert player size (0.5 blocks) to pixels
         int playerSizePixels = (int)(0.5 * BLOCK_SIZE);
         
+        System.out.println("playerSizePixels: " + playerSizePixels);
         // Draw the player as a red circle centered at the calculated position
         // The position represents the center of the player (matching collision detection)
         g.setColor(Color.RED);

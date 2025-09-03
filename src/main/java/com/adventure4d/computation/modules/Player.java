@@ -349,15 +349,18 @@ public class Player extends Entity {
      */
     private boolean checkCollision(Vector4D position, World world) {
         // Calculate player's bounding box at the given position
-        double minX = position.getX() - getSizeX() / 2.0;
-        double maxX = position.getX() + getSizeX() / 2.0;
-        double minY = position.getY() - getSizeY() / 2.0;
-        double maxY = position.getY() + getSizeY() / 2.0;
-        double minZ = position.getZ() - getSizeZ() / 2.0;
-        double maxZ = position.getZ() + getSizeZ() / 2.0;
-        double minW = position.getW() - getSizeW() / 2.0;
-        double maxW = position.getW() + getSizeW() / 2.0;
+        double minX = position.getX() - (getSizeX() / 2.0) + getSizeX();
+        double maxX = position.getX() + (getSizeX() / 2.0) + getSizeX();
+        double minY = position.getY() - (getSizeY() / 2.0)+ getSizeY() ;
+        double maxY = position.getY() + (getSizeY() / 2.0)+ getSizeY() ;
+        double minZ = position.getZ() - (getSizeZ() / 2.0)+ getSizeZ();
+        double maxZ = position.getZ() + (getSizeZ() / 2.0)+ getSizeZ();
+        double minW = position.getW() - (getSizeW() / 2.0)+ getSizeW();
+        double maxW = position.getW() + (getSizeW() / 2.0)+ getSizeW();
         
+
+        System.out.println("playersize: " + getSizeX());
+
         // Calculate the range of blocks that could potentially intersect with the player
         int startX = (int) Math.floor(minX);
         int endX = (int) Math.floor(maxX);
