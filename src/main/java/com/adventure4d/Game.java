@@ -6,6 +6,7 @@ import com.adventure4d.computation.modules.World;
 import com.adventure4d.computation.modules.Player;
 import com.adventure4d.computation.modules.Block;
 import com.adventure4d.rendering.modules.Renderer;
+import com.adventure4d.rendering.modules.SliceRenderer;
 import com.adventure4d.rendering.modules.Camera;
 
 import java.awt.Component;
@@ -127,12 +128,12 @@ public class Game {
         contentPane.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                handleMouseClick(e.getX(), e.getY(), e.getButton());
+               
             }
             
             @Override
             public void mousePressed(MouseEvent e) {
-                // Not used
+                handleMouseClick(e.getX(), e.getY(), e.getButton());
             }
             
             @Override
@@ -265,74 +266,82 @@ public class Game {
      * @param button The mouse button (1=left, 3=right)
      */
     private void handleMouseClick(int x, int y, int button) {
-        // Get the actual grid size from the renderer
-        int gridSizePixels = renderer.getGridRenderer().getGridSizePixels();
+        // Convert screen coordinates to world coordinates
+        Vector4DInt worldPos = screenToWorldCoordinates(x, y);
         
-        // Calculate grid position (centered on screen)
+        if (worldPos != null) {
+            if (button == 1) { // Left click - destroy block
+                handleBlockDestruction(worldPos.getX(), worldPos.getY(), worldPos.getZ(), worldPos.getW());
+            } else if (button == 3) { // Right click - place block
+                handleBlockPlacement(worldPos.getX(), worldPos.getY(), worldPos.getZ(), worldPos.getW());
+            }
+        }
+    }
+    
+    /**
+     * Converts screen coordinates to world coordinates.
+     * 
+     * @param screenX The screen X coordinate
+     * @param screenY The screen Y coordinate
+     * @return The world coordinates, or null if the click is outside the grid
+     */
+    private Vector4DInt screenToWorldCoordinates(int screenX, int screenY) {
+        // Get grid dimensions and positioning
+        int gridSizePixels = renderer.getGridRenderer().getGridSizePixels();
         int gridX = (WIDTH - gridSizePixels) / 2;
         int gridY = (HEIGHT - gridSizePixels) / 2;
         
-        // Check if click is within the grid area
-        if (x >= gridX && x < gridX + gridSizePixels && y >= gridY && y < gridY + gridSizePixels) {
-            // Calculate relative position within the grid
-            int relativeX = x - gridX;
-            int relativeY = y - gridY;
-            
-            // Convert to slice coordinates (7x7 grid of slices)
-            int sliceSize = gridSizePixels / 7; // 7x7 grid, not 3x3
-            int sliceCol = relativeX / sliceSize;
-            int sliceRow = relativeY / sliceSize;
-            
-            // Ensure we're within valid slice bounds
-            if (sliceCol >= 0 && sliceCol < 7 && sliceRow >= 0 && sliceRow < 7) {
-                // Get the world coordinates for the center of this slice
-                Vector4D sliceCenterWorld = camera.getSliceCenterWorldCoord(sliceCol, sliceRow);
-                
-                // Calculate fractional offsets for smooth movement (same as in SliceRenderer)
-                double fracX = sliceCenterWorld.getX() - Math.floor(sliceCenterWorld.getX());
-                double fracY = sliceCenterWorld.getY() - Math.floor(sliceCenterWorld.getY());
-                
-                // Calculate position within the slice
-                int posInSliceX = relativeX % sliceSize;
-                int posInSliceY = relativeY % sliceSize;
-                
-                // Get the slice size in blocks (7x7 blocks per slice)
-                int sliceSizeBlocks = 7;
-                int blockSizePixels = sliceSize / sliceSizeBlocks;
-                
-                // Account for fractional offset in pixel coordinates
-                // The rendering shifts blocks by fracX and fracY, so we need to reverse this
-                double adjustedPosX = posInSliceX + (fracX * blockSizePixels);
-                double adjustedPosY = posInSliceY - (fracY * blockSizePixels); // Subtract because Y is inverted in rendering
-                
-                // Calculate block coordinates within the slice, accounting for fractional offsets
-                int blockX = (int) Math.floor(adjustedPosX / blockSizePixels);
-                int blockY = (int) Math.floor(adjustedPosY / blockSizePixels);
-                
-                // Ensure we're within valid block bounds (accounting for the extended range due to fractional rendering)
-                if (blockX >= -1 && blockX <= sliceSizeBlocks && blockY >= -1 && blockY <= sliceSizeBlocks) {
-                    // Calculate the world coordinates of the clicked block
-                    // The slice shows blocks from (centerX-3, centerY-3) to (centerX+3, centerY+3)
-                    // But with fractional offsets, we need to account for the extended range
-                    int worldX = (int) Math.floor(sliceCenterWorld.getX()) - 3 + blockX;
-                    // Fix upside-down rendering: higher Y values should be at the top of the screen
-                    int worldY = (int) Math.floor(sliceCenterWorld.getY()) + 3 - blockY;
-                    int worldZ = (int) Math.floor(sliceCenterWorld.getZ());
-                    int worldW = (int) Math.floor(sliceCenterWorld.getW());
-                    
-                    // Debug: Uncomment the lines below to see coordinate transformation details
-                    // System.out.println("Mouse click at slice (" + sliceCol + ", " + sliceRow + ") block (" + blockX + ", " + blockY + ") -> world (" + worldX + ", " + worldY + ", " + worldZ + ", " + worldW + ")");
-                    // System.out.println("Fractional offsets: fracX=" + fracX + ", fracY=" + fracY);
-                    
-                    // Handle the block interaction
-                    if (button == MouseEvent.BUTTON1) { // Left click - destroy block
-                        handleBlockDestruction(worldX, worldY, worldZ, worldW);
-                    } else if (button == MouseEvent.BUTTON3) { // Right click - place block
-                        handleBlockPlacement(worldX, worldY, worldZ, worldW);
-                    }
-                }
-            }
+        // Check if click is within the grid bounds
+        if (screenX < gridX || screenX >= gridX + gridSizePixels ||
+            screenY < gridY || screenY >= gridY + gridSizePixels) {
+            return null; // Click is outside the grid
         }
+        
+        // Convert to grid-relative coordinates
+        int relativeX = screenX - gridX;
+        int relativeY = screenY - gridY;
+        
+        // Calculate slice size in pixels (7x7 blocks per slice)
+        int sliceSizePixels = gridSizePixels / SliceRenderer.getSliceSize(); // 7x7 grid of slices
+        
+        // Determine which slice was clicked
+        int sliceX = relativeX / sliceSizePixels;
+        int sliceY = relativeY / sliceSizePixels;
+        
+        // Ensure slice coordinates are within bounds
+        if (sliceX < 0 || sliceX >= SliceRenderer.getSliceSize() || sliceY < 0 || sliceY >= SliceRenderer.getSliceSize()) {
+            return null;
+        }
+        
+        // Calculate position within the slice
+        int sliceRelativeX = relativeX % sliceSizePixels;
+        int sliceRelativeY = relativeY % sliceSizePixels;
+        
+        // Calculate block size within slice (7x7 blocks per slice)
+        int blockSize = sliceSizePixels / SliceRenderer.getSliceSize();
+        
+        // Determine which block within the slice was clicked
+        int blockX = sliceRelativeX / blockSize;
+        int blockY = sliceRelativeY / blockSize;
+        
+        // Ensure block coordinates are within bounds
+        if (blockX < 0 || blockX >= SliceRenderer.getSliceSize() || blockY < 0 || blockY >= SliceRenderer.getSliceSize()) {
+            return null;
+        }
+        
+        // Get the world coordinates for the center of the clicked slice
+        Vector4D sliceCenterWorld = camera.getSliceCenterWorldCoord(sliceX, sliceY);
+        
+        // Convert block position within slice to world coordinates
+        // Block coordinates within slice: (0,0) is top-left, (6,6) is bottom-right
+        // World coordinates: slice center is at (sliceCenterWorld.x, sliceCenterWorld.y)
+        // Blocks are offset from -3 to +3 relative to slice center
+        int worldX = (int) Math.floor(sliceCenterWorld.getX()) - SliceRenderer.getSliceCenter() + blockX;
+        int worldY = (int) Math.floor(sliceCenterWorld.getY()) + SliceRenderer.getSliceCenter()  - blockY; // Y is flipped in screen coordinates
+        int worldZ = (int) Math.floor(sliceCenterWorld.getZ());
+        int worldW = (int) Math.floor(sliceCenterWorld.getW());
+        
+        return new Vector4DInt(worldX, worldY, worldZ, worldW);
     }
      
      /**

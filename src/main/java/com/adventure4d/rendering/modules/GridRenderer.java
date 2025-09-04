@@ -11,7 +11,7 @@ import java.awt.image.BufferedImage;
  */
 public class GridRenderer {
     // The size of the grid (7x7)
-    private static final int GRID_SIZE = 7;
+    private static final int GRID_SIZE = SliceRenderer.getSliceSize();
     
     // The padding between slices (minimal padding to maximize slice size)
     private static final int SLICE_PADDING = 0;
@@ -47,7 +47,7 @@ public class GridRenderer {
      * Updates the sizing calculations.
      */
     private void updateSizing() {
-        sliceSizePixels = SliceRenderer.getSliceSize();
+        sliceSizePixels = SliceRenderer.getSliceSizeTimesBlockSize();
         gridSizePixels = GRID_SIZE * sliceSizePixels + (GRID_SIZE - 1) * SLICE_PADDING;
     }
     

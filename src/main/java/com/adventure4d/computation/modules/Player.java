@@ -6,11 +6,8 @@ package com.adventure4d.computation.modules;
  */
 public class Player extends Entity {
     // Player constants - adjusted for better visual/collision alignment
-    private static final double PLAYER_SIZE_X = 0.5;
-    private static final double PLAYER_SIZE_Y = 0.5;
-    private static final double PLAYER_SIZE_Z = 0.5;
-    private static final double PLAYER_SIZE_W = 0.5;
-    
+    private static final double PLAYER_SIZE = 0.5;
+  
     // Physics constants
     private static final double GRAVITY = -15.0; // blocks per second squared (increased for more realistic falling)
     private static final double JUMP_VELOCITY = 8.0; // blocks per second
@@ -47,7 +44,7 @@ public class Player extends Entity {
      * @param username The player's username
      */
     public Player(int id, Vector4D position, String username) {
-        super(id, position, PLAYER_SIZE_X, PLAYER_SIZE_Y, PLAYER_SIZE_Z, PLAYER_SIZE_W);
+        super(id, position, PLAYER_SIZE, PLAYER_SIZE, PLAYER_SIZE, PLAYER_SIZE);
         this.username = username;
         this.inventory = new Inventory(36); // 36 slots (9x4)
         this.selectedSlot = 0;
@@ -59,6 +56,17 @@ public class Player extends Entity {
         setGravity(true);
     }
     
+    /**
+     * Gets the player's size.
+     * 
+     * @return The player's size
+     */
+    public double getSize() {
+        return PLAYER_SIZE;
+    }
+
+
+
     /**
      * Gets the player's username.
      * 
@@ -150,49 +158,6 @@ public class Player extends Entity {
         this.movingUp = movingUp;
         this.movingDown = movingDown;
         this.jumping = jumping;
-    }
-    
-    /**
-     * Places a block in the world.
-     * 
-     * @param world The world to place the block in
-     * @param position The position to place the block at
-     * @param blockType The type of block to place
-     * @return true if the block was placed, false otherwise
-     */
-    public boolean placeBlock(World world, Vector4DInt position, byte blockType) {
-        // Check if the position is within reach
-        if (isWithinReach(position)) {
-            // Check if the player has the block in their inventory
-            if (inventory.removeItem(new Item(blockType, 1))) {
-                // Place the block
-                return world.setBlock(position, new Block(blockType));
-            }
-        }
-        return false;
-    }
-    
-    /**
-     * Breaks a block in the world.
-     * 
-     * @param world The world to break the block in
-     * @param position The position of the block to break
-     * @return true if the block was broken, false otherwise
-     */
-    public boolean breakBlock(World world, Vector4DInt position) {
-        // Check if the position is within reach
-        if (isWithinReach(position)) {
-            // Get the block
-            Block block = world.getBlock(position);
-            if (block != null && !block.isAir()) {
-                // Add the block to the player's inventory
-                inventory.addItem(new Item(block.getType(), 1));
-                
-                // Break the block
-                return world.setBlock(position, new Block(Block.TYPE_AIR));
-            }
-        }
-        return false;
     }
     
     /**
@@ -349,17 +314,16 @@ public class Player extends Entity {
      */
     private boolean checkCollision(Vector4D position, World world) {
         // Calculate player's bounding box at the given position
-        double minX = position.getX() - (getSizeX() / 2.0) + getSizeX();
-        double maxX = position.getX() + (getSizeX() / 2.0) + getSizeX();
-        double minY = position.getY() - (getSizeY() / 2.0)+ getSizeY() ;
-        double maxY = position.getY() + (getSizeY() / 2.0)+ getSizeY() ;
-        double minZ = position.getZ() - (getSizeZ() / 2.0)+ getSizeZ();
-        double maxZ = position.getZ() + (getSizeZ() / 2.0)+ getSizeZ();
-        double minW = position.getW() - (getSizeW() / 2.0)+ getSizeW();
-        double maxW = position.getW() + (getSizeW() / 2.0)+ getSizeW();
+        double minX = position.getX() - (getSizeX() / 2.0);
+        double maxX = position.getX() + (getSizeX() / 2.0);
+        double minY = position.getY() - (getSizeY() / 2.0);
+        double maxY = position.getY() + (getSizeY() / 2.0);
+        double minZ = position.getZ() - (getSizeZ() / 2.0);
+        double maxZ = position.getZ() + (getSizeZ() / 2.0);
+        double minW = position.getW() - (getSizeW() / 2.0);
+        double maxW = position.getW() + (getSizeW() / 2.0);
         
-
-        System.out.println("playersize: " + getSizeX());
+        
 
         // Calculate the range of blocks that could potentially intersect with the player
         int startX = (int) Math.floor(minX);
@@ -428,7 +392,7 @@ public class Player extends Entity {
      */
     private boolean isWithinReach(Vector4DInt position) {
         // Calculate the distance between the player and the position
-        double distance = getPosition().distance(position.toVector4D().add(new Vector4D(0.5, 0.5, 0.5, 0.5)));
+        double distance = getPosition().distance(position.toVector4D());
         
         // Check if the distance is within reach (3 blocks)
         return distance <= 3.0;

@@ -95,8 +95,8 @@ public class Camera {
      */
     public Vector4D getSliceCenterWorldCoord(int sliceX, int sliceY) {
         // Calculate the offset from the center slice (3,3)
-        double wOffset = sliceX - 3;
-        double zOffset = sliceY - 3;
+        double wOffset = sliceX - SliceRenderer.getSliceCenter();
+        double zOffset = sliceY - SliceRenderer.getSliceCenter();
         
         // Return the world coordinate for this slice center
         return new Vector4D(

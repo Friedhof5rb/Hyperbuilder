@@ -1,6 +1,7 @@
 package com.adventure4d.rendering.modules;
 
 import com.adventure4d.computation.modules.Block;
+import com.adventure4d.computation.modules.Player;
 import com.adventure4d.computation.modules.Vector4D;
 import com.adventure4d.computation.modules.Vector4DInt;
 import com.adventure4d.computation.modules.World;
@@ -26,10 +27,20 @@ public class SliceRenderer {
      * 
      * @return The size of a slice in pixels
      */
-    public static int getSliceSize() {
+    public static int getSliceSizeTimesBlockSize() {
         return SLICE_SIZE * BLOCK_SIZE;
     }
-    
+     /**
+     * Gets the center of a slice.
+     * 
+     * @return The center of a slice
+     */
+    public static int getSliceSize() {
+        return SLICE_SIZE;
+    }
+     public static int getSliceCenter() {
+        return (int) Math.floor(SLICE_SIZE/2);
+    }
     /**
      * Sets the block size based on window dimensions.
      * This ensures the 7x7 grid of slices fills as much of the window as possible.
@@ -44,8 +55,8 @@ public class SliceRenderer {
         
         // Calculate block size based on the smaller dimension to ensure everything fits
         // Remove padding entirely to maximize block size
-        int maxBlockSizeFromWidth = availableWidth / (7 * SLICE_SIZE); // 7 slices, no padding
-        int maxBlockSizeFromHeight = availableHeight / (7 * SLICE_SIZE); // 7 slices, no padding
+        int maxBlockSizeFromWidth = availableWidth / (SLICE_SIZE * SLICE_SIZE); // 7 slices, no padding
+        int maxBlockSizeFromHeight = availableHeight / (SLICE_SIZE * SLICE_SIZE); // 7 slices, no padding
         
         BLOCK_SIZE = Math.min(maxBlockSizeFromWidth, maxBlockSizeFromHeight);
         
@@ -59,7 +70,7 @@ public class SliceRenderer {
         System.out.println("Max block size from width: " + maxBlockSizeFromWidth);
         System.out.println("Max block size from height: " + maxBlockSizeFromHeight);
         System.out.println("Dynamic block size calculated: " + BLOCK_SIZE + " pixels");
-        System.out.println("Total grid size will be: " + (7 * SLICE_SIZE * BLOCK_SIZE) + " pixels");
+        System.out.println("Total grid size will be: " + (SLICE_SIZE * SLICE_SIZE * BLOCK_SIZE) + " pixels");
     }
     
     // Graphics context for drawing
@@ -149,14 +160,15 @@ public class SliceRenderer {
         for (int y = -1; y <= SLICE_SIZE; y++) {
             for (int x = -1; x <= SLICE_SIZE; x++) {
                 // Calculate the world coordinates (integer positions)
-                int worldX = (int) Math.floor(sliceCenterWorld.getX()) - 3 + x;
+                int worldX = (int) Math.floor(sliceCenterWorld.getX()) - getSliceCenter() + x;
                 // Fix upside-down rendering: higher Y values should be at the top of the screen
-                int worldY = (int) Math.floor(sliceCenterWorld.getY()) + 3 - y;
+                int worldY = (int) Math.floor(sliceCenterWorld.getY()) + getSliceCenter() - y;
                 
                 // Get the block at this position
                 Vector4DInt blockPos = new Vector4DInt(worldX, worldY, (int) Math.floor(sliceCenterWorld.getZ()), (int) Math.floor(sliceCenterWorld.getW()));
                 Block block = world.getBlock(blockPos);
-                
+
+
                 // Draw the block with fractional offset for smooth movement
                 // The clipping will be handled by the graphics context
                 drawBlockWithOffset(freshGraphics, x, y, block, fracX, fracY);
@@ -164,7 +176,7 @@ public class SliceRenderer {
         }
         
         // Draw a border around the slice
-        freshGraphics.setColor(Color.GRAY);
+        freshGraphics.setColor(Color.WHITE);
         freshGraphics.drawRect(0, 0, freshSliceImage.getWidth() - 1, freshSliceImage.getHeight() - 1);
         
         // Check if the player should be drawn in this slice
@@ -172,12 +184,12 @@ public class SliceRenderer {
         Vector4D playerViewPos = camera.worldToView(playerWorldPos);
         
         // Calculate which slice the player should appear in
-        int playerSliceX = (int) Math.round(playerViewPos.getW()) + 3;
-        int playerSliceY = (int) Math.round(playerViewPos.getZ()) + 3;
+        int playerSliceX = (int) Math.round(playerViewPos.getW()) + getSliceCenter();
+        int playerSliceY = (int) Math.round(playerViewPos.getZ()) + getSliceCenter();
         
         // If this is the slice containing the player, draw the player
         if (sliceX == playerSliceX && sliceY == playerSliceY && 
-            playerSliceX >= 0 && playerSliceX < 7 && playerSliceY >= 0 && playerSliceY < 7) {
+            playerSliceX >= 0 && playerSliceX < SLICE_SIZE && playerSliceY >= 0 && playerSliceY < 7) {
             
             // Draw a thicker border for the slice containing the player
             freshGraphics.setColor(Color.WHITE);
@@ -186,7 +198,7 @@ public class SliceRenderer {
             freshGraphics.setStroke(new BasicStroke(1));
             
             // Draw the player at their relative position within this slice
-            drawPlayerOnGraphics(freshGraphics, playerViewPos);
+            drawPlayerOnGraphics(freshGraphics, player,camera);
         }
         
         // Clean up graphics resources
@@ -195,28 +207,9 @@ public class SliceRenderer {
         return freshSliceImage;
     }
     
-    /**
-     * Draws a block at the specified position.
-     * 
-     * @param x The x-coordinate in the slice
-     * @param y The y-coordinate in the slice
-     * @param block The block to draw
-     */
-    private void drawBlock(int x, int y, Block block) {
-        drawBlockOnGraphics(graphics, x, y, block);
-    }
+   
     
-    /**
-     * Draws a block at the specified position using the provided graphics context.
-     * 
-     * @param g The graphics context to draw on
-     * @param x The x-coordinate in the slice
-     * @param y The y-coordinate in the slice
-     * @param block The block to draw
-     */
-    private void drawBlockOnGraphics(Graphics2D g, int x, int y, Block block) {
-        drawBlockWithOffset(g, x, y, block, 0.0, 0.0);
-    }
+
     
     /**
      * Draws a block at the specified position with fractional offset for smooth movement.
@@ -230,8 +223,9 @@ public class SliceRenderer {
      */
     private void drawBlockWithOffset(Graphics2D g, int x, int y, Block block, double fracX, double fracY) {
         // Calculate the pixel coordinates with fractional offset
-        int pixelX = (int)(x * BLOCK_SIZE - fracX * BLOCK_SIZE);
-        int pixelY = (int)(y * BLOCK_SIZE + fracY * BLOCK_SIZE); // Note: + because Y is inverted
+        // Add 0.5 * BLOCK_SIZE to center blocks on the grid
+        int pixelX = (int)((x + 0.5) * BLOCK_SIZE - fracX * BLOCK_SIZE);
+        int pixelY = (int)((y - 0.5) * BLOCK_SIZE + fracY * BLOCK_SIZE); // Note: + because Y is inverted
         
         // Draw the block based on its type
         if (block != null) {
@@ -276,25 +270,49 @@ public class SliceRenderer {
      * @param g The graphics context to draw on
      * @param playerViewPos The player's position in view coordinates
      */
-    private void drawPlayerOnGraphics(Graphics2D g, Vector4D playerViewPos) {
+    private void drawPlayerOnGraphics(Graphics2D g, Player player, Camera camera) {
+
+
+        Vector4D playerWorldPos = player.getPosition();
+        Vector4D playerViewPos = camera.worldToView(playerWorldPos);
+
+        Double left = player.getPosition().getX() - player.getSize()/2;
+        Double right = player.getPosition().getX() + player.getSize()/2;
+        Double top = player.getPosition().getY() - player.getSize()/2;
+        Double bottom = player.getPosition().getY() + player.getSize()/2;
+
+        Vector4D bottomleft = new Vector4D(left,bottom,0,0);
+        Vector4D bottomright = new Vector4D(right,bottom,0,0);
+        Vector4D topleft = new Vector4D(left,top,0,0);
+        Vector4D topright = new Vector4D(right,top,0,0);
+
+        Vector4D bottomleftView = camera.worldToView(bottomleft);
+        Vector4D bottomrightView = camera.worldToView(bottomright);
+        Vector4D topleftView = camera.worldToView(topleft);
+        Vector4D toprightView = camera.worldToView(topright);
+        
+        
+
+
         // Calculate the player's position within the slice
         // The slice center is at (3, 3) in slice coordinates
         // Player position is relative to the slice center
-        double relativeX = playerViewPos.getX() - Math.floor(playerViewPos.getX());
-        double relativeY = playerViewPos.getY() - Math.floor(playerViewPos.getY());
+        double relativeX = playerViewPos.getX();
+        double relativeY = playerViewPos.getY();
         
         // Convert to pixel coordinates within the slice
         // Add 3.5 to center in the slice, then add the fractional offset
-        double pixelX = (3.5 + relativeX) * BLOCK_SIZE;
-        double pixelY = (3.5 - relativeY) * BLOCK_SIZE; // Subtract because Y is flipped in screen coordinates
+        double pixelX = (getSliceCenter() + 0.5 + relativeX) * BLOCK_SIZE;
+        double pixelY = (getSliceCenter() + 0.5 - relativeY) * BLOCK_SIZE; // Subtract because Y is flipped in screen coordinates
         
         // Player hitbox is 0.5x0.5 blocks, so draw circle to match this size
         // Convert player size (0.5 blocks) to pixels
-        int playerSizePixels = (int)(0.5 * BLOCK_SIZE);
+        int playerSizePixels = (int)(player.getSize() * BLOCK_SIZE);
         
-        System.out.println("playerSizePixels: " + playerSizePixels);
+
         // Draw the player as a red circle centered at the calculated position
         // The position represents the center of the player (matching collision detection)
+
         g.setColor(Color.RED);
         g.fillOval(
             (int)(pixelX - playerSizePixels / 2), 
@@ -302,15 +320,7 @@ public class SliceRenderer {
             playerSizePixels, 
             playerSizePixels
         );
-        
-        // Draw a small black dot at the exact center position for precise visualization
-        g.setColor(Color.BLACK);
-        g.fillOval(
-            (int)(pixelX - 1), 
-            (int)(pixelY - 1), 
-            2, 
-            2
-        );
+       
     }
     
     /**
