@@ -20,6 +20,9 @@ public class HUD {
     // Hotbar component
     private final Hotbar hotbar;
     
+    // Inventory UI component
+    private final InventoryUI inventoryUI;
+    
     /**
      * Creates a new HUD with the specified dimensions.
      * 
@@ -35,6 +38,9 @@ public class HUD {
         
         // Initialize hotbar
         this.hotbar = new Hotbar(width, height);
+        
+        // Initialize inventory UI
+        this.inventoryUI = new InventoryUI(width, height);
     }
     
     /**
@@ -78,6 +84,10 @@ public class HUD {
         // Draw hotbar
         hotbar.render(g, player.getInventory());
         
+        // Update inventory UI mouse position and render
+        inventoryUI.updateMousePosition(mouseX, mouseY);
+        inventoryUI.render(g, player.getInventory(), hotbar);
+        
         // W-slice bar removed for cleaner display
         
         // Draw mouse crosshair for debugging
@@ -95,6 +105,15 @@ public class HUD {
      */
     public Hotbar getHotbar() {
         return hotbar;
+    }
+    
+    /**
+     * Gets the inventory UI component.
+     * 
+     * @return The inventory UI
+     */
+    public InventoryUI getInventoryUI() {
+        return inventoryUI;
     }
     
     /**

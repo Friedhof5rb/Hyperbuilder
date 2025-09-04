@@ -28,6 +28,13 @@ public class Hotbar {
     private final int width;
     private final int height;
     
+    // Item name display
+    private static final long DISPLAY_DURATION_MS = 1000; // 3 seconds
+    private static final long FADE_DURATION_MS = 500; // 1 second fade
+    private long itemNameDisplayStartTime = 0;
+    private String displayedItemName = "";
+    private boolean showingItemName = false;
+    
     /**
      * Creates a new hotbar with the specified screen dimensions.
      * 
@@ -113,6 +120,54 @@ public class Hotbar {
             g.drawString(slotNumber, numberX, numberY);
         }
         
+        // Draw item name display if active
+        if (showingItemName) {
+            long currentTime = System.currentTimeMillis();
+            long elapsedTime = currentTime - itemNameDisplayStartTime;
+            
+            if (elapsedTime < DISPLAY_DURATION_MS + FADE_DURATION_MS) {
+                // Calculate alpha for fade effect
+                float alpha = 1.0f;
+                if (elapsedTime > DISPLAY_DURATION_MS) {
+                    // Fade out phase
+                    long fadeElapsed = elapsedTime - DISPLAY_DURATION_MS;
+                    alpha = 1.0f - (float) fadeElapsed / FADE_DURATION_MS;
+                    alpha = Math.max(0.0f, alpha);
+                }
+                
+                // Draw item name below the selected slot
+                if (!displayedItemName.isEmpty()) {
+                    int selectedSlotX = hotbarX + HOTBAR_PADDING + selectedSlot * (SLOT_SIZE + SLOT_PADDING);
+                    int selectedSlotY = hotbarY + HOTBAR_PADDING;
+                    
+                    // Set font and get metrics
+                    Font nameFont = new Font("Arial", Font.BOLD, 16);
+                    g.setFont(nameFont);
+                    FontMetrics fm = g.getFontMetrics();
+                    
+                    // Calculate text position (centered below the slot)
+                    int textWidth = fm.stringWidth(displayedItemName);
+                    int textX = selectedSlotX + (SLOT_SIZE - textWidth) / 2;
+                    int textY = selectedSlotY + SLOT_SIZE + 25;
+                    
+                    // Draw text background with fade
+                    int bgAlpha = (int) (150 * alpha);
+                    g.setColor(new Color(0, 0, 0, bgAlpha));
+                    int padding = 4;
+                    g.fillRoundRect(textX - padding, textY - fm.getAscent() - padding, 
+                                  textWidth + 2 * padding, fm.getHeight() + 2 * padding, 6, 6);
+                    
+                    // Draw text with fade
+                    int textAlpha = (int) (255 * alpha);
+                    g.setColor(new Color(255, 255, 255, textAlpha));
+                    g.drawString(displayedItemName, textX, textY);
+                }
+            } else {
+                // Display time is over, hide the name
+                showingItemName = false;
+            }
+        }
+        
         // Restore original settings
         g.setFont(originalFont);
         g.setColor(originalColor);
@@ -196,6 +251,31 @@ public class Hotbar {
     public void setSelectedSlot(int slot) {
         if (slot >= 0 && slot < HOTBAR_SLOTS) {
             this.selectedSlot = slot;
+            // Trigger item name display
+            this.itemNameDisplayStartTime = System.currentTimeMillis();
+            this.showingItemName = true;
+        }
+    }
+    
+    /**
+     * Sets the selected hotbar slot and displays the item name.
+     * 
+     * @param slot The slot to select (0-8)
+     * @param inventory The player's inventory to get the item name from
+     */
+    public void setSelectedSlot(int slot, Inventory inventory) {
+        if (slot >= 0 && slot < HOTBAR_SLOTS) {
+            this.selectedSlot = slot;
+            // Get the item name for display
+            Item selectedItem = inventory.getItem(slot);
+            if (selectedItem != null && selectedItem.getCount() > 0) {
+                this.displayedItemName = selectedItem.getName();
+            } else {
+                this.displayedItemName = "Empty";
+            }
+            // Trigger item name display
+            this.itemNameDisplayStartTime = System.currentTimeMillis();
+            this.showingItemName = true;
         }
     }
     

@@ -52,7 +52,7 @@ public class Game {
         // Create a player at spawn position (center at Y=1.25, so feet at Y=1, just above grass at Y=0)
         // Player size is 0.5, so center needs to be at Y=1.25 for feet to be at Y=1
         // Position at (0.5, 1.25, 0.5, 0.5) to avoid overlapping with blocks at negative coordinates
-        player = world.createPlayer("Player1", new Vector4D(0, 2, 0, 0));
+        player = world.createPlayer("Player1", new Vector4D(0, 4, 0, 0));
         
         // Debug: Check what blocks exist around spawn
         System.out.println("Debug: Checking blocks around spawn position:");
@@ -188,7 +188,11 @@ public class Game {
         // Handle immediate actions
         switch (keyCode) {
             case KeyEvent.VK_ESCAPE:
-                stop();
+                if(renderer.getHUD().getInventoryUI().isVisible()){
+                    renderer.getHUD().getInventoryUI().setVisible(false);
+                }else{
+                    stop();
+                }
                 break;
             case KeyEvent.VK_SPACE:
                 // Set jumping flag
@@ -210,7 +214,11 @@ public class Game {
             case KeyEvent.VK_8:
             case KeyEvent.VK_9:
                 int slot = keyCode - KeyEvent.VK_1; // Convert to 0-8 range
-                renderer.getHUD().getHotbar().setSelectedSlot(slot);
+                renderer.getHUD().getHotbar().setSelectedSlot(slot, player.getInventory());
+                break;
+            case KeyEvent.VK_F:
+                // Toggle inventory visibility
+                renderer.getHUD().getInventoryUI().toggleVisibility();
                 break;
         }
         
@@ -269,14 +277,19 @@ public class Game {
     }
     
     /**
-     * Handles mouse click events for block interaction.
+     * Handles mouse click events for UI and block interaction.
      * 
      * @param x The x coordinate of the click
      * @param y The y coordinate of the click
      * @param button The mouse button (1=left, 3=right)
      */
     private void handleMouseClick(int x, int y, int button) {
-        // Convert screen coordinates to world coordinates
+        // First, check if the inventory UI handles the click
+        if (renderer.getHUD().getInventoryUI().handleMouseClick(x, y, button, player.getInventory())) {
+            return; // Inventory UI handled the click, don't process block interaction
+        }
+        
+        // Convert screen coordinates to world coordinates for block interaction
         Vector4DInt worldPos = screenToWorldCoordinates(x, y);
         
         if (worldPos != null) {
@@ -400,7 +413,7 @@ public class Game {
         Block block = world.getBlock(position);
         
         // Check if the position is empty (null or air)
-        if (block == null || block.isAir()) {
+        if ((block == null || block.isAir()) && !checkCollisionWithBlockPosition(x, y, z, w)) {
             // Get the selected item from the hotbar
             com.adventure4d.computation.modules.Item selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
             
@@ -424,7 +437,28 @@ public class Game {
             System.out.println("Cannot place block - position is occupied");
         }
     }
-     
+
+
+    public boolean checkCollisionWithBlockPosition(int x, int y, int z, int w){
+         // Calculate player's bounding box at the given position
+        double minX = player.getPosition().getX() - (player.getSizeX() / 2.0);
+        double maxX = player.getPosition().getX() + (player.getSizeX() / 2.0);
+        double minY = player.getPosition().getY() - (player.getSizeY() / 2.0);
+        double maxY = player.getPosition().getY() + (player.getSizeY() / 2.0);
+        double minZ = player.getPosition().getZ() - (player.getSizeZ() / 2.0);
+        double maxZ = player.getPosition().getZ() + (player.getSizeZ() / 2.0);
+        double minW = player.getPosition().getW() - (player.getSizeW() / 2.0);
+        double maxW = player.getPosition().getW() + (player.getSizeW() / 2.0);
+        // Check if player's bounding box intersects with this block
+        if (player.intersectsBlock(minX, maxX, minY, maxY, minZ, maxZ, minW, maxW, x, y, z, w)) {
+            return true; // Collision detected
+        }
+        return false;
+    
+    }
+
+
+    
      /**
      * Checks if there's at least one adjacent block to the specified position.
      * 

@@ -10,15 +10,11 @@ public class Player extends Entity {
   
     // Physics constants
     private static final double GRAVITY = -15.0; // blocks per second squared (increased for more realistic falling)
-    private static final double JUMP_VELOCITY = 8.0; // blocks per second
+    private static final double JUMP_VELOCITY = 10.0; // blocks per second
     private static final double MOVE_SPEED = 4.0; // blocks per second
     private static final double FRICTION = 0.8; // friction coefficient
     private static final double EPSILON = 0.001; // small value to prevent floating point precision issues
-    
-    private static final double WALK_SPEED = 4.0; // blocks per second
-    private static final double JUMP_FORCE = 8.0;
-    private static final double GRAVITY_FORCE = -20.0;
-    
+
     // Player state
     private String username;
     private Inventory inventory;
@@ -374,7 +370,7 @@ public class Player extends Entity {
      * @param blockW Block's W coordinate
      * @return true if there's an intersection, false otherwise
      */
-    private boolean intersectsBlock(double minX, double maxX, double minY, double maxY,
+    public boolean intersectsBlock(double minX, double maxX, double minY, double maxY,
                                    double minZ, double maxZ, double minW, double maxW,
                                    int blockX, int blockY, int blockZ, int blockW) {
         // Block occupies space from (blockX, blockY, blockZ, blockW) to (blockX+1, blockY+1, blockZ+1, blockW+1)
