@@ -101,7 +101,11 @@ public class Game {
     private void setupInput() {
         JFrame frame = renderer.getFrame();
         frame.setFocusable(true);
-        frame.requestFocus();
+        frame.setFocusTraversalKeysEnabled(false); // Disable focus traversal for Tab key
+        frame.requestFocusInWindow();
+        
+        System.out.println("Setting up input - frame focusable: " + frame.isFocusable());
+        System.out.println("Frame has focus: " + frame.hasFocus());
         
         // Get the content pane for accurate mouse coordinates
         Component contentPane = frame.getContentPane();
@@ -110,6 +114,7 @@ public class Game {
         frame.addKeyListener(new KeyListener() {
             @Override
             public void keyPressed(KeyEvent e) {
+                //System.out.println("Key pressed: " + KeyEvent.getKeyText(e.getKeyCode()) + " (code: " + e.getKeyCode() + ")");
                 handleKeyPress(e.getKeyCode());
             }
             
@@ -188,6 +193,11 @@ public class Game {
             case KeyEvent.VK_SPACE:
                 // Set jumping flag
                 updateMovementInput();
+                break;
+            case KeyEvent.VK_TAB:
+                // Cycle through horizontal dimensions (X -> Z -> W -> X)
+                camera.cycleHorizontalDimension();
+                System.out.println("Switched to horizontal dimension: " + camera.getHorizontalDimension().getDisplayName());
                 break;
             // Hotbar selection (1-9 keys)
             case KeyEvent.VK_1:
@@ -521,7 +531,6 @@ public class Game {
         updateMovementInput();
         
 
-    
         // Update player physics (gravity, collision detection, etc.)
         player.update(deltaTime, world);
         

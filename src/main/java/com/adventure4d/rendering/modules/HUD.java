@@ -69,6 +69,12 @@ public class HUD {
         // Draw camera coordinates (world position)
         drawCoordinates(g, camera);
         
+        // Draw dimension information
+        drawDimensionInfo(g, camera);
+        
+        // Draw controls information
+        drawControls(g);
+        
         // Draw hotbar
         hotbar.render(g, player.getInventory());
         
@@ -115,6 +121,99 @@ public class HUD {
         g.drawString(yCoord, x, y + lineHeight);
         g.drawString(zCoord, x, y + 2 * lineHeight);
         g.drawString(wCoord, x, y + 3 * lineHeight);
+    }
+    
+    /**
+     * Draws dimension cycling information.
+     * 
+     * @param g The graphics context
+     * @param camera The camera
+     */
+    private void drawDimensionInfo(Graphics2D g, Camera camera) {
+        Camera.HorizontalDimension current = camera.getHorizontalDimension();
+        Camera.HorizontalDimension next = current.getNext();
+        Camera.HorizontalDimension previous = current.getPrevious();
+        
+        // Draw dimension info in the top-right corner
+        int rightMargin = 10;
+        int y = 20;
+        
+        String currentDimText = next.getDisplayName() + " -> (" + current.getDisplayName() + ")-> " + previous.getDisplayName();
+       
+        
+        // Calculate x position to right-align the text
+        FontMetrics fm = g.getFontMetrics();
+        int currentWidth = fm.stringWidth(currentDimText);
+       
+        
+        int currentX = width - rightMargin - currentWidth;
+        
+        g.drawString(currentDimText, currentX, y);
+       
+    }
+    
+    /**
+     * Draws the game controls information.
+     * 
+     * @param g The graphics context
+     */
+    private void drawControls(Graphics2D g) {
+        // Set smaller font for controls
+        Font originalFont = g.getFont();
+        g.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        
+        // Controls text
+        String[] controls = {
+            "CONTROLS:",
+            "WS - Move (W Axis) ",
+            "AD - Move (X Axis)",
+            "QE - Move (Z Axis)",
+            "SPACE - Jump (Y Axis)",
+            "TAB - Cycle View Dimension",
+            "1-9 - Select Hotbar Slot",
+            "Left Click - Destroy Block",
+            "Right Click - Place Block",
+            "ESC - Exit Game"
+        };
+        
+        // Position controls in the bottom-left corner
+        int x = 10;
+        int startY = height - (controls.length * 15) - 20;
+        int lineHeight = 15;
+        
+        // Draw semi-transparent background
+        Color originalColor = g.getColor();
+        g.setColor(new Color(0, 0, 0, 128)); // Semi-transparent black
+        FontMetrics fm = g.getFontMetrics();
+        
+        // Find the widest line for background width
+        int maxWidth = 0;
+        for (String control : controls) {
+            int width = fm.stringWidth(control);
+            if (width > maxWidth) {
+                maxWidth = width;
+            }
+        }
+        
+        // Draw background rectangle
+        g.fillRect(x - 5, startY - 15, maxWidth + 10, controls.length * lineHeight + 10);
+        
+        // Draw controls text
+        g.setColor(Color.WHITE);
+        for (int i = 0; i < controls.length; i++) {
+            if (i == 0) {
+                // Make the title slightly brighter
+                g.setColor(Color.YELLOW);
+                g.drawString(controls[i], x, startY + i * lineHeight);
+                g.setColor(Color.WHITE);
+            } else {
+                g.drawString(controls[i], x, startY + i * lineHeight);
+            }
+        }
+        
+        // Restore original font and color
+        g.setFont(originalFont);
+        g.setColor(originalColor);
     }
     
 

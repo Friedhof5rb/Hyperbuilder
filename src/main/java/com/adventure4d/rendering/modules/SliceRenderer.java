@@ -149,29 +149,78 @@ public class SliceRenderer {
         freshGraphics.setClip(0, 0, freshSliceImage.getWidth(), freshSliceImage.getHeight());
         
         // Get the world coordinates for the center of this slice
-        Vector4D sliceCenterWorld = camera.getSliceCenterWorldCoord(sliceX, sliceY);
-        
-        // Calculate fractional offsets for smooth movement
-        double fracX = sliceCenterWorld.getX() - Math.floor(sliceCenterWorld.getX());
-        double fracY = sliceCenterWorld.getY() - Math.floor(sliceCenterWorld.getY());
+         Vector4D sliceCenterWorld = camera.getSliceCenterWorldCoord(sliceX, sliceY);
+
+
+
+        // Calculate fractional offsets for smooth movement based on current horizontal dimension
+        double fracHorizontal;
+        double fracVertical = sliceCenterWorld.getY() - Math.floor(sliceCenterWorld.getY());
+        switch (camera.getHorizontalDimension()) {
+            case X:
+                fracHorizontal = sliceCenterWorld.getX() - Math.floor(sliceCenterWorld.getX());
+                
+                break;
+            case Z:
+                fracHorizontal = sliceCenterWorld.getZ() - Math.floor(sliceCenterWorld.getZ());
+              
+                break;
+            case W:
+                fracHorizontal = sliceCenterWorld.getW() - Math.floor(sliceCenterWorld.getW());
+               
+                break;
+            default:
+                fracHorizontal = sliceCenterWorld.getX() - Math.floor(sliceCenterWorld.getX());
+                break;
+        }
         
         // Draw the blocks in this slice, including partial blocks at edges
         // Draw one extra block in each direction to fill gaps from fractional movement
         for (int y = -1; y <= SLICE_SIZE; y++) {
             for (int x = -1; x <= SLICE_SIZE; x++) {
-                // Calculate the world coordinates (integer positions)
-                int worldX = (int) Math.floor(sliceCenterWorld.getX()) - getSliceCenter() + x;
-                // Fix upside-down rendering: higher Y values should be at the top of the screen
+
+
+                Vector4DInt blockPos;
+                 // Fix upside-down rendering: higher Y values should be at the top of the screen
                 int worldY = (int) Math.floor(sliceCenterWorld.getY()) + getSliceCenter() - y;
+
+
+                switch (camera.getHorizontalDimension()) {
+                    case X:
+                        // Calculate the world coordinates (integer positions)
+                        int worldX = (int) Math.floor(sliceCenterWorld.getX()) - getSliceCenter() + x;
+                        blockPos = new Vector4DInt(worldX, worldY, (int) Math.floor(sliceCenterWorld.getZ()), (int) Math.floor(sliceCenterWorld.getW()));
+                        
+                        break;
+                    case Z:
+                        // Calculate the world coordinates (integer positions)
+                        int worldZ = (int) Math.floor(sliceCenterWorld.getZ()) - getSliceCenter() + x;
+                        blockPos = new Vector4DInt((int) Math.floor(sliceCenterWorld.getX()), worldY, worldZ, (int) Math.floor(sliceCenterWorld.getW()));
+                        
+                        break;
+                    case W:
+                        // Calculate the world coordinates (integer positions)
+                        int worldW = (int) Math.floor(sliceCenterWorld.getW()) - getSliceCenter() + x;
+                        blockPos = new Vector4DInt((int) Math.floor(sliceCenterWorld.getX()), worldY, (int) Math.floor(sliceCenterWorld.getZ()), worldW);
+                        
+                        break;
                 
-                // Get the block at this position
-                Vector4DInt blockPos = new Vector4DInt(worldX, worldY, (int) Math.floor(sliceCenterWorld.getZ()), (int) Math.floor(sliceCenterWorld.getW()));
+                    default:
+                        // Calculate the world coordinates (integer positions)
+                        worldX = (int) Math.floor(sliceCenterWorld.getX()) - getSliceCenter() + x;
+                        blockPos = new Vector4DInt(worldX, worldY, (int) Math.floor(sliceCenterWorld.getZ()), (int) Math.floor(sliceCenterWorld.getW()));
+                        
+                        break;
+                }
+              
+        
                 Block block = world.getBlock(blockPos);
 
+                
 
                 // Draw the block with fractional offset for smooth movement
                 // The clipping will be handled by the graphics context
-                drawBlockWithOffset(freshGraphics, x, y, block, fracX, fracY);
+                drawBlockWithOffset(freshGraphics, x, y, block, fracHorizontal, fracVertical);
             }
         }
         
@@ -285,14 +334,6 @@ public class SliceRenderer {
         Vector4D bottomright = new Vector4D(right,bottom,0,0);
         Vector4D topleft = new Vector4D(left,top,0,0);
         Vector4D topright = new Vector4D(right,top,0,0);
-
-        Vector4D bottomleftView = camera.worldToView(bottomleft);
-        Vector4D bottomrightView = camera.worldToView(bottomright);
-        Vector4D topleftView = camera.worldToView(topleft);
-        Vector4D toprightView = camera.worldToView(topright);
-        
-        
-
 
         // Calculate the player's position within the slice
         // The slice center is at (3, 3) in slice coordinates

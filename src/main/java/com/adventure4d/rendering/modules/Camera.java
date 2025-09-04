@@ -8,8 +8,52 @@ import com.adventure4d.computation.modules.Vector4D;
  * The player always appears centered, and movement affects the camera's world offset.
  */
 public class Camera {
+    /**
+     * Enum representing which dimension is mapped to the horizontal (left-right) axis within slices.
+     */
+    public enum HorizontalDimension {
+        X("X"), Z("Z"), W("W");
+        
+        private final String displayName;
+        
+        HorizontalDimension(String displayName) {
+            this.displayName = displayName;
+        }
+        
+        public String getDisplayName() {
+            return displayName;
+        }
+        
+        /**
+         * Gets the next dimension in the cycle.
+         */
+        public HorizontalDimension getNext() {
+            switch (this) {
+                case X: return Z;
+                case Z: return W;
+                case W: return X;
+                default: return X;
+            }
+        }
+        
+        /**
+         * Gets the previous dimension in the cycle.
+         */
+        public HorizontalDimension getPrevious() {
+            switch (this) {
+                case X: return W;
+                case Z: return X;
+                case W: return Z;
+                default: return X;
+            }
+        }
+    }
+    
     // The camera's position in the world (what the camera is looking at)
     private Vector4D worldOffset;
+    
+    // The current horizontal dimension mapping (which dimension is left-right within slices)
+    private HorizontalDimension horizontalDimension;
     
     // The fixed player position (always at the center of the view)
     private static final Vector4D PLAYER_CENTER_POSITION = new Vector4D(0, 0, 0, 0);
@@ -21,6 +65,7 @@ public class Camera {
      */
     public Camera(Vector4D initialWorldOffset) {
         this.worldOffset = initialWorldOffset;
+        this.horizontalDimension = HorizontalDimension.X; // Default to X dimension as horizontal
     }
     
     /**
@@ -87,23 +132,47 @@ public class Camera {
     }
     
     /**
+     * Gets the current horizontal dimension.
+     * 
+     * @return The current horizontal dimension
+     */
+    public HorizontalDimension getHorizontalDimension() {
+        return horizontalDimension;
+    }
+    
+    /**
+     * Cycles to the next horizontal dimension (X -> Z -> W -> X).
+     */
+    public void cycleHorizontalDimension() {
+        this.horizontalDimension = this.horizontalDimension.getNext();
+    }
+    
+    /**
+     * Sets the horizontal dimension.
+     * 
+     * @param dimension The dimension to set as horizontal
+     */
+    public void setHorizontalDimension(HorizontalDimension dimension) {
+        this.horizontalDimension = dimension;
+    }
+    
+    /**
      * Gets the world coordinate that should be rendered at the center of a slice.
      * 
      * @param sliceX The x-coordinate of the slice in the grid (0-6)
      * @param sliceY The y-coordinate of the slice in the grid (0-6)
      * @return The world coordinate for the center of that slice
      */
-    public Vector4D getSliceCenterWorldCoord(int sliceX, int sliceY) {
+   public Vector4D getSliceCenterWorldCoord(int sliceX, int sliceY) {
         // Calculate the offset from the center slice (3,3)
         double wOffset = sliceX - SliceRenderer.getSliceCenter();
         double zOffset = sliceY - SliceRenderer.getSliceCenter();
-        
-        // Return the world coordinate for this slice center
-        return new Vector4D(
-            worldOffset.getX(),
-            worldOffset.getY(),
-            worldOffset.getZ() + zOffset,
-            worldOffset.getW() + wOffset
-        );
+    
+         return new Vector4D(
+                    worldOffset.getX(),
+                    worldOffset.getY(),
+                    worldOffset.getZ() + zOffset,
+                    worldOffset.getW() + wOffset
+                );
     }
 }
