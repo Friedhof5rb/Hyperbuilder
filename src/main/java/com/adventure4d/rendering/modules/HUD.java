@@ -78,6 +78,9 @@ public class HUD {
         // Draw dimension information
         drawDimensionInfo(g, camera);
         
+        // Draw direction indicator
+        drawDirectionIndicator(g, camera);
+        
         // Draw controls information
         drawControls(g);
         
@@ -169,6 +172,101 @@ public class HUD {
         
         g.drawString(currentDimText, currentX, y);
        
+    }
+    
+    /**
+     * Draws the direction indicator showing current coordinate axes.
+     * 
+     * @param g The graphics context
+     * @param camera The camera
+     */
+    private void drawDirectionIndicator(Graphics2D g, Camera camera) {
+        Camera.HorizontalDimension current = camera.getHorizontalDimension();
+        
+        // Position below the mode indicator
+        int rightMargin = 10;
+        int startY = 50; // Below the mode line
+        
+        // Save original settings
+        Font originalFont = g.getFont();
+        Color originalColor = g.getColor();
+        Stroke originalStroke = g.getStroke();
+        
+        // Set font for labels
+        g.setFont(new Font("Monospaced", Font.BOLD, 12));
+        g.setColor(Color.WHITE);
+        g.setStroke(new BasicStroke(2));
+        
+        // Determine axis labels based on current mode
+        String sliceHorizontalLabel, sliceVerticalLabel, gridHorizontalLabel, gridVerticalLabel;
+        switch (current) {
+            case X:
+                // X mode: viewing X-Y plane, grid represents Z and W
+                sliceHorizontalLabel = "X";
+                sliceVerticalLabel = "Y";
+                gridHorizontalLabel = "Z";
+                gridVerticalLabel = "W";
+                break;
+            case Z:
+                // Z mode: viewing Z-Y plane, grid represents X and W
+                sliceHorizontalLabel = "Z";
+                sliceVerticalLabel = "Y";
+                gridHorizontalLabel = "X";
+                gridVerticalLabel = "W";
+                break;
+            case W:
+                // W mode: viewing W-Y plane, grid represents X and Z
+                sliceHorizontalLabel = "W";
+                sliceVerticalLabel = "Y";
+                gridHorizontalLabel = "X";
+                gridVerticalLabel = "Z";
+                break;
+            default:
+                sliceHorizontalLabel = "X";
+                sliceVerticalLabel = "Y";
+                gridHorizontalLabel = "Z";
+                gridVerticalLabel = "W";
+                break;
+        }
+        
+        // Small coordinate system (slice coordinates)
+        int smallArrowLength = 20;
+        int smallCenterX = width - rightMargin - 100;
+        int smallCenterY = startY + 35;
+        
+        // Draw small horizontal arrow (right)
+        g.drawLine(smallCenterX, smallCenterY, smallCenterX + smallArrowLength, smallCenterY);
+        g.drawLine(smallCenterX + smallArrowLength, smallCenterY, smallCenterX + smallArrowLength - 4, smallCenterY - 2);
+        g.drawLine(smallCenterX + smallArrowLength, smallCenterY, smallCenterX + smallArrowLength - 4, smallCenterY + 2);
+        g.drawString(sliceHorizontalLabel, smallCenterX + smallArrowLength + 3, smallCenterY + 4);
+        
+        // Draw small vertical arrow (up)
+        g.drawLine(smallCenterX, smallCenterY, smallCenterX, smallCenterY - smallArrowLength);
+        g.drawLine(smallCenterX, smallCenterY - smallArrowLength, smallCenterX - 2, smallCenterY - smallArrowLength + 4);
+        g.drawLine(smallCenterX, smallCenterY - smallArrowLength, smallCenterX + 2, smallCenterY - smallArrowLength + 4);
+        g.drawString(sliceVerticalLabel, smallCenterX - 10, smallCenterY - smallArrowLength - 3);
+        
+        // Large coordinate system (grid coordinates) - positioned to the left and below
+        int largeArrowLength = 35;
+        int largeCenterX = width - rightMargin - 120;
+        int largeCenterY = startY + 60;
+        
+        // Draw large horizontal arrow (right)
+        g.drawLine(largeCenterX, largeCenterY, largeCenterX + largeArrowLength, largeCenterY);
+        g.drawLine(largeCenterX + largeArrowLength, largeCenterY, largeCenterX + largeArrowLength - 6, largeCenterY - 3);
+        g.drawLine(largeCenterX + largeArrowLength, largeCenterY, largeCenterX + largeArrowLength - 6, largeCenterY + 3);
+        g.drawString(gridHorizontalLabel, largeCenterX + largeArrowLength + 5, largeCenterY + 4);
+        
+        // Draw large vertical arrow (up)
+        g.drawLine(largeCenterX, largeCenterY, largeCenterX, largeCenterY - largeArrowLength);
+        g.drawLine(largeCenterX, largeCenterY - largeArrowLength, largeCenterX - 3, largeCenterY - largeArrowLength + 6);
+        g.drawLine(largeCenterX, largeCenterY - largeArrowLength, largeCenterX + 3, largeCenterY - largeArrowLength + 6);
+        g.drawString(gridVerticalLabel, largeCenterX - 12, largeCenterY - largeArrowLength - 5);
+        
+        // Restore original settings
+        g.setFont(originalFont);
+        g.setColor(originalColor);
+        g.setStroke(originalStroke);
     }
     
     /**
