@@ -8,6 +8,7 @@ import com.adventure4d.computation.modules.World;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 /**
  * Renders a single 2D slice of the 4D world.
@@ -21,6 +22,13 @@ public class SliceRenderer {
     
     // The rendered image
     private BufferedImage sliceImage;
+    
+    // 4D texture for grass blocks
+    private Texture4D grassTexture;
+    
+
+
+
     
     /**
      * Gets the size of a slice in pixels.
@@ -81,6 +89,19 @@ public class SliceRenderer {
      */
     public SliceRenderer() {
         createSliceImage();
+        loadTextures();
+    }
+    
+    /**
+     * Loads the textures needed for rendering.
+     */
+    private void loadTextures() {
+        try {
+            grassTexture = TextureManager.loadTexture4D("Grass.png");
+        } catch (IOException e) {
+            System.err.println("Failed to load grass texture: " + e.getMessage());
+            grassTexture = null;
+        }
     }
     
     /**
@@ -124,9 +145,12 @@ public class SliceRenderer {
      * @param sliceVertical The vertical coordinate of the slice in the grid
      * @param camera The camera to use for rendering
      * @param player The player to render (if in this slice)
+     * @param game The game instance for line-of-sight checks
+     * @param mouseX The mouse X coordinate for hover detection
+     * @param mouseY The mouse Y coordinate for hover detection
      * @return The rendered slice image
      */
-    public BufferedImage renderSlice(World world, int sliceHorizontal, int sliceVertical, Camera camera, com.adventure4d.computation.modules.Player player) {
+    public BufferedImage renderSlice(World world, int sliceHorizontal, int sliceVertical, Camera camera, com.adventure4d.computation.modules.Player player, com.adventure4d.Game game, int mouseX, int mouseY) {
         // Create a fresh image for each slice to avoid artifacts
         BufferedImage freshSliceImage = new BufferedImage(
             sliceImage.getWidth(), 
@@ -151,30 +175,40 @@ public class SliceRenderer {
         // Get the world coordinates for the center of this slice
          Vector4D sliceCenterWorld = camera.getSliceCenterWorldCoord(sliceHorizontal, sliceVertical);
 
-
-
         // Calculate fractional offsets for smooth movement
         double fracHorizontal;
         double fracY; // Y is always the within-slice vertical dimension
+        
+        // Calculate fractional coordinates for outer dimensions (for texture transitions)
+        double fracZ, fracW;
+        
         switch (camera.getHorizontalDimension()) {
             case X:
                 // X mode: horizontal=X, vertical=Y
                 fracHorizontal = sliceCenterWorld.getX() - Math.floor(sliceCenterWorld.getX());
+                fracZ = sliceCenterWorld.getZ() - Math.floor(sliceCenterWorld.getZ());
+                fracW = sliceCenterWorld.getW() - Math.floor(sliceCenterWorld.getW());
                 fracY = sliceCenterWorld.getY() - Math.floor(sliceCenterWorld.getY());
                 break;
             case Z:
                 // Z mode: horizontal=Z, vertical=Y
                 fracHorizontal = sliceCenterWorld.getZ() - Math.floor(sliceCenterWorld.getZ());
+                fracZ = sliceCenterWorld.getX() - Math.floor(sliceCenterWorld.getX());
+                fracW = sliceCenterWorld.getW() - Math.floor(sliceCenterWorld.getW());
                 fracY = sliceCenterWorld.getY() - Math.floor(sliceCenterWorld.getY());
                 break;
             case W:
                 // W mode: horizontal=W, vertical=Y
                 fracHorizontal = sliceCenterWorld.getW() - Math.floor(sliceCenterWorld.getW());
+                fracZ = sliceCenterWorld.getX() - Math.floor(sliceCenterWorld.getX());
+                fracW = sliceCenterWorld.getZ() - Math.floor(sliceCenterWorld.getZ());
                 fracY = sliceCenterWorld.getY() - Math.floor(sliceCenterWorld.getY());
                 break;
             default:
                 // Default to X mode: horizontal=X, vertical=Y
                 fracHorizontal = sliceCenterWorld.getX() - Math.floor(sliceCenterWorld.getX());
+                fracZ = sliceCenterWorld.getZ() - Math.floor(sliceCenterWorld.getZ());
+                fracW = sliceCenterWorld.getW() - Math.floor(sliceCenterWorld.getW());
                 fracY = sliceCenterWorld.getY() - Math.floor(sliceCenterWorld.getY());
                 break;
         }
@@ -225,7 +259,7 @@ public class SliceRenderer {
 
                 // Draw the block with fractional offset for smooth movement
                 // The clipping will be handled by the graphics context
-                drawBlockWithOffset(freshGraphics, x, y, block, fracHorizontal, fracY);
+                drawBlockWithOffset(freshGraphics, x, y, block, fracHorizontal, fracY, fracZ, fracW, blockPos, game, sliceHorizontal, sliceVertical, mouseX, mouseY);
             }
         }
         
@@ -297,8 +331,16 @@ public class SliceRenderer {
      * @param block The block to draw
      * @param fracX The fractional X offset (0.0 to 1.0)
      * @param fracY The fractional Y offset (0.0 to 1.0)
+     * @param fracZ The fractional Z coordinate for texture transitions
+     * @param fracW The fractional W coordinate for texture transitions
+     * @param blockPos The world position of the block
+     * @param game The game instance for line-of-sight checks
+     * @param sliceHorizontal The horizontal slice coordinate
+     * @param sliceVertical The vertical slice coordinate
+     * @param mouseX The mouse X coordinate
+     * @param mouseY The mouse Y coordinate
      */
-    private void drawBlockWithOffset(Graphics2D g, int x, int y, Block block, double fracX, double fracY) {
+    private void drawBlockWithOffset(Graphics2D g, int x, int y, Block block, double fracX, double fracY, double fracZ, double fracW, Vector4DInt blockPos, com.adventure4d.Game game, int sliceHorizontal, int sliceVertical, int mouseX, int mouseY) {
         // Calculate the pixel coordinates with fractional offset
         // Add 0.5 * BLOCK_SIZE to center blocks on the grid
         int pixelX = (int)((x + 0.5) * BLOCK_SIZE - fracX * BLOCK_SIZE);
@@ -317,8 +359,13 @@ public class SliceRenderer {
                     break;
                     
                 case Block.TYPE_GRASS:
-                    g.setColor(new Color(34, 139, 34));
-                    g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
+                    if (grassTexture != null) {
+                        drawTexturedBlock(g, pixelX, pixelY, grassTexture, blockPos, fracZ, fracW);
+                    } else {
+                        // Fallback to solid color if texture failed to load
+                        g.setColor(new Color(34, 139, 34));
+                        g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
+                    }
                     break;
                     
                 case Block.TYPE_STONE:
@@ -336,10 +383,117 @@ public class SliceRenderer {
             // Draw a border around the block
             g.setColor(Color.BLACK);
             g.drawRect(pixelX, pixelY, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
+            
+            // Add visual indicator for line-of-sight
+            
+            boolean canDestroy = game.isInSightOfPlayer(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW());
+            
+            // Check if this block is being hovered over
+            boolean isHovered = isBlockHovered(x, y, sliceHorizontal, sliceVertical, mouseX, mouseY, game);
+            
+            // Set outline color based on line-of-sight
+            Color outlineColor;
+            int outlineThickness;
+            
+            if (canDestroy && (!block.isAir() || game.hasAdjacentBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW()))) {
+                // Green for blocks that can be destroyed
+                outlineColor = new Color(0, 255, 0, 200) ;
+            } else {
+                // Red for blocks that cannot be destroyed
+                outlineColor =  new Color(255, 0, 0, 200);
+            }
+            if(game.checkCollisionWithBlockPosition(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW())){
+                // Red for blocks that cannot be destroyed
+                outlineColor =  new Color(255, 0, 0, 200);
+            }
+
+
+
+
+            outlineThickness = 3;
+            
+            if(isHovered){
+                // Draw the outline
+                g.setColor(outlineColor);
+                g.setStroke(new BasicStroke(outlineThickness));
+                g.drawRect(pixelX + 1, pixelY + 1, BLOCK_SIZE - 3, BLOCK_SIZE - 3);
+            }
+            g.setStroke(new BasicStroke(1)); // Reset stroke
         }
     }
     
- 
+    /**
+     * Draws a textured block using a 4D texture.
+     * 
+     * @param g The graphics context
+     * @param pixelX The X pixel coordinate to draw at
+     * @param pixelY The Y pixel coordinate to draw at
+     * @param texture The 4D texture to use
+     * @param blockPos The 4D position of the block (used for texture coordinates)
+     */
+    private void drawTexturedBlock(Graphics2D g, int pixelX, int pixelY, Texture4D texture, Vector4DInt blockPos, double fracZ, double fracW) {
+        // Calculate fractional texture coordinates for smooth transitions
+        // Scale fractional coordinates by 8 to get texture transitions every 1/8th of a block
+        double textureZ = blockPos.getZ() + fracZ * 8.0;
+        double textureW = blockPos.getW() + fracW * 8.0;
+        
+        // Get the interpolated 2D texture slice using fractional coordinates
+        BufferedImage textureSlice = texture.getSlice2DFractional(textureZ, textureW);
+        
+        // Scale and draw the texture to fit the block size
+        g.drawImage(textureSlice, pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE, null);
+    }
+    
+    /**
+     * Checks if a block is being hovered over by the mouse.
+     * 
+     * @param blockX The block's X coordinate in the slice
+     * @param blockY The block's Y coordinate in the slice
+     * @param sliceHorizontal The horizontal slice coordinate
+     * @param sliceVertical The vertical slice coordinate
+     * @param mouseX The mouse X coordinate
+     * @param mouseY The mouse Y coordinate
+     * @param game The game instance for coordinate conversion
+     * @return true if the block is being hovered over
+     */
+    private boolean isBlockHovered(int blockX, int blockY, int sliceHorizontal, int sliceVertical, int mouseX, int mouseY, com.adventure4d.Game game) {
+        // Convert mouse coordinates to world coordinates
+        Vector4DInt hoveredBlock = game.screenToWorldCoordinates(mouseX, mouseY);
+        
+        if (hoveredBlock == null) {
+            return false;
+        }
+        
+        // Get the world coordinates for this block
+        // This logic should match the coordinate calculation in renderSlice
+        Camera camera = game.getCamera();
+        Vector4D sliceCenterWorld = camera.getSliceCenterWorldCoord(sliceHorizontal, sliceVertical);
+        
+        int worldY = (int) Math.floor(sliceCenterWorld.getY()) + getSliceCenter() - blockY;
+        
+        Vector4DInt blockWorldPos;
+        switch (camera.getHorizontalDimension()) {
+            case X:
+                int worldX = (int) Math.floor(sliceCenterWorld.getX()) - getSliceCenter() + blockX;
+                blockWorldPos = new Vector4DInt(worldX, worldY, (int) Math.floor(sliceCenterWorld.getZ()), (int) Math.floor(sliceCenterWorld.getW()));
+                break;
+            case Z:
+                int worldZ = (int) Math.floor(sliceCenterWorld.getZ()) - getSliceCenter() + blockX;
+                blockWorldPos = new Vector4DInt((int) Math.floor(sliceCenterWorld.getX()), worldY, worldZ, (int) Math.floor(sliceCenterWorld.getW()));
+                break;
+            case W:
+                int worldW = (int) Math.floor(sliceCenterWorld.getW()) - getSliceCenter() + blockX;
+                blockWorldPos = new Vector4DInt((int) Math.floor(sliceCenterWorld.getX()), worldY, (int) Math.floor(sliceCenterWorld.getZ()), worldW);
+                break;
+            default:
+                worldX = (int) Math.floor(sliceCenterWorld.getX()) - getSliceCenter() + blockX;
+                blockWorldPos = new Vector4DInt(worldX, worldY, (int) Math.floor(sliceCenterWorld.getZ()), (int) Math.floor(sliceCenterWorld.getW()));
+                break;
+        }
+        
+        // Check if the hovered block matches this block's world position
+        return hoveredBlock.equals(blockWorldPos);
+    }
     
     /**
      * Draws the player on the graphics context.
@@ -352,17 +506,6 @@ public class SliceRenderer {
 
         Vector4D playerWorldPos = player.getPosition();
         Vector4D playerViewPos = camera.worldToView(playerWorldPos);
-
-        Double left = player.getPosition().getX() - player.getSize()/2;
-        Double right = player.getPosition().getX() + player.getSize()/2;
-        Double top = player.getPosition().getY() - player.getSize()/2;
-        Double bottom = player.getPosition().getY() + player.getSize()/2;
-
-        Vector4D bottomleft = new Vector4D(left,bottom,0,0);
-        Vector4D bottomright = new Vector4D(right,bottom,0,0);
-        Vector4D topleft = new Vector4D(left,top,0,0);
-        Vector4D topright = new Vector4D(right,top,0,0);
-
         // Calculate the player's position within the slice
         // The slice center is at (3, 3) in slice coordinates
         // Player position is relative to the slice center

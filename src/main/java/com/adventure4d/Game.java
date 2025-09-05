@@ -8,6 +8,7 @@ import com.adventure4d.computation.modules.Block;
 import com.adventure4d.rendering.modules.Renderer;
 import com.adventure4d.rendering.modules.SliceRenderer;
 import com.adventure4d.rendering.modules.Camera;
+import com.adventure4d.rendering.modules.TextureManager;
 
 import java.awt.Component;
 import java.awt.event.KeyEvent;
@@ -80,6 +81,9 @@ public class Game {
         
         // Create a camera starting at the player's initial world position
         camera = new Camera(new Vector4D(0, 1, 0, 0));
+        
+        // Preload textures
+        TextureManager.preloadTextures();
         
         // Initialize the renderer
         renderer = new Renderer(WIDTH, HEIGHT, GAME_TITLE + " v" + VERSION);
@@ -277,6 +281,15 @@ public class Game {
     }
     
     /**
+     * Gets the camera instance.
+     * 
+     * @return The camera
+     */
+    public Camera getCamera() {
+        return camera;
+    }
+    
+    /**
      * Handles mouse click events for UI and block interaction.
      * 
      * @param x The x coordinate of the click
@@ -308,7 +321,7 @@ public class Game {
      * @param screenY The screen Y coordinate
      * @return The world coordinates, or null if the click is outside the grid
      */
-    private Vector4DInt screenToWorldCoordinates(int screenX, int screenY) {
+    public Vector4DInt screenToWorldCoordinates(int screenX, int screenY) {
         // Get grid dimensions and positioning
         int gridSizePixels = renderer.getGridRenderer().getGridSizePixels();
         int gridX = (WIDTH - gridSizePixels) / 2;
@@ -415,8 +428,8 @@ public class Game {
         // Get the block at this position
         Block block = world.getBlock(position);
         
-        // Check if there's a block at this position (not null and not air)
-        if (block != null && !block.isAir()) {
+        // Check if there's a block at this position (not null and not air) and if it's in sight
+        if (block != null && !block.isAir() && isInSightOfPlayer(x, y, z, w)) {
             // Get the block type before destroying it
             byte blockType = block.getType();
             
@@ -427,6 +440,8 @@ public class Game {
             player.getInventory().addItem(blockType, 1);
             
             System.out.println("Destroyed block at (" + x + ", " + y + ", " + z + ", " + w + ")");
+        } else if (block != null && !block.isAir()) {
+            System.out.println("Cannot destroy block - not in line of sight");
         }
     }
      
@@ -445,8 +460,8 @@ public class Game {
         // Get the block at this position
         Block block = world.getBlock(position);
         
-        // Check if the position is empty (null or air)
-        if ((block == null || block.isAir()) && !checkCollisionWithBlockPosition(x, y, z, w)) {
+        // Check if the position is empty (null or air) and is in line of sight
+        if ((block == null || block.isAir()) && !checkCollisionWithBlockPosition(x, y, z, w) && isInSightOfPlayer(x, y, z, w)) {
             // Get the selected item from the hotbar
             com.adventure4d.computation.modules.Item selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
             
@@ -490,7 +505,58 @@ public class Game {
     
     }
 
-
+    public boolean isInSightOfPlayer(int x, int y, int z, int w){
+        // Get player's position
+        Vector4D playerPos = player.getPosition();
+        
+        // Calculate the direction vector from player to target
+        Vector4D targetPos = new Vector4D(x + 0.5, y + 0.5, z + 0.5, w + 0.5); // Center of target block
+        Vector4D direction = targetPos.subtract(playerPos);
+        
+        // Calculate the distance to the target
+        double distance = direction.magnitude();
+        
+        // If target is too close (essentially at player position), consider it visible
+        if (distance < 0.1) {
+            return true;
+        }
+        
+        // Normalize the direction vector
+        direction = direction.normalize();
+        
+        // Step size for ray marching (smaller = more accurate, larger = faster)
+        double stepSize = 0.1;
+        int steps = (int) Math.ceil(distance / stepSize);
+        
+        // March along the ray from player to target
+        for (int i = 1; i < steps; i++) { // Start from 1 to skip player's position
+            // Calculate current position along the ray
+            Vector4D currentPos = playerPos.add(direction.scale(i * stepSize));
+            
+            // Convert to block coordinates
+            int blockX = (int) Math.floor(currentPos.getX());
+            int blockY = (int) Math.floor(currentPos.getY());
+            int blockZ = (int) Math.floor(currentPos.getZ());
+            int blockW = (int) Math.floor(currentPos.getW());
+            
+            // Skip checking the target block itself (it's allowed to be solid)
+            if (blockX == x && blockY == y && blockZ == z && blockW == w) {
+                continue;
+            }
+            
+            // Check if there's a solid block at this position
+            Vector4DInt blockPos = new Vector4DInt(blockX, blockY, blockZ, blockW);
+            Block block = world.getBlock(blockPos);
+            
+            // If there's a solid block (not null and not air), the view is blocked
+            if (block != null && !block.isAir()) {
+                return false;
+            }
+        }
+        
+        // No obstructions found, target is visible
+        return true;
+    }
     
      /**
      * Checks if there's at least one adjacent block to the specified position.
@@ -501,7 +567,7 @@ public class Game {
      * @param w World W coordinate
      * @return true if there's an adjacent block, false otherwise
      */
-    private boolean hasAdjacentBlock(int x, int y, int z, int w) {
+    public boolean hasAdjacentBlock(int x, int y, int z, int w) {
         // Check all 8 adjacent positions in 4D space (±1 in each dimension)
         int[][] offsets = {
             {-1, 0, 0, 0}, {1, 0, 0, 0},  // X axis
@@ -614,7 +680,7 @@ public class Game {
      */
     private void render() {
         // Render the world using our renderer with camera and player
-        renderer.render(world, camera, player, mouseX, mouseY);
+        renderer.render(world, camera, player, this, mouseX, mouseY);
     }
     
     /**

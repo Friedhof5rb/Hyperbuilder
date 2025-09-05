@@ -1,6 +1,8 @@
+com\adventure4d\rendering\modules\HUD$1.class
 com\adventure4d\computation\modules\Entity.class
 com\adventure4d\rendering\modules\Camera$HorizontalDimension.class
 com\adventure4d\rendering\modules\SliceRenderer.class
+com\adventure4d\rendering\modules\TextureManager.class
 com\adventure4d\Game$1.class
 com\adventure4d\computation\modules\World.class
 com\adventure4d\computation\modules\Vector4DInt.class

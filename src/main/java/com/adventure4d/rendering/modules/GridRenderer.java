@@ -92,9 +92,12 @@ public class GridRenderer {
      * @param world The world to render
      * @param camera The camera to use for rendering
      * @param player The player to render
+     * @param game The game instance for line-of-sight checks
+     * @param mouseX The mouse X coordinate
+     * @param mouseY The mouse Y coordinate
      * @return The rendered grid image
      */
-    public BufferedImage renderGrid(World world, Camera camera, com.adventure4d.computation.modules.Player player) {
+    public BufferedImage renderGrid(World world, Camera camera, com.adventure4d.computation.modules.Player player, com.adventure4d.Game game, int mouseX, int mouseY) {
         // Clear the image
         graphics.setColor(Color.BLACK);
         graphics.fillRect(0, 0, gridImage.getWidth(), gridImage.getHeight());
@@ -103,7 +106,7 @@ public class GridRenderer {
         for (int y = 0; y < GRID_SIZE; y++) {
             for (int x = 0; x < GRID_SIZE; x++) {
                 // Render the slice (x=horizontal, y=vertical in slice coordinates)
-                BufferedImage sliceImage = sliceRenderer.renderSlice(world, x, y, camera, player);
+                BufferedImage sliceImage = sliceRenderer.renderSlice(world, x, y, camera, player, game, mouseX, mouseY);
                 
                 // Calculate the position to draw the slice
                 int drawX = x * (sliceSizePixels + SLICE_PADDING);

@@ -114,27 +114,17 @@ public class Renderer {
      * @param world The world to render
      * @param camera The camera to use for rendering
      * @param player The player to render
-     */
-    public void render(World world, Camera camera, com.adventure4d.computation.modules.Player player) {
-        render(world, camera, player, 0, 0);
-    }
-    
-    /**
-     * Renders the world using the 2D grid of 2D grids approach.
-     * 
-     * @param world The world to render
-     * @param camera The camera to use for rendering
-     * @param player The player to render
+     * @param game The game instance for line-of-sight checks
      * @param mouseX The current mouse X coordinate
      * @param mouseY The current mouse Y coordinate
      */
-    public void render(World world, Camera camera, com.adventure4d.computation.modules.Player player, int mouseX, int mouseY) {
+    public void render(World world, Camera camera, com.adventure4d.computation.modules.Player player, com.adventure4d.Game game, int mouseX, int mouseY) {
         // Clear the buffer
         graphics.setColor(Color.BLACK);
         graphics.fillRect(0, 0, width, height);
         
         // Render the grid of slices
-        BufferedImage gridImage = gridRenderer.renderGrid(world, camera, player);
+        BufferedImage gridImage = gridRenderer.renderGrid(world, camera, player, game, mouseX, mouseY);
         
         // Calculate the position to center the grid
         int gridX = (width - gridRenderer.getGridSizePixels()) / 2;

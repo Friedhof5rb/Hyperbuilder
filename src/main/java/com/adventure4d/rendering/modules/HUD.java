@@ -94,7 +94,7 @@ public class HUD {
         // W-slice bar removed for cleaner display
         
         // Draw mouse crosshair for debugging
-        drawMouseCrosshair(g, mouseX, mouseY);
+        //drawMouseCrosshair(g, mouseX, mouseY);
         
         // Restore the original font and color
         g.setFont(originalFont);
@@ -387,6 +387,7 @@ public class HUD {
         
         // Set crosshair style
         g.setStroke(new BasicStroke(2));
+
         g.setColor(Color.RED);
         
         // Draw crosshair lines
