@@ -91,6 +91,8 @@ public class TextureManager {
         try {
             // Load the grass texture
             loadTexture4D("Grass.png");
+            loadTexture4D("Dirt.png");
+            loadTexture4D("stone.png");
             System.out.println("All textures preloaded successfully");
         } catch (IOException e) {
             System.err.println("Failed to preload textures: " + e.getMessage());

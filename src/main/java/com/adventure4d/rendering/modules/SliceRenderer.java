@@ -25,7 +25,9 @@ public class SliceRenderer {
     
     // 4D texture for grass blocks
     private Texture4D grassTexture;
-    
+    private Texture4D dirtTexture;
+    private Texture4D stoneTexture;
+
 
 
 
@@ -98,9 +100,13 @@ public class SliceRenderer {
     private void loadTextures() {
         try {
             grassTexture = TextureManager.loadTexture4D("Grass.png");
+            dirtTexture = TextureManager.loadTexture4D("Dirt.png");
+            stoneTexture = TextureManager.loadTexture4D("stone.png");
         } catch (IOException e) {
             System.err.println("Failed to load grass texture: " + e.getMessage());
             grassTexture = null;
+            dirtTexture = null;
+            stoneTexture = null;
         }
     }
     
@@ -354,8 +360,13 @@ public class SliceRenderer {
                     break;
                     
                 case Block.TYPE_DIRT:
-                    g.setColor(new Color(139, 69, 19));
-                    g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
+                    if (dirtTexture != null) {
+                        drawTexturedBlock(g, pixelX, pixelY, dirtTexture, blockPos, fracZ, fracW);
+                    } else {
+                        // Fallback to solid color if texture failed to load
+                        g.setColor(new Color(255, 0, 220));
+                        g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
+                    }
                     break;
                     
                 case Block.TYPE_GRASS:
@@ -363,14 +374,19 @@ public class SliceRenderer {
                         drawTexturedBlock(g, pixelX, pixelY, grassTexture, blockPos, fracZ, fracW);
                     } else {
                         // Fallback to solid color if texture failed to load
-                        g.setColor(new Color(34, 139, 34));
+                        g.setColor(new Color(255, 0, 220));
                         g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
                     }
                     break;
                     
                 case Block.TYPE_STONE:
-                    g.setColor(new Color(128, 128, 128));
-                    g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
+                    if (stoneTexture != null) {
+                        drawTexturedBlock(g, pixelX, pixelY, stoneTexture, blockPos, fracZ, fracW);
+                    } else {
+                        // Fallback to solid color if texture failed to load
+                        g.setColor(new Color(255, 0, 220));
+                        g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
+                    }
                     break;
                     
                 default:
