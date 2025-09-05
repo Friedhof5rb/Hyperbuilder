@@ -120,13 +120,13 @@ public class SliceRenderer {
      * Renders a slice of the world at the specified 4D coordinates.
      * 
      * @param world The world to render
-     * @param sliceX The x-coordinate of the slice in the grid
-     * @param sliceY The y-coordinate of the slice in the grid
+     * @param sliceHorizontal The horizontal coordinate of the slice in the grid
+     * @param sliceVertical The vertical coordinate of the slice in the grid
      * @param camera The camera to use for rendering
      * @param player The player to render (if in this slice)
      * @return The rendered slice image
      */
-    public BufferedImage renderSlice(World world, int sliceX, int sliceY, Camera camera, com.adventure4d.computation.modules.Player player) {
+    public BufferedImage renderSlice(World world, int sliceHorizontal, int sliceVertical, Camera camera, com.adventure4d.computation.modules.Player player) {
         // Create a fresh image for each slice to avoid artifacts
         BufferedImage freshSliceImage = new BufferedImage(
             sliceImage.getWidth(), 
@@ -149,28 +149,33 @@ public class SliceRenderer {
         freshGraphics.setClip(0, 0, freshSliceImage.getWidth(), freshSliceImage.getHeight());
         
         // Get the world coordinates for the center of this slice
-         Vector4D sliceCenterWorld = camera.getSliceCenterWorldCoord(sliceX, sliceY);
+         Vector4D sliceCenterWorld = camera.getSliceCenterWorldCoord(sliceHorizontal, sliceVertical);
 
 
 
-        // Calculate fractional offsets for smooth movement based on current horizontal dimension
+        // Calculate fractional offsets for smooth movement
         double fracHorizontal;
-        double fracVertical = sliceCenterWorld.getY() - Math.floor(sliceCenterWorld.getY());
+        double fracY; // Y is always the within-slice vertical dimension
         switch (camera.getHorizontalDimension()) {
             case X:
+                // X mode: horizontal=X, vertical=Y
                 fracHorizontal = sliceCenterWorld.getX() - Math.floor(sliceCenterWorld.getX());
-                
+                fracY = sliceCenterWorld.getY() - Math.floor(sliceCenterWorld.getY());
                 break;
             case Z:
+                // Z mode: horizontal=Z, vertical=Y
                 fracHorizontal = sliceCenterWorld.getZ() - Math.floor(sliceCenterWorld.getZ());
-              
+                fracY = sliceCenterWorld.getY() - Math.floor(sliceCenterWorld.getY());
                 break;
             case W:
+                // W mode: horizontal=W, vertical=Y
                 fracHorizontal = sliceCenterWorld.getW() - Math.floor(sliceCenterWorld.getW());
-               
+                fracY = sliceCenterWorld.getY() - Math.floor(sliceCenterWorld.getY());
                 break;
             default:
+                // Default to X mode: horizontal=X, vertical=Y
                 fracHorizontal = sliceCenterWorld.getX() - Math.floor(sliceCenterWorld.getX());
+                fracY = sliceCenterWorld.getY() - Math.floor(sliceCenterWorld.getY());
                 break;
         }
         
@@ -187,26 +192,26 @@ public class SliceRenderer {
 
                 switch (camera.getHorizontalDimension()) {
                     case X:
-                        // Calculate the world coordinates (integer positions)
+                        // X mode: x varies along X dimension, y varies along Y dimension
                         int worldX = (int) Math.floor(sliceCenterWorld.getX()) - getSliceCenter() + x;
                         blockPos = new Vector4DInt(worldX, worldY, (int) Math.floor(sliceCenterWorld.getZ()), (int) Math.floor(sliceCenterWorld.getW()));
                         
                         break;
                     case Z:
-                        // Calculate the world coordinates (integer positions)
+                        // Z mode: x varies along Z dimension, y varies along Y dimension
                         int worldZ = (int) Math.floor(sliceCenterWorld.getZ()) - getSliceCenter() + x;
                         blockPos = new Vector4DInt((int) Math.floor(sliceCenterWorld.getX()), worldY, worldZ, (int) Math.floor(sliceCenterWorld.getW()));
                         
                         break;
                     case W:
-                        // Calculate the world coordinates (integer positions)
+                        // W mode: x varies along W dimension, y varies along Y dimension
                         int worldW = (int) Math.floor(sliceCenterWorld.getW()) - getSliceCenter() + x;
                         blockPos = new Vector4DInt((int) Math.floor(sliceCenterWorld.getX()), worldY, (int) Math.floor(sliceCenterWorld.getZ()), worldW);
                         
                         break;
                 
                     default:
-                        // Calculate the world coordinates (integer positions)
+                        // Default to X mode
                         worldX = (int) Math.floor(sliceCenterWorld.getX()) - getSliceCenter() + x;
                         blockPos = new Vector4DInt(worldX, worldY, (int) Math.floor(sliceCenterWorld.getZ()), (int) Math.floor(sliceCenterWorld.getW()));
                         
@@ -220,7 +225,7 @@ public class SliceRenderer {
 
                 // Draw the block with fractional offset for smooth movement
                 // The clipping will be handled by the graphics context
-                drawBlockWithOffset(freshGraphics, x, y, block, fracHorizontal, fracVertical);
+                drawBlockWithOffset(freshGraphics, x, y, block, fracHorizontal, fracY);
             }
         }
         
@@ -232,13 +237,36 @@ public class SliceRenderer {
         Vector4D playerWorldPos = player.getPosition();
         Vector4D playerViewPos = camera.worldToView(playerWorldPos);
         
-        // Calculate which slice the player should appear in
-        int playerSliceX = (int) Math.round(playerViewPos.getW()) + getSliceCenter();
-        int playerSliceY = (int) Math.round(playerViewPos.getZ()) + getSliceCenter();
+        // Calculate which slice the player should appear in based on camera mode
+        // Must match the coordinate mapping in Camera.getSliceCenterWorldCoord
+        // The grid represents the two dimensions orthogonal to the viewing plane
+        int playerSliceHorizontal, playerSliceVertical;
+        switch (camera.getHorizontalDimension()) {
+            case X:
+                // X mode: viewing X-Y plane, grid represents Z (horizontal) and W (vertical)
+                playerSliceHorizontal = (int) Math.round(playerViewPos.getZ()) + getSliceCenter();
+                playerSliceVertical = (int) Math.round(playerViewPos.getW()) + getSliceCenter();
+                break;
+            case Z:
+                // Z mode: viewing Z-Y plane, grid represents X (horizontal) and W (vertical)
+                playerSliceHorizontal = (int) Math.round(playerViewPos.getX()) + getSliceCenter();
+                playerSliceVertical = (int) Math.round(playerViewPos.getW()) + getSliceCenter();
+                break;
+            case W:
+                // W mode: viewing W-Y plane, grid represents X (horizontal) and Z (vertical)
+                playerSliceHorizontal = (int) Math.round(playerViewPos.getX()) + getSliceCenter();
+                playerSliceVertical = (int) Math.round(playerViewPos.getZ()) + getSliceCenter();
+                break;
+            default:
+                // Default to X mode: viewing X-Y plane, grid represents Z and W
+                playerSliceHorizontal = (int) Math.round(playerViewPos.getZ()) + getSliceCenter();
+                playerSliceVertical = (int) Math.round(playerViewPos.getW()) + getSliceCenter();
+                break;
+        }
         
         // If this is the slice containing the player, draw the player
-        if (sliceX == playerSliceX && sliceY == playerSliceY && 
-            playerSliceX >= 0 && playerSliceX < SLICE_SIZE && playerSliceY >= 0 && playerSliceY < 7) {
+        if (sliceHorizontal == playerSliceHorizontal && sliceVertical == playerSliceVertical && 
+            playerSliceHorizontal >= 0 && playerSliceHorizontal < SLICE_SIZE && playerSliceVertical >= 0 && playerSliceVertical < 7) {
             
             // Draw a thicker border for the slice containing the player
             freshGraphics.setColor(Color.WHITE);

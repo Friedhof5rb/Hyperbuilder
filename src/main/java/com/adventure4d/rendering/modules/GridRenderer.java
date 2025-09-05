@@ -102,7 +102,7 @@ public class GridRenderer {
         // Draw each slice
         for (int y = 0; y < GRID_SIZE; y++) {
             for (int x = 0; x < GRID_SIZE; x++) {
-                // Render the slice
+                // Render the slice (x=horizontal, y=vertical in slice coordinates)
                 BufferedImage sliceImage = sliceRenderer.renderSlice(world, x, y, camera, player);
                 
                 // Calculate the position to draw the slice

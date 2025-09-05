@@ -203,21 +203,21 @@ public class Player extends Entity {
         }
         
         // Set Z axis movement velocity directly
-        double zVelocity = 0;
+        double wVelocity = 0;
         if (movingForward) {
-            zVelocity += MOVE_SPEED;
+            wVelocity += MOVE_SPEED;
         }
         if (movingBackward) {
-            zVelocity -= MOVE_SPEED;
+            wVelocity -= MOVE_SPEED;
         }
         
         // Set W axis movement velocity directly
-        double wVelocity = 0;
+        double zVelocity = 0;
         if (movingUp) {
-            wVelocity += MOVE_SPEED;
+            zVelocity += MOVE_SPEED;
         }
         if (movingDown) {
-            wVelocity -= MOVE_SPEED;
+            zVelocity -= MOVE_SPEED;
         }
         
         // Process jumping (Y axis) - only if on ground

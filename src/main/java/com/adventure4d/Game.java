@@ -328,11 +328,11 @@ public class Game {
         int sliceSizePixels = gridSizePixels / SliceRenderer.getSliceSize(); // 7x7 grid of slices
         
         // Determine which slice was clicked
-        int sliceX = relativeX / sliceSizePixels;
-        int sliceY = relativeY / sliceSizePixels;
+        int sliceHorizontal = relativeX / sliceSizePixels;
+        int sliceVertical = relativeY / sliceSizePixels;
         
         // Ensure slice coordinates are within bounds
-        if (sliceX < 0 || sliceX >= SliceRenderer.getSliceSize() || sliceY < 0 || sliceY >= SliceRenderer.getSliceSize()) {
+        if (sliceHorizontal < 0 || sliceHorizontal >= SliceRenderer.getSliceSize() || sliceVertical < 0 || sliceVertical >= SliceRenderer.getSliceSize()) {
             return null;
         }
         
@@ -353,17 +353,50 @@ public class Game {
         }
         
         // Get the world coordinates for the center of the clicked slice
-        Vector4D sliceCenterWorld = camera.getSliceCenterWorldCoord(sliceX, sliceY);
+        Vector4D sliceCenterWorld = camera.getSliceCenterWorldCoord(sliceHorizontal, sliceVertical);
         
         // Convert block position within slice to world coordinates
         // Block coordinates within slice: (0,0) is top-left, (6,6) is bottom-right
         // World coordinates: slice center is at (sliceCenterWorld.x, sliceCenterWorld.y)
         // Blocks are offset from -3 to +3 relative to slice center
-        int worldX = (int) Math.floor(sliceCenterWorld.getX()) - SliceRenderer.getSliceCenter() + blockX;
-        int worldY = (int) Math.floor(sliceCenterWorld.getY()) + SliceRenderer.getSliceCenter()  - blockY; // Y is flipped in screen coordinates
-        int worldZ = (int) Math.floor(sliceCenterWorld.getZ());
-        int worldW = (int) Math.floor(sliceCenterWorld.getW());
-        
+
+
+
+
+        int worldX, worldZ, worldW;
+        int worldY = (int) Math.floor(sliceCenterWorld.getY()) + SliceRenderer.getSliceCenter() - blockY; // Y is flipped in screen coordinates
+
+        // Map coordinates consistently with Camera and SliceRenderer
+        // The viewing plane shows horizontal dimension + Y, blocks vary within that plane
+        switch (camera.getHorizontalDimension()) {
+            case X:
+                // X mode: viewing X-Y plane, slice grid represents Z and W (fixed for this slice)
+                worldX = (int) Math.floor(sliceCenterWorld.getX()) - SliceRenderer.getSliceCenter() + blockX;
+                worldZ = (int) Math.floor(sliceCenterWorld.getZ());
+                worldW = (int) Math.floor(sliceCenterWorld.getW());
+                break;
+            case Z:
+                // Z mode: viewing Z-Y plane, slice grid represents X and W (fixed for this slice)
+                worldX = (int) Math.floor(sliceCenterWorld.getX());
+                worldZ = (int) Math.floor(sliceCenterWorld.getZ()) - SliceRenderer.getSliceCenter() + blockX;
+                worldW = (int) Math.floor(sliceCenterWorld.getW());
+                break;
+            case W:
+                // W mode: viewing W-Y plane, slice grid represents X and Z (fixed for this slice)
+                worldX = (int) Math.floor(sliceCenterWorld.getX());
+                worldZ = (int) Math.floor(sliceCenterWorld.getZ());
+                worldW = (int) Math.floor(sliceCenterWorld.getW()) - SliceRenderer.getSliceCenter() + blockX;
+                break;
+            default:
+                // Default to X mode: viewing X-Y plane
+                worldX = (int) Math.floor(sliceCenterWorld.getX()) - SliceRenderer.getSliceCenter() + blockX;
+                worldZ = (int) Math.floor(sliceCenterWorld.getZ());
+                worldW = (int) Math.floor(sliceCenterWorld.getW());
+                break;
+        }
+
+
+
         return new Vector4DInt(worldX, worldY, worldZ, worldW);
     }
      

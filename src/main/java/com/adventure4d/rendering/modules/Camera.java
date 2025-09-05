@@ -157,22 +157,55 @@ public class Camera {
     }
     
     /**
-     * Gets the world coordinate that should be rendered at the center of a slice.
+     * Get the world coordinates for the center of a specific slice in the grid.
      * 
-     * @param sliceX The x-coordinate of the slice in the grid (0-6)
-     * @param sliceY The y-coordinate of the slice in the grid (0-6)
-     * @return The world coordinate for the center of that slice
+     * The 7x7 slice grid represents the two dimensions orthogonal to the current viewing plane.
+     * Each viewing mode shows a 2D slice (horizontal + Y), and the grid shows different positions
+     * in the two remaining dimensions.
+     * 
+     * @param sliceHorizontal The horizontal coordinate of the slice in the grid (0-6)
+     * @param sliceVertical The vertical coordinate of the slice in the grid (0-6)
+     * @return The world coordinates of the slice center
      */
-   public Vector4D getSliceCenterWorldCoord(int sliceX, int sliceY) {
+    public Vector4D getSliceCenterWorldCoord(int sliceHorizontal, int sliceVertical) {
         // Calculate the offset from the center slice (3,3)
-        double wOffset = sliceX - SliceRenderer.getSliceCenter();
-        double zOffset = sliceY - SliceRenderer.getSliceCenter();
+        double horizontalOffset = sliceHorizontal - SliceRenderer.getSliceCenter();
+        double verticalOffset = sliceVertical - SliceRenderer.getSliceCenter();
     
-         return new Vector4D(
+        // Map slice grid coordinates to the two dimensions orthogonal to the viewing plane
+        switch (horizontalDimension) {
+            case X:
+                // X mode: viewing X-Y plane, grid represents Z (horizontal) and W (vertical) dimensions
+                return new Vector4D(
                     worldOffset.getX(),
                     worldOffset.getY(),
-                    worldOffset.getZ() + zOffset,
-                    worldOffset.getW() + wOffset
+                    worldOffset.getZ() + horizontalOffset,
+                    worldOffset.getW() + verticalOffset
                 );
+            case Z:
+                // Z mode: viewing Z-Y plane, grid represents X (horizontal) and W (vertical) dimensions
+                return new Vector4D(
+                    worldOffset.getX() + horizontalOffset,
+                    worldOffset.getY(),
+                    worldOffset.getZ(),
+                    worldOffset.getW() + verticalOffset
+                );
+            case W:
+                // W mode: viewing W-Y plane, grid represents X (horizontal) and Z (vertical) dimensions
+                return new Vector4D(
+                    worldOffset.getX() + horizontalOffset,
+                    worldOffset.getY(),
+                    worldOffset.getZ() + verticalOffset,
+                    worldOffset.getW()
+                );
+            default:
+                // Default to X mode: viewing X-Y plane, grid represents Z and W dimensions
+                return new Vector4D(
+                    worldOffset.getX(),
+                    worldOffset.getY(),
+                    worldOffset.getZ() + horizontalOffset,
+                    worldOffset.getW() + verticalOffset
+                );
+        }
     }
 }
