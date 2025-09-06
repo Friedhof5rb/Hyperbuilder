@@ -418,9 +418,9 @@ public class SliceRenderer {
                     break;
             }
             
-            // Draw a border around the block
-            g.setColor(Color.BLACK);
-            g.drawRect(pixelX, pixelY, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
+            // Border around blocks removed for cleaner appearance
+            // g.setColor(Color.BLACK);
+            // g.drawRect(pixelX, pixelY, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
             
             // Add visual indicator for line-of-sight
             

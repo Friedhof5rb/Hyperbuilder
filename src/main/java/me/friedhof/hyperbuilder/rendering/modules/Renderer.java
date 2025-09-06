@@ -133,7 +133,7 @@ public class Renderer {
         graphics.drawImage(gridImage, gridX, gridY, null);
         
         // Render the HUD
-        hud.render(graphics, camera, player, mouseX, mouseY);
+        hud.render(graphics, camera, player, mouseX, mouseY, game);
         
         // Update the display
         frame.repaint();

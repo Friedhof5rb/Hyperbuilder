@@ -52,21 +52,10 @@ public class HUD {
      * @param g The graphics context
      * @param camera The camera
      * @param player The player
-     */
-    public void render(Graphics2D g, Camera camera, Player player) {
-        render(g, camera, player, 0, 0);
-    }
-    
-    /**
-     * Renders the HUD.
-     * 
-     * @param g The graphics context
-     * @param camera The camera
-     * @param player The player
      * @param mouseX The current mouse X coordinate
      * @param mouseY The current mouse Y coordinate
      */
-    public void render(Graphics2D g, Camera camera, Player player, int mouseX, int mouseY) {
+    public void render(Graphics2D g, Camera camera, Player player, int mouseX, int mouseY, me.friedhof.hyperbuilder.Game game) {
         // Save the original font and color
         Font originalFont = g.getFont();
         Color originalColor = g.getColor();
@@ -93,6 +82,11 @@ public class HUD {
         // Update inventory UI mouse position and render
         inventoryUI.updateMousePosition(mouseX, mouseY);
         inventoryUI.render(g, player.getInventory(), hotbar);
+        
+        // Draw block breaking progress if breaking a block
+        if (game.isBreakingBlock()) {
+            drawBlockBreakingProgress(g, game.getBreakingProgress(), game);
+        }
         
         // W-slice bar removed for cleaner display
         
@@ -347,6 +341,80 @@ public class HUD {
         
         // Restore original font and color
         g.setFont(originalFont);
+        g.setColor(originalColor);
+    }
+    
+    /**
+     * Draws a circular progress bar for block breaking.
+     * 
+     * @param g The graphics context
+     * @param progress The breaking progress (0.0 to 1.0)
+     * @param game The game instance to get breaking block position
+     */
+    private void drawBlockBreakingProgress(Graphics2D g, float progress, me.friedhof.hyperbuilder.Game game) {
+        // Get the world position of the breaking block
+        me.friedhof.hyperbuilder.computation.modules.Vector4DInt breakingBlockPos = game.getBreakingBlockPosition();
+        if (breakingBlockPos == null) {
+            return; // No block being broken
+        }
+        
+        // Convert world coordinates to screen coordinates
+        java.awt.Point screenPos = game.worldToScreenCoordinates(breakingBlockPos);
+        if (screenPos == null) {
+            return; // Block not visible on screen
+        }
+        
+        int centerX = screenPos.x;
+        int centerY = screenPos.y;
+        
+        if (progress <= 0.0f) {
+            return; // Don't draw anything if no progress
+        }
+        
+        // Save original rendering hints and stroke
+        RenderingHints originalHints = g.getRenderingHints();
+        Stroke originalStroke = g.getStroke();
+        Color originalColor = g.getColor();
+        
+        // Enable anti-aliasing for smooth circles
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        int radius = 30;
+        
+        // Set stroke width for the progress ring
+        g.setStroke(new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        
+        // Draw background circle (semi-transparent dark)
+        g.setColor(new Color(0, 0, 0, 100));
+        g.drawOval(centerX - radius, centerY - radius, radius * 2, radius * 2);
+        
+        // Calculate the arc angle based on progress (0-360 degrees)
+        int arcAngle = (int) (progress * 360);
+        
+        // Draw progress arc (starting from top, going clockwise)
+        // Color changes from red to yellow to green based on progress
+        Color progressColor;
+        if (progress < 0.5f) {
+            // Red to yellow (0.0 to 0.5)
+            float ratio = progress * 2.0f;
+            progressColor = new Color(255, (int) (255 * ratio), 0, 200);
+        } else {
+            // Yellow to green (0.5 to 1.0)
+            float ratio = (progress - 0.5f) * 2.0f;
+            progressColor = new Color((int) (255 * (1.0f - ratio)), 255, 0, 200);
+        }
+        
+        g.setColor(progressColor);
+        g.drawArc(centerX - radius, centerY - radius, radius * 2, radius * 2, 90, -arcAngle);
+        
+        // Draw a small center dot
+        g.setColor(new Color(255, 255, 255, 150));
+        int dotRadius = 3;
+        g.fillOval(centerX - dotRadius, centerY - dotRadius, dotRadius * 2, dotRadius * 2);
+        
+        // Restore original rendering settings
+        g.setRenderingHints(originalHints);
+        g.setStroke(originalStroke);
         g.setColor(originalColor);
     }
 

@@ -9,7 +9,7 @@
             "name": "MainMenu",
             "request": "launch",
             "mainClass": "me.friedhof.hyperbuilder.ui.MainMenu",
-            "projectName": "voxel-game"
+            "projectName": "hyperbuilder"
         },
         {
             "type": "java",
@@ -21,8 +21,8 @@
             "type": "java",
             "name": "Game",
             "request": "launch",
-            "mainClass": "me.friedhof.hyperbuilder.Game",
-            "projectName": "voxel-game"
+            "mainClass": "me.friedhof.hyperbuilder.ui.MainMenu",
+            "projectName": "hyperbuilder"
         }
     ]
 }

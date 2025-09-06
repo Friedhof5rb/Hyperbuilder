@@ -6,6 +6,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
@@ -55,6 +57,40 @@ public class Game {
     // Mouse position tracking
     private int mouseX = 0;
     private int mouseY = 0;
+    
+    // Block breaking progress tracking
+    private boolean isBreakingBlock = false;
+    private Vector4DInt breakingBlockPos = null;
+    private long breakingStartTime = 0;
+    private static final long BLOCK_BREAK_TIME = 1000; // 1 second to break a block
+    private float breakingProgress = 0.0f;
+    
+    /**
+     * Gets whether a block is currently being broken.
+     * 
+     * @return true if breaking a block, false otherwise
+     */
+    public boolean isBreakingBlock() {
+        return isBreakingBlock;
+    }
+    
+    /**
+     * Gets the current block breaking progress.
+     * 
+     * @return progress value from 0.0 to 1.0
+     */
+    public float getBreakingProgress() {
+        return breakingProgress;
+    }
+    
+    /**
+     * Gets the position of the block currently being broken.
+     * 
+     * @return The world coordinates of the breaking block, or null if not breaking
+     */
+    public Vector4DInt getBreakingBlockPosition() {
+        return breakingBlockPos;
+    }
     
     // Auto-save functionality
     private long lastAutoSave = 0;
@@ -263,12 +299,12 @@ public class Game {
             
             @Override
             public void mousePressed(MouseEvent e) {
-                handleMouseClick(e.getX(), e.getY(), e.getButton());
+                handleMousePressed(e.getX(), e.getY(), e.getButton());
             }
             
             @Override
             public void mouseReleased(MouseEvent e) {
-                // Not used
+                handleMouseReleased(e.getX(), e.getY(), e.getButton());
             }
             
             @Override
@@ -294,6 +330,14 @@ public class Game {
             public void mouseMoved(MouseEvent e) {
                 mouseX = e.getX();
                 mouseY = e.getY();
+            }
+        });
+        
+        // Add MouseWheelListener for hotbar slot cycling
+        contentPane.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                handleMouseWheel(e.getWheelRotation());
             }
         });
     }
@@ -390,6 +434,32 @@ public class Game {
     }
     
     /**
+     * Handles mouse wheel events for hotbar slot cycling.
+     * 
+     * @param wheelRotation The wheel rotation amount (negative = up, positive = down)
+     */
+    private void handleMouseWheel(int wheelRotation) {
+        // Get current hotbar
+        me.friedhof.hyperbuilder.rendering.modules.Hotbar hotbar = renderer.getHUD().getHotbar();
+        
+        // Get current selected slot
+        int currentSlot = hotbar.getSelectedSlot();
+        
+        // Calculate new slot (wheel up = previous slot, wheel down = next slot)
+        int newSlot;
+        if (wheelRotation < 0) {
+            // Wheel up - go to previous slot
+            newSlot = (currentSlot - 1 + 9) % 9; // Wrap around from 0 to 8
+        } else {
+            // Wheel down - go to next slot
+            newSlot = (currentSlot + 1) % 9; // Wrap around from 8 to 0
+        }
+        
+        // Set the new selected slot
+        hotbar.setSelectedSlot(newSlot, player.getInventory());
+    }
+    
+    /**
      * Gets the current mouse X coordinate.
      * 
      * @return The mouse X coordinate
@@ -439,6 +509,130 @@ public class Game {
                 handleBlockPlacement(worldPos.getX(), worldPos.getY(), worldPos.getZ(), worldPos.getW());
             }
         }
+    }
+    
+    /**
+     * Handles mouse press events for UI and block interaction.
+     * 
+     * @param x The x coordinate of the press
+     * @param y The y coordinate of the press
+     * @param button The mouse button (1=left, 3=right)
+     */
+    private void handleMousePressed(int x, int y, int button) {
+        // First, check if the inventory UI handles the click
+        if (renderer.getHUD().getInventoryUI().handleMouseClick(x, y, button, player.getInventory())) {
+            return; // Inventory UI handled the click, don't process block interaction
+        }
+        
+        // Convert screen coordinates to world coordinates for block interaction
+        Vector4DInt worldPos = screenToWorldCoordinates(x, y);
+        
+        if (worldPos != null) {
+            if (button == 1) { // Left click - start breaking block with progress
+                startBlockBreaking(worldPos.getX(), worldPos.getY(), worldPos.getZ(), worldPos.getW());
+            } else if (button == 3) { // Right click - place block
+                handleBlockPlacement(worldPos.getX(), worldPos.getY(), worldPos.getZ(), worldPos.getW());
+            }
+        }
+    }
+    
+    /**
+     * Handles mouse release events.
+     * 
+     * @param x The x coordinate of the release
+     * @param y The y coordinate of the release
+     * @param button The mouse button (1=left, 3=right)
+     */
+    private void handleMouseReleased(int x, int y, int button) {
+        if (button == 1) { // Left click released - stop breaking block
+            stopBlockBreaking();
+        }
+    }
+    
+    /**
+     * Starts the block breaking process at the specified coordinates.
+     * 
+     * @param x World X coordinate
+     * @param y World Y coordinate
+     * @param z World Z coordinate
+     * @param w World W coordinate
+     */
+    private void startBlockBreaking(int x, int y, int z, int w) {
+        Vector4DInt position = new Vector4DInt(x, y, z, w);
+        Block block = world.getBlock(position);
+        
+        // Check if there's a block to break and if it's in sight
+        if (block != null && !block.isAir() && isInSightOfPlayer(x, y, z, w)) {
+            // If already breaking a different block, stop the previous one
+            if (isBreakingBlock && !position.equals(breakingBlockPos)) {
+                stopBlockBreaking();
+            }
+            
+            // Start breaking this block
+            isBreakingBlock = true;
+            breakingBlockPos = position;
+            breakingStartTime = System.currentTimeMillis();
+            breakingProgress = 0.0f;
+            
+            System.out.println("Started breaking block at (" + x + ", " + y + ", " + z + ", " + w + ")");
+        }
+    }
+    
+    /**
+     * Stops the block breaking process and resets progress.
+     */
+    private void stopBlockBreaking() {
+        if (isBreakingBlock) {
+            System.out.println("Stopped breaking block - progress reset");
+            isBreakingBlock = false;
+            breakingBlockPos = null;
+            breakingProgress = 0.0f;
+        }
+    }
+    
+    /**
+     * Updates the block breaking progress and completes breaking if time elapsed.
+     */
+    private void updateBlockBreaking() {
+        if (isBreakingBlock && breakingBlockPos != null) {
+            long currentTime = System.currentTimeMillis();
+            long elapsedTime = currentTime - breakingStartTime;
+            
+            // Calculate progress (0.0 to 1.0)
+            breakingProgress = Math.min(1.0f, (float) elapsedTime / BLOCK_BREAK_TIME);
+            
+            // Check if breaking is complete
+            if (breakingProgress >= 1.0f) {
+                // Complete the block breaking
+                completeBlockBreaking();
+            }
+        }
+    }
+    
+    /**
+     * Completes the block breaking process by destroying the block.
+     */
+    private void completeBlockBreaking() {
+        if (breakingBlockPos != null) {
+            // Get the block type before destroying it
+            Block block = world.getBlock(breakingBlockPos);
+            if (block != null && !block.isAir()) {
+                byte blockType = block.getType();
+                
+                // Remove the block from the world by setting it to air
+                world.setBlock(breakingBlockPos, new Block(Block.TYPE_AIR));
+                
+                // Add the block to the player's inventory
+                player.getInventory().addItem(blockType, 1);
+                
+                System.out.println("Completed breaking block at (" + breakingBlockPos.getX() + ", " + 
+                                 breakingBlockPos.getY() + ", " + breakingBlockPos.getZ() + ", " + 
+                                 breakingBlockPos.getW() + ")");
+            }
+        }
+        
+        // Reset breaking state
+        stopBlockBreaking();
     }
     
     /**
@@ -538,6 +732,99 @@ public class Game {
 
 
         return new Vector4DInt(worldX, worldY, worldZ, worldW);
+    }
+    
+    /**
+     * Converts world coordinates to screen coordinates.
+     * This is the reverse of screenToWorldCoordinates.
+     * 
+     * @param worldPos The world coordinates
+     * @return The screen coordinates as a Point, or null if not visible
+     */
+    public java.awt.Point worldToScreenCoordinates(Vector4DInt worldPos) {
+        // Get grid dimensions and positioning
+        int gridSizePixels = renderer.getGridRenderer().getGridSizePixels();
+        int gridX = (WIDTH - gridSizePixels) / 2;
+        int gridY = (HEIGHT - gridSizePixels) / 2;
+        
+        // Calculate slice size in pixels (7x7 blocks per slice)
+        int sliceSizePixels = gridSizePixels / SliceRenderer.getSliceSize();
+        
+        // Calculate block size within slice (7x7 blocks per slice)
+        int blockSize = sliceSizePixels / SliceRenderer.getSliceSize();
+        
+        // Find which slice this world position belongs to
+        // We need to reverse the coordinate mapping logic
+        int sliceHorizontal = -1, sliceVertical = -1;
+        int blockX = -1, blockY = -1;
+        
+        // Check all slices to find the one containing this world position
+        for (int sh = 0; sh < SliceRenderer.getSliceSize(); sh++) {
+            for (int sv = 0; sv < SliceRenderer.getSliceSize(); sv++) {
+                Vector4D sliceCenterWorld = camera.getSliceCenterWorldCoord(sh, sv);
+                
+                // Check if this world position could be in this slice
+                boolean inThisSlice = false;
+                int testBlockX = -1, testBlockY = -1;
+                
+                // Reverse the coordinate mapping based on camera mode
+                switch (camera.getHorizontalDimension()) {
+                    case X:
+                        // X mode: viewing X-Y plane, slice grid represents Z and W
+                        if ((int) Math.floor(sliceCenterWorld.getZ()) == worldPos.getZ() &&
+                            (int) Math.floor(sliceCenterWorld.getW()) == worldPos.getW()) {
+                            testBlockX = worldPos.getX() - (int) Math.floor(sliceCenterWorld.getX()) + SliceRenderer.getSliceCenter();
+                            testBlockY = SliceRenderer.getSliceCenter() - (worldPos.getY() - (int) Math.floor(sliceCenterWorld.getY()));
+                            inThisSlice = true;
+                        }
+                        break;
+                    case Z:
+                        // Z mode: viewing Z-Y plane, slice grid represents X and W
+                        if ((int) Math.floor(sliceCenterWorld.getX()) == worldPos.getX() &&
+                            (int) Math.floor(sliceCenterWorld.getW()) == worldPos.getW()) {
+                            testBlockX = worldPos.getZ() - (int) Math.floor(sliceCenterWorld.getZ()) + SliceRenderer.getSliceCenter();
+                            testBlockY = SliceRenderer.getSliceCenter() - (worldPos.getY() - (int) Math.floor(sliceCenterWorld.getY()));
+                            inThisSlice = true;
+                        }
+                        break;
+                    case W:
+                        // W mode: viewing W-Y plane, slice grid represents X and Z
+                        if ((int) Math.floor(sliceCenterWorld.getX()) == worldPos.getX() &&
+                            (int) Math.floor(sliceCenterWorld.getZ()) == worldPos.getZ()) {
+                            testBlockX = worldPos.getW() - (int) Math.floor(sliceCenterWorld.getW()) + SliceRenderer.getSliceCenter();
+                            testBlockY = SliceRenderer.getSliceCenter() - (worldPos.getY() - (int) Math.floor(sliceCenterWorld.getY()));
+                            inThisSlice = true;
+                        }
+                        break;
+                }
+                
+                // Check if the block coordinates are valid within the slice
+                if (inThisSlice && testBlockX >= 0 && testBlockX < SliceRenderer.getSliceSize() &&
+                    testBlockY >= 0 && testBlockY < SliceRenderer.getSliceSize()) {
+                    sliceHorizontal = sh;
+                    sliceVertical = sv;
+                    blockX = testBlockX;
+                    blockY = testBlockY;
+                    break;
+                }
+            }
+            if (sliceHorizontal != -1) break;
+        }
+        
+        // If we couldn't find the slice, the block is not visible
+        if (sliceHorizontal == -1 || sliceVertical == -1) {
+            return null;
+        }
+        
+        // Convert slice and block coordinates to screen coordinates
+        int sliceScreenX = gridX + sliceHorizontal * sliceSizePixels;
+        int sliceScreenY = gridY + sliceVertical * sliceSizePixels;
+        
+        int blockScreenX = sliceScreenX + blockX * blockSize;
+        int blockScreenY = sliceScreenY + blockY * blockSize;
+        
+        // Return the center of the block
+        return new java.awt.Point(blockScreenX + blockSize / 2, blockScreenY + blockSize / 2);
     }
      
      /**
@@ -818,6 +1105,9 @@ public class Game {
                 
                 // Update the world
                 world.update(deltaTime);
+                
+                // Update block breaking progress
+                updateBlockBreaking();
                 
                 // Check for periodic auto-save
                 checkAutoSave();

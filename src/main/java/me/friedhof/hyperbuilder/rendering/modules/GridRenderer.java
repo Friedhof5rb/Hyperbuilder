@@ -97,8 +97,8 @@ public class GridRenderer {
      * @return The rendered grid image
      */
     public BufferedImage renderGrid(World world, Camera camera, me.friedhof.hyperbuilder.computation.modules.Player player, me.friedhof.hyperbuilder.Game game, int mouseX, int mouseY) {
-        // Clear the image
-        graphics.setColor(Color.BLACK);
+        // Clear the image with sky blue background
+        graphics.setColor(new Color(135, 206, 235)); // Sky blue color
         graphics.fillRect(0, 0, gridImage.getWidth(), gridImage.getHeight());
         
         // Draw each slice
