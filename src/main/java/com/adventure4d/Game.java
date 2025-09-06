@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Main entry point for the 4D Adventure Game.
  */
 public class Game {
-    private static final String GAME_TITLE = "Adventure 4D";
+    private static final String GAME_TITLE = "Hyperbuilder";
     private static final String VERSION = "0.1.0";
     
     // Window dimensions

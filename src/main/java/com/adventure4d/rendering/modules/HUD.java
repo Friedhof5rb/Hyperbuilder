@@ -306,6 +306,7 @@ public class HUD {
             "1-9 - Select Hotbar Slot",
             "Left Click - Destroy Block",
             "Right Click - Place Block",
+            "F - Inventory",
             "ESC - Exit Game"
         };
         
