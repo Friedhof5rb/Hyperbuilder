@@ -102,8 +102,8 @@ public class SliceRenderer {
         try {
             grassTexture = TextureManager.loadTexture4D("Grass.png");
             dirtTexture = TextureManager.loadTexture4D("Dirt.png");
-            stoneTexture = TextureManager.loadTexture4D("stone.png");
-            woodLogTexture = TextureManager.loadTexture4D("wood_log.png");
+            stoneTexture = TextureManager.loadTexture4D("Stone.png");
+            woodLogTexture = TextureManager.loadTexture4D("Wood_log.png");
             leavesTexture = TextureManager.loadTexture4D("Leaves.png");
         } catch (IOException e) {
             System.err.println("Failed to load grass texture: " + e.getMessage());

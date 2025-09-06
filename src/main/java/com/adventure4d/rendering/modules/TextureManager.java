@@ -3,6 +3,7 @@ package com.adventure4d.rendering.modules;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import javax.imageio.ImageIO;
@@ -15,8 +16,10 @@ public class TextureManager {
     // Cache for loaded textures
     private static final Map<String, Texture4D> textureCache = new HashMap<>();
     
-    // Base path for texture files
-    private static final String TEXTURE_BASE_PATH = "src/main/java/com/adventure4d/rendering/data/";
+    // Base path for texture files (file system)
+    private static final String TEXTURE_BASE_PATH = "src/main/resources/textures/";
+    // Base path for texture files in classpath (JAR)
+    private static final String TEXTURE_CLASSPATH_PATH = "/textures/";
     
     /**
      * Loads a 4D texture from a 2D image file by splitting it into a grid.
@@ -33,9 +36,42 @@ public class TextureManager {
             return textureCache.get(filename);
         }
         
-        // Load the image file
-        String fullPath = TEXTURE_BASE_PATH + filename;
-        BufferedImage image = ImageIO.read(new File(fullPath));
+        // Detect if running from JAR by checking if class is loaded from jar file
+        BufferedImage image = null;
+        String classLocation = TextureManager.class.getProtectionDomain().getCodeSource().getLocation().toString();
+        boolean runningFromJar = classLocation.endsWith(".jar");
+        
+        if (runningFromJar) {
+            // Load from classpath (for JAR)
+            String resourcePath = TEXTURE_CLASSPATH_PATH + filename;
+            InputStream inputStream = TextureManager.class.getResourceAsStream(resourcePath);
+            
+            if (inputStream == null) {
+                throw new IOException("Texture resource not found: " + resourcePath);
+            }
+            
+            image = ImageIO.read(inputStream);
+            inputStream.close();
+        } else {
+            // Load from file system (for development)
+            String filePath = TEXTURE_BASE_PATH + filename;
+            File file = new File(filePath);
+            
+            if (file.exists()) {
+                image = ImageIO.read(file);
+            } else {
+                // Fallback to classpath if file not found
+                String resourcePath = TEXTURE_CLASSPATH_PATH + filename;
+                InputStream inputStream = TextureManager.class.getResourceAsStream(resourcePath);
+                
+                if (inputStream == null) {
+                    throw new IOException("Texture not found in file system (" + filePath + ") or classpath (" + resourcePath + ")");
+                }
+                
+                image = ImageIO.read(inputStream);
+                inputStream.close();
+            }
+        }
         
         // Verify the image is 64x64 pixels
         if (image.getWidth() != 64 || image.getHeight() != 64) {
@@ -92,8 +128,8 @@ public class TextureManager {
             // Load the grass texture
             loadTexture4D("Grass.png");
             loadTexture4D("Dirt.png");
-            loadTexture4D("stone.png");
-            loadTexture4D("wood_log.png");
+            loadTexture4D("Stone.png");
+            loadTexture4D("Wood_log.png");
             loadTexture4D("Leaves.png");
             System.out.println("All textures preloaded successfully");
         } catch (IOException e) {

@@ -3,6 +3,7 @@ package com.adventure4d.rendering.modules;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import javax.imageio.ImageIO;
 
 /**
@@ -50,6 +51,30 @@ public class Texture2D {
         }
         
         return new Texture2D(image, filename);
+    }
+    
+    /**
+     * Loads a 2D texture from a classpath resource.
+     * 
+     * @param resourcePath The resource path of the texture to load
+     * @return A new Texture2D instance
+     * @throws IOException If the resource cannot be loaded
+     */
+    public static Texture2D loadFromResource(String resourcePath) throws IOException {
+        InputStream inputStream = Texture2D.class.getResourceAsStream(resourcePath);
+        
+        if (inputStream == null) {
+            throw new IOException("Texture resource not found: " + resourcePath);
+        }
+        
+        BufferedImage image = ImageIO.read(inputStream);
+        inputStream.close();
+        
+        if (image == null) {
+            throw new IOException("Failed to load texture resource: " + resourcePath);
+        }
+        
+        return new Texture2D(image, resourcePath);
     }
     
     /**

@@ -1,5 +1,6 @@
 package com.adventure4d.rendering.modules;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,8 +10,10 @@ import java.util.Map;
  * Provides caching and loading functionality for PNG textures.
  */
 public class TextureManager2D {
-    // Base path for texture files
-    private static final String TEXTURE_BASE_PATH = "src/main/java/com/adventure4d/rendering/data/";
+    // Base path for texture files (file system)
+    private static final String TEXTURE_BASE_PATH = "src/main/resources/textures/";
+    // Base path for texture files in classpath (JAR)
+    private static final String TEXTURE_CLASSPATH_PATH = "/textures/";
     
     // Cache for loaded textures
     private static final Map<String, Texture2D> textureCache = new HashMap<>();
@@ -28,8 +31,28 @@ public class TextureManager2D {
             return textureCache.get(filename);
         }
         
-        // Load the texture
-        Texture2D texture = Texture2D.loadFromFile(TEXTURE_BASE_PATH + filename);
+        // Detect if running from JAR by checking if class is loaded from jar file
+        String classLocation = TextureManager2D.class.getProtectionDomain().getCodeSource().getLocation().toString();
+        boolean runningFromJar = classLocation.endsWith(".jar");
+        
+        Texture2D texture;
+        if (runningFromJar) {
+            // Load from classpath (for JAR)
+            String resourcePath = TEXTURE_CLASSPATH_PATH + filename;
+            texture = Texture2D.loadFromResource(resourcePath);
+        } else {
+            // Load from file system (for development)
+            String filePath = TEXTURE_BASE_PATH + filename;
+            File file = new File(filePath);
+            
+            if (file.exists()) {
+                texture = Texture2D.loadFromFile(filePath);
+            } else {
+                // Fallback to classpath if file not found
+                String resourcePath = TEXTURE_CLASSPATH_PATH + filename;
+                texture = Texture2D.loadFromResource(resourcePath);
+            }
+        }
         
         // Cache it
         textureCache.put(filename, texture);
@@ -56,8 +79,8 @@ public class TextureManager2D {
             // Load the same textures that are used for blocks
             loadTexture2D("Grass.png");
             loadTexture2D("Dirt.png");
-            loadTexture2D("stone.png");
-            loadTexture2D("wood_log.png");
+            loadTexture2D("Stone.png");
+            loadTexture2D("Wood_log.png");
             loadTexture2D("Leaves.png");
             
             System.out.println("All 2D item textures preloaded successfully");

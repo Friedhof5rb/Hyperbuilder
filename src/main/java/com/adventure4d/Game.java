@@ -643,6 +643,8 @@ public class Game {
             if (System.currentTimeMillis() - timer > 1000) {
                 timer += 1000;
                 System.out.println("FPS: " + frames);
+                // Update HUD with current FPS
+                renderer.getHUD().updateFPS(frames);
                 frames = 0;
             }
             

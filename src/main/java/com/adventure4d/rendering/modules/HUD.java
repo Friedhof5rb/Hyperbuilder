@@ -23,6 +23,9 @@ public class HUD {
     // Inventory UI component
     private final InventoryUI inventoryUI;
     
+    // FPS tracking
+    private int currentFPS = 0;
+    
     /**
      * Creates a new HUD with the specified dimensions.
      * 
@@ -120,6 +123,15 @@ public class HUD {
     }
     
     /**
+     * Updates the FPS counter.
+     * 
+     * @param fps The current frames per second
+     */
+    public void updateFPS(int fps) {
+        this.currentFPS = fps;
+    }
+    
+    /**
      * Draws the camera coordinates (world position).
      * 
      * @param g The graphics context
@@ -143,6 +155,10 @@ public class HUD {
         g.drawString(yCoord, x, y + lineHeight);
         g.drawString(zCoord, x, y + 2 * lineHeight);
         g.drawString(wCoord, x, y + 3 * lineHeight);
+        
+        // Draw FPS counter below coordinates
+        String fpsText = "FPS: " + currentFPS;
+        g.drawString(fpsText, x, y + 4 * lineHeight);
     }
     
     /**
