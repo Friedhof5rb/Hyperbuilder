@@ -1,6 +1,8 @@
 package com.adventure4d.computation.modules;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -18,6 +20,12 @@ public class World {
     // Map of loaded chunks (chunk position -> chunk)
     private final Map<Vector4DInt, Chunk4D> chunks;
     
+    /**
+     * Map of pending leaves for chunks that don't exist yet.
+     * Key: chunk position, Value: list of leaf positions within that chunk
+     */
+    private final Map<Vector4DInt, java.util.List<Vector4DInt>> pendingLeaves;
+    
     // Map of entities (entity ID -> entity)
     private final Map<Integer, Entity> entities;
     
@@ -34,6 +42,7 @@ public class World {
         this.name = name;
         this.seed = seed;
         this.chunks = new ConcurrentHashMap<>();
+        this.pendingLeaves = new ConcurrentHashMap<>();
         this.entities = new ConcurrentHashMap<>();
         this.nextEntityId = 1;
     }
@@ -124,6 +133,12 @@ public class World {
             }
         }
         
+        // Generate trees for this chunk
+        generateTrees(chunk, position);
+        
+        // Process any pending leaves for this chunk
+        processPendingLeaves(chunk, position);
+        
         return chunk;
     }
     
@@ -168,7 +183,7 @@ public class World {
      */
     private void generateTrees(Chunk4D chunk, Vector4DInt chunkPosition) {
         // Optimized tree generation parameters
-        int treesPerChunk = 4; // Fixed number of trees per chunk for predictable performance
+        int treesPerChunk = 2; // Fixed number of trees per chunk for predictable performance
         int minTreeHeight = 3;
         int maxTreeHeight = 5;
         
@@ -229,46 +244,43 @@ public class World {
      * @param height Height of the tree trunk
      */
     private void generateSimpleTree(Chunk4D chunk, Vector4DInt chunkPosition, int x, int y, int z, int w, int height) {
-        // Convert local coordinates to world coordinates
-        int worldX = x + chunkPosition.getX() * Chunk4D.CHUNK_SIZE;
-        int worldZ = z + chunkPosition.getZ() * Chunk4D.CHUNK_SIZE;
-        int worldW = w + chunkPosition.getW() * Chunk4D.CHUNK_SIZE;
-        
-        // Generate trunk (always within the current chunk)
+        // Generate trunk
         for (int i = 0; i < height; i++) {
-            int trunkY = y + i;
-            if (trunkY >= 0 && trunkY < Chunk4D.CHUNK_SIZE) {
-                chunk.setBlock(x, trunkY, z, w, new Block(Block.TYPE_WOOD));
+            if (y + i < Chunk4D.CHUNK_SIZE) {
+                chunk.setBlock(x, y + i, z, w, new Block(Block.TYPE_WOOD));
             }
         }
         
-        // Generate simple 4D leaves - just a small cross pattern in each dimension
-        int leavesY = y + height - 1;
+        // Generate leaves in a 4D cross pattern around the top of the tree
+        int leafY = y + height - 1;
+        int leafRadius = 2;
         
-        // Place leaves in a simple 4D cross pattern (much more efficient than sphere)
-        int[] offsets = {-1, 0, 1};
+        // Convert tree position to world coordinates
+        int worldX = x + chunkPosition.getX() * Chunk4D.CHUNK_SIZE;
+        int worldY = leafY + chunkPosition.getY() * Chunk4D.CHUNK_SIZE;
+        int worldZ = z + chunkPosition.getZ() * Chunk4D.CHUNK_SIZE;
+        int worldW = w + chunkPosition.getW() * Chunk4D.CHUNK_SIZE;
         
-        for (int dx : offsets) {
-            for (int dy : offsets) {
-                for (int dz : offsets) {
-                    for (int dw : offsets) {
-                        // Only place leaves if not too many dimensions are at maximum offset
-                        int nonZeroCount = (dx != 0 ? 1 : 0) + (dy != 0 ? 1 : 0) + (dz != 0 ? 1 : 0) + (dw != 0 ? 1 : 0);
-                        if (nonZeroCount <= 2) { // Limit to create a cross-like pattern
-                            // Calculate world coordinates for the leaf
+        // Generate leaves in 4D cross pattern
+        for (int dx = -leafRadius; dx <= leafRadius; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -leafRadius; dz <= leafRadius; dz++) {
+                    for (int dw = -leafRadius; dw <= leafRadius; dw++) {
+                        // 4D cross pattern: only place leaves if at most 2 coordinates are non-zero
+                        int nonZeroCount = 0;
+                        if (dx != 0) nonZeroCount++;
+                        if (dy != 0) nonZeroCount++;
+                        if (dz != 0) nonZeroCount++;
+                        if (dw != 0) nonZeroCount++;
+                        
+                        if (nonZeroCount <= 2) {
                             int leafWorldX = worldX + dx;
-                            int leafWorldY = leavesY + dy;
+                            int leafWorldY = worldY + dy;
                             int leafWorldZ = worldZ + dz;
                             int leafWorldW = worldW + dw;
                             
-                            // Use world coordinates to place leaves (can cross chunk boundaries)
-                            Vector4DInt leafPos = new Vector4DInt(leafWorldX, leafWorldY, leafWorldZ, leafWorldW);
-                            
-                            // Only place leaves in air blocks
-                            Block existingBlock = getBlock(leafPos);
-                            if (existingBlock == null || existingBlock.isAir()) {
-                                setBlock(leafPos, new Block(Block.TYPE_LEAVES));
-                            }
+                            // Try to place the leaf
+                            placeLeafAtWorldPosition(leafWorldX, leafWorldY, leafWorldZ, leafWorldW);
                         }
                     }
                 }
@@ -276,7 +288,68 @@ public class World {
         }
     }
     
-
+    /**
+     * Places a leaf at the specified world position, handling cross-chunk placement.
+     */
+    private void placeLeafAtWorldPosition(int worldX, int worldY, int worldZ, int worldW) {
+        // Calculate which chunk this position belongs to
+        Vector4DInt targetChunkPos = new Vector4DInt(
+            Math.floorDiv(worldX, Chunk4D.CHUNK_SIZE),
+            Math.floorDiv(worldY, Chunk4D.CHUNK_SIZE),
+            Math.floorDiv(worldZ, Chunk4D.CHUNK_SIZE),
+            Math.floorDiv(worldW, Chunk4D.CHUNK_SIZE)
+        );
+        
+        // Calculate local coordinates within the target chunk
+        int localX = worldX - targetChunkPos.getX() * Chunk4D.CHUNK_SIZE;
+        int localY = worldY - targetChunkPos.getY() * Chunk4D.CHUNK_SIZE;
+        int localZ = worldZ - targetChunkPos.getZ() * Chunk4D.CHUNK_SIZE;
+        int localW = worldW - targetChunkPos.getW() * Chunk4D.CHUNK_SIZE;
+        
+        // Check if the target chunk exists
+        Chunk4D targetChunk = chunks.get(targetChunkPos);
+        if (targetChunk != null) {
+            // Chunk exists, place the leaf if the position is air
+            Block existingBlock = targetChunk.getBlock(localX, localY, localZ, localW);
+            if (existingBlock != null && existingBlock.getType() == Block.TYPE_AIR) {
+                targetChunk.setBlock(localX, localY, localZ, localW, new Block(Block.TYPE_LEAVES));
+            }
+        } else {
+            // Chunk doesn't exist, add to pending leaves
+            Vector4DInt localPos = new Vector4DInt(localX, localY, localZ, localW);
+            pendingLeaves.computeIfAbsent(targetChunkPos, k -> new ArrayList<>()).add(localPos);
+        }
+    }
+    
+    /**
+     * Processes pending leaves for a newly generated chunk.
+     */
+    private void processPendingLeaves(Chunk4D chunk, Vector4DInt chunkPosition) {
+        List<Vector4DInt> pendingForThisChunk = pendingLeaves.remove(chunkPosition);
+        if (pendingForThisChunk != null) {
+            for (Vector4DInt leafPos : pendingForThisChunk) {
+                // Only place leaf if the position is air
+                Block existingBlock = chunk.getBlock(leafPos.getX(), leafPos.getY(), leafPos.getZ(), leafPos.getW());
+                if (existingBlock != null && existingBlock.getType() == Block.TYPE_AIR) {
+                    chunk.setBlock(leafPos.getX(), leafPos.getY(), leafPos.getZ(), leafPos.getW(), new Block(Block.TYPE_LEAVES));
+                }
+            }
+        }
+    }
+    
+    /**
+     * Gets the number of pending leaf chunks for debugging.
+     */
+    public int getPendingLeavesChunkCount() {
+        return pendingLeaves.size();
+    }
+    
+    /**
+     * Gets the total number of pending leaves for debugging.
+     */
+    public int getTotalPendingLeavesCount() {
+        return pendingLeaves.values().stream().mapToInt(List::size).sum();
+    }
     
     /**
      * 4D Perlin noise implementation for realistic terrain generation.
@@ -396,6 +469,11 @@ public class World {
         // Get the chunk
         Chunk4D chunk = getChunk(chunkPos);
         
+        // Check if chunk exists
+        if (chunk == null) {
+            return null; // Return null for non-existent chunks
+        }
+        
         // Get the block
         return chunk.getBlock(localPos);
     }
@@ -426,6 +504,11 @@ public class World {
         
         // Get the chunk
         Chunk4D chunk = getChunk(chunkPos);
+        
+        // Check if chunk exists
+        if (chunk == null) {
+            return false; // Cannot set block in non-existent chunk
+        }
         
         // Set the block
         return chunk.setBlock(localPos, block);
