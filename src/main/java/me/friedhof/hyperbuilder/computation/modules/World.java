@@ -614,4 +614,24 @@ public class World {
             }
         }
     }
+    
+    /**
+     * Gets all loaded chunks in the world.
+     * 
+     * @return A map of chunk positions to chunks
+     */
+    public Map<Vector4DInt, Chunk4D> getLoadedChunks() {
+        return new HashMap<>(chunks);
+    }
+    
+    /**
+     * Sets a chunk at the specified position.
+     * Used for loading chunks from save data.
+     * 
+     * @param position The chunk position
+     * @param chunk The chunk to set
+     */
+    public void setChunk(Vector4DInt position, Chunk4D chunk) {
+        chunks.put(position, chunk);
+    }
 }

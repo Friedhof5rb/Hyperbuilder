@@ -7,6 +7,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import me.friedhof.hyperbuilder.computation.modules.Block;
 import me.friedhof.hyperbuilder.computation.modules.Player;
@@ -18,6 +19,9 @@ import me.friedhof.hyperbuilder.rendering.modules.Renderer;
 import me.friedhof.hyperbuilder.rendering.modules.SliceRenderer;
 import me.friedhof.hyperbuilder.rendering.modules.TextureManager;
 import me.friedhof.hyperbuilder.rendering.modules.TextureManager2D;
+import me.friedhof.hyperbuilder.ui.MainMenu;
+import me.friedhof.hyperbuilder.save.SavedWorldInfo;
+import me.friedhof.hyperbuilder.save.WorldSaveManager;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +30,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * Main entry point for the 4D Adventure Game.
  */
 public class Game {
+    
+    public enum GameState {
+        MENU,
+        PLAYING,
+        PAUSED
+    }
     private static final String GAME_TITLE = "Hyperbuilder";
     private static final String VERSION = "0.1.0";
     
@@ -38,10 +48,63 @@ public class Game {
     private Renderer renderer;
     private Camera camera;
     private boolean running;
+    private GameState currentState;
+    private MainMenu mainMenu;
+    private WorldSaveManager saveManager;
     
     // Mouse position tracking
     private int mouseX = 0;
     private int mouseY = 0;
+    
+    // Auto-save functionality
+    private long lastAutoSave = 0;
+    private static final long AUTO_SAVE_INTERVAL = 300000; // 5 minutes in milliseconds
+    
+    // Rendering synchronization
+    private volatile boolean renderPending = false;
+    
+    /**
+     * Constructor for creating a game from menu.
+     */
+    public Game(String worldName, long seed, MainMenu menu) {
+        this.mainMenu = menu;
+        this.saveManager = new WorldSaveManager();
+        this.currentState = GameState.PLAYING;
+        
+        // Create a new world
+        world = new World(worldName, seed);
+        initGameWorld();
+        
+        // Hide menu when transitioning to game
+        if (mainMenu != null) {
+            mainMenu.setVisible(false);
+        }
+    }
+    
+    /**
+     * Constructor for loading a game from menu.
+     */
+    public Game(SavedWorldInfo worldInfo, MainMenu menu) {
+        this.mainMenu = menu;
+        this.saveManager = new WorldSaveManager();
+        this.currentState = GameState.PLAYING;
+        
+        // Load the world
+        loadGameWorld(worldInfo);
+        
+        // Hide menu when transitioning to game
+        if (mainMenu != null) {
+            mainMenu.setVisible(false);
+        }
+    }
+    
+    /**
+     * Default constructor for direct game launch.
+     */
+    public Game() {
+        this.saveManager = new WorldSaveManager();
+        this.currentState = GameState.PLAYING;
+    }
     
     /**
      * Initializes the game.
@@ -49,14 +112,45 @@ public class Game {
     public void init() {
         System.out.println("Initializing " + GAME_TITLE + " v" + VERSION);
         
-        // Create a new world
-        world = new World("Test World", System.currentTimeMillis());
+        if (currentState == GameState.PLAYING && world == null) {
+            // Direct game launch - create default world only if no world exists
+            world = new World("Test World", System.currentTimeMillis());
+            initGameWorld();
+        }
+        
+        // Initialize renderer
+        renderer = new Renderer(WIDTH, HEIGHT, GAME_TITLE + " v" + VERSION);
+        
+        // Show the window
+        renderer.getFrame().setVisible(true);
+        
+        if (currentState == GameState.PLAYING) {
+            // Set up input handling for gameplay
+            setupInput();
+            
+            // Force focus on the frame
+            renderer.getFrame().requestFocus();
+            renderer.getFrame().toFront();
+            
+            // Initialize auto-save timer
+            lastAutoSave = System.currentTimeMillis();
+        }
+    }
+    
+    /**
+     * Initializes game world components.
+     */
+    private void initGameWorld() {
+        System.out.println("DEBUG: Starting initGameWorld()");
+        System.out.println("DEBUG: World is null: " + (world == null));
         
         // Find a safe spawn position starting from Y=100 and moving down
         Vector4D safeSpawnPos = world.findSafeSpawnPosition(0.5, 0.5, 0.5);
+        System.out.println("DEBUG: Found spawn position: " + safeSpawnPos);
         
         // Create a player at the safe spawn position
         player = world.createPlayer("Player1", safeSpawnPos);
+        System.out.println("DEBUG: Created player: " + (player != null));
         
         // Debug: Check what blocks exist around spawn
         System.out.println("Debug: Checking blocks around spawn position:");
@@ -84,6 +178,7 @@ public class Game {
         
         // Create a camera starting at the player's initial world position
         camera = new Camera(new Vector4D(0, 1, 0, 0));
+        System.out.println("DEBUG: Created camera: " + (camera != null));
         
         // Preload textures
         TextureManager.preloadTextures();
@@ -91,16 +186,36 @@ public class Game {
         // Preload 2D textures for items
         TextureManager2D.preloadItemTextures();
         
-        // Initialize the renderer
-        renderer = new Renderer(WIDTH, HEIGHT, GAME_TITLE + " v" + VERSION);
-        
-        // Set up input handling
-        setupInput();
-        
-        // Show the window
-        renderer.show();
-        
-        System.out.println("Game initialized successfully");
+        System.out.println("Game world initialized successfully");
+        System.out.println("DEBUG: Final state - world: " + (world != null) + ", player: " + (player != null) + ", camera: " + (camera != null));
+    }
+    
+    /**
+     * Loads an existing game world.
+     */
+    private void loadGameWorld(SavedWorldInfo worldInfo) {
+        try {
+            // Load the world using save manager
+            WorldSaveManager.WorldSaveData saveData = saveManager.loadWorld(worldInfo);
+            if (saveData != null) {
+                world = saveData.getWorld();
+                player = saveData.getPlayer();
+                
+                // Create camera at player position
+                camera = new Camera(new Vector4D(0, 1, 0, 0));
+                
+                // Preload textures
+                TextureManager.preloadTextures();
+                TextureManager2D.preloadItemTextures();
+                
+                System.out.println("Loaded world: " + worldInfo.getName());
+            } else {
+                System.err.println("Failed to load world data for: " + worldInfo.getName());
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to load world: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     /**
@@ -201,7 +316,7 @@ public class Game {
                 if(renderer.getHUD().getInventoryUI().isVisible()){
                     renderer.getHUD().getInventoryUI().setVisible(false);
                 }else{
-                    stop();
+                    returnToMenu();
                 }
                 break;
             case KeyEvent.VK_SPACE:
@@ -229,6 +344,12 @@ public class Game {
             case KeyEvent.VK_F:
                 // Toggle inventory visibility
                 renderer.getHUD().getInventoryUI().toggleVisibility();
+                break;
+            case KeyEvent.VK_S:
+                // Manual save with Ctrl+S
+                if (pressedKeys.contains(KeyEvent.VK_CONTROL)) {
+                    manualSave();
+                }
                 break;
         }
         
@@ -621,43 +742,55 @@ public class Game {
     private void run() {
         System.out.println("Game is running...");
         
-        long lastTime = System.nanoTime();
-        double amountOfTicks = 60.0;
-        double ns = 1000000000 / amountOfTicks;
-        double delta = 0;
-        long timer = System.currentTimeMillis();
-        int frames = 0;
+        // Run the game loop in a separate thread to avoid blocking the EDT
+        Thread gameThread = new Thread(() -> {
+            long lastTime = System.currentTimeMillis();
+            long timer = System.currentTimeMillis();
+            int frames = 0;
+            final int targetFPS = 60;
+            final long frameTime = 1000 / targetFPS; // 16.67ms per frame
+            
+            while (running) {
+                long currentTime = System.currentTimeMillis();
+                
+                // Update game logic
+                update(1.0 / targetFPS);
+                
+                // Render on EDT with queue management
+                if (!renderPending) {
+                    renderPending = true;
+                    SwingUtilities.invokeLater(() -> {
+                        render();
+                        renderPending = false;
+                    });
+                }
+                frames++;
+                
+                // Update FPS counter every second
+                if (currentTime - timer >= 1000) {
+                    renderer.getHUD().updateFPS(frames);
+                    frames = 0;
+                    timer = currentTime;
+                }
+                
+                // Sleep to maintain target FPS
+                long elapsed = System.currentTimeMillis() - currentTime;
+                long sleepTime = frameTime - elapsed;
+                if (sleepTime > 0) {
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+            
+            cleanup();
+        });
         
-        while (running) {
-            long now = System.nanoTime();
-            delta += (now - lastTime) / ns;
-            lastTime = now;
-            
-            while (delta >= 1) {
-                update(1.0 / amountOfTicks);
-                delta--;
-            }
-            
-            render();
-            frames++;
-            
-            if (System.currentTimeMillis() - timer > 1000) {
-                timer += 1000;
-                System.out.println("FPS: " + frames);
-                // Update HUD with current FPS
-                renderer.getHUD().updateFPS(frames);
-                frames = 0;
-            }
-            
-            // Add a small delay to prevent CPU overuse
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        
-        cleanup();
+        gameThread.setDaemon(true);
+        gameThread.start();
     }
     
 
@@ -668,27 +801,48 @@ public class Game {
      * @param deltaTime The time elapsed since the last update in seconds
      */
     private void update(double deltaTime) {
-        // Update movement input continuously for smooth movement
-        updateMovementInput();
-        
-
-        // Update player physics (gravity, collision detection, etc.)
-        player.update(deltaTime, world);
-        
-        // Sync camera to follow player - keep player centered
-        Vector4D playerPos = player.getPosition();
-        camera.setWorldOffset(playerPos);
-        
-        // Update the world
-        world.update(deltaTime);
+        switch (currentState) {
+            case MENU:
+                // Update menu (if needed)
+                break;
+            case PLAYING:
+                // Update movement input continuously for smooth movement
+                updateMovementInput();
+                
+                // Update player physics (gravity, collision detection, etc.)
+                player.update(deltaTime, world);
+                
+                // Sync camera to follow player - keep player centered
+                Vector4D playerPos = player.getPosition();
+                camera.setWorldOffset(playerPos);
+                
+                // Update the world
+                world.update(deltaTime);
+                
+                // Check for periodic auto-save
+                checkAutoSave();
+                break;
+            case PAUSED:
+                // Game is paused, don't update game logic
+                break;
+        }
     }
     
     /**
      * Renders the game.
      */
     private void render() {
-        // Render the world using our renderer with camera and player
-        renderer.render(world, camera, player, this, mouseX, mouseY);
+        switch (currentState) {
+            case MENU:
+                // Menu rendering is handled by MainMenu itself
+                // Window visibility is managed by state transitions, not here
+                break;
+            case PLAYING:
+            case PAUSED:
+                // Render the world using our renderer with camera and player
+                renderer.render(world, camera, player, this, mouseX, mouseY);
+                break;
+        }
     }
     
     /**
@@ -712,13 +866,90 @@ public class Game {
     }
     
     /**
-     * Main method.
-     * 
-     * @param args Command line arguments
+     * Returns to the main menu.
      */
-    public static void main(String[] args) {
-        Game game = new Game();
-        game.init();
-        game.start();
+    public void returnToMenu() {
+        currentState = GameState.MENU;
+        // Clean up current game state if needed
+        if (world != null) {
+            // Auto-save before returning to menu
+            try {
+                saveManager.saveWorld(world, player);
+                System.out.println("World auto-saved before returning to menu");
+            } catch (Exception e) {
+                System.err.println("Failed to auto-save world: " + e.getMessage());
+            }
+        }
+        
+        // Hide the game window
+        if (renderer != null) {
+            renderer.getFrame().setVisible(false);
+        }
+        
+        // Show the main menu
+        if (mainMenu != null) {
+            mainMenu.setVisible(true);
+            mainMenu.showMenu();
+        }
     }
+    
+    /**
+     * Gets the current game state.
+     */
+    public GameState getCurrentState() {
+        return currentState;
+    }
+    
+    /**
+     * Gets the save manager.
+     */
+    public WorldSaveManager getSaveManager() {
+        return saveManager;
+    }
+    
+    /**
+     * Performs a manual save of the current world and player data.
+     */
+    private void manualSave() {
+        if (world != null && player != null && saveManager != null) {
+            try {
+                boolean success = saveManager.saveWorld(world, player);
+                if (success) {
+                    System.out.println("Game saved manually");
+                    // You could add a visual notification here if desired
+                } else {
+                    System.err.println("Manual save failed");
+                }
+            } catch (Exception e) {
+                System.err.println("Error during manual save: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("Cannot save: world, player, or save manager is null");
+        }
+    }
+    
+    /**
+     * Performs periodic auto-save if enough time has passed.
+     */
+    private void checkAutoSave() {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastAutoSave >= AUTO_SAVE_INTERVAL) {
+            if (world != null && player != null && saveManager != null) {
+                try {
+                    boolean success = saveManager.saveWorld(world, player);
+                    if (success) {
+                        System.out.println("Auto-save completed");
+                        lastAutoSave = currentTime;
+                    } else {
+                        System.err.println("Auto-save failed");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error during auto-save: " + e.getMessage());
+                }
+            }
+        }
+    }
+    
+
 }
