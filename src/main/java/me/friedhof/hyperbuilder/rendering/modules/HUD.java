@@ -1,10 +1,10 @@
-package com.adventure4d.rendering.modules;
-
-import com.adventure4d.computation.modules.Player;
-import com.adventure4d.computation.modules.Vector4D;
+package me.friedhof.hyperbuilder.rendering.modules;
 
 import java.awt.*;
 import java.text.DecimalFormat;
+
+import me.friedhof.hyperbuilder.computation.modules.Player;
+import me.friedhof.hyperbuilder.computation.modules.Vector4D;
 
 /**
  * Heads-Up Display for showing player information.

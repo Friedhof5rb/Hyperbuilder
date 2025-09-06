@@ -1,4 +1,4 @@
-package com.adventure4d.rendering.modules;
+package me.friedhof.hyperbuilder.rendering.modules;
 
 import java.io.File;
 import java.io.IOException;

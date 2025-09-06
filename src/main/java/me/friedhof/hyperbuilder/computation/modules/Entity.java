@@ -1,4 +1,4 @@
-package com.adventure4d.computation.modules;
+package me.friedhof.hyperbuilder.computation.modules;
 
 /**
  * Base class for all entities in the 4D world.

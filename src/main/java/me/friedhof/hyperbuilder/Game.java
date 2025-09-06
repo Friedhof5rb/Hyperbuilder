@@ -1,15 +1,4 @@
-package com.adventure4d;
-
-import com.adventure4d.computation.modules.Vector4D;
-import com.adventure4d.computation.modules.Vector4DInt;
-import com.adventure4d.computation.modules.World;
-import com.adventure4d.computation.modules.Player;
-import com.adventure4d.computation.modules.Block;
-import com.adventure4d.rendering.modules.Renderer;
-import com.adventure4d.rendering.modules.SliceRenderer;
-import com.adventure4d.rendering.modules.Camera;
-import com.adventure4d.rendering.modules.TextureManager;
-import com.adventure4d.rendering.modules.TextureManager2D;
+package me.friedhof.hyperbuilder;
 
 import java.awt.Component;
 import java.awt.event.KeyEvent;
@@ -18,6 +7,18 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import javax.swing.JFrame;
+
+import me.friedhof.hyperbuilder.computation.modules.Block;
+import me.friedhof.hyperbuilder.computation.modules.Player;
+import me.friedhof.hyperbuilder.computation.modules.Vector4D;
+import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
+import me.friedhof.hyperbuilder.computation.modules.World;
+import me.friedhof.hyperbuilder.rendering.modules.Camera;
+import me.friedhof.hyperbuilder.rendering.modules.Renderer;
+import me.friedhof.hyperbuilder.rendering.modules.SliceRenderer;
+import me.friedhof.hyperbuilder.rendering.modules.TextureManager;
+import me.friedhof.hyperbuilder.rendering.modules.TextureManager2D;
+
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -74,12 +75,12 @@ public class Game {
         }
         
         // Give the player some starting blocks
-        com.adventure4d.computation.modules.Inventory inventory = player.getInventory();
-        inventory.addItem(com.adventure4d.computation.modules.Block.TYPE_DIRT, 64);
-        inventory.addItem(com.adventure4d.computation.modules.Block.TYPE_STONE, 32);
-        inventory.addItem(com.adventure4d.computation.modules.Block.TYPE_WOOD, 16);
-        inventory.addItem(com.adventure4d.computation.modules.Block.TYPE_GRASS, 32);
-        inventory.addItem(com.adventure4d.computation.modules.Block.TYPE_LEAVES, 16);
+        me.friedhof.hyperbuilder.computation.modules.Inventory inventory = player.getInventory();
+        inventory.addItem(me.friedhof.hyperbuilder.computation.modules.Block.TYPE_DIRT, 64);
+        inventory.addItem(me.friedhof.hyperbuilder.computation.modules.Block.TYPE_STONE, 32);
+        inventory.addItem(me.friedhof.hyperbuilder.computation.modules.Block.TYPE_WOOD, 16);
+        inventory.addItem(me.friedhof.hyperbuilder.computation.modules.Block.TYPE_GRASS, 32);
+        inventory.addItem(me.friedhof.hyperbuilder.computation.modules.Block.TYPE_LEAVES, 16);
         
         // Create a camera starting at the player's initial world position
         camera = new Camera(new Vector4D(0, 1, 0, 0));
@@ -468,7 +469,7 @@ public class Game {
         // Check if the position is empty (null or air) and is in line of sight
         if ((block == null || block.isAir()) && !checkCollisionWithBlockPosition(x, y, z, w) && isInSightOfPlayer(x, y, z, w)) {
             // Get the selected item from the hotbar
-            com.adventure4d.computation.modules.Item selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
+            me.friedhof.hyperbuilder.computation.modules.Item selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
             
             if (selectedItem != null && selectedItem.getCount() > 0) {
                 // Check if there's an adjacent block (adjacency validation)

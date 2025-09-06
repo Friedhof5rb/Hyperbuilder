@@ -1,4 +1,4 @@
-package com.adventure4d.computation.modules;
+package me.friedhof.hyperbuilder.computation.modules;
 
 /**
  * Represents a player in the 4D world.

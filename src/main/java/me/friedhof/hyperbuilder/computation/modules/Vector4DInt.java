@@ -1,4 +1,4 @@
-package com.adventure4d.computation.modules;
+package me.friedhof.hyperbuilder.computation.modules;
 
 /**
  * Represents a vector in 4D space with integer x, y, z, and w components.

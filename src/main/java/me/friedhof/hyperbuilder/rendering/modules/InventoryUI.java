@@ -1,14 +1,15 @@
-package com.adventure4d.rendering.modules;
-
-import com.adventure4d.computation.modules.Inventory;
-import com.adventure4d.computation.modules.Item;
-import com.adventure4d.computation.modules.Block;
+package me.friedhof.hyperbuilder.rendering.modules;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+
+import me.friedhof.hyperbuilder.computation.modules.Block;
+import me.friedhof.hyperbuilder.computation.modules.Inventory;
+import me.friedhof.hyperbuilder.computation.modules.Item;
+import me.friedhof.hyperbuilder.rendering.modules.Texture2D;
+import me.friedhof.hyperbuilder.rendering.modules.TextureManager2D;
+
 import java.awt.event.MouseEvent;
-import com.adventure4d.rendering.modules.Texture2D;
-import com.adventure4d.rendering.modules.TextureManager2D;
 
 /**
  * Inventory UI component for displaying and managing items.

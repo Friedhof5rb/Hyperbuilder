@@ -1,6 +1,6 @@
-package com.adventure4d.rendering.modules;
+package me.friedhof.hyperbuilder.rendering.modules;
 
-import com.adventure4d.computation.modules.Vector4D;
+import me.friedhof.hyperbuilder.computation.modules.Vector4D;
 
 /**
  * Represents a camera in the 4D world that handles view positioning.

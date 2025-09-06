@@ -1,10 +1,11 @@
-package com.adventure4d.rendering.modules;
-
-import com.adventure4d.computation.modules.Vector4D;
-import com.adventure4d.computation.modules.World;
-import com.adventure4d.computation.modules.Player;
+package me.friedhof.hyperbuilder.rendering.modules;
 
 import javax.swing.*;
+
+import me.friedhof.hyperbuilder.computation.modules.Player;
+import me.friedhof.hyperbuilder.computation.modules.Vector4D;
+import me.friedhof.hyperbuilder.computation.modules.World;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
@@ -118,7 +119,7 @@ public class Renderer {
      * @param mouseX The current mouse X coordinate
      * @param mouseY The current mouse Y coordinate
      */
-    public void render(World world, Camera camera, com.adventure4d.computation.modules.Player player, com.adventure4d.Game game, int mouseX, int mouseY) {
+    public void render(World world, Camera camera, me.friedhof.hyperbuilder.computation.modules.Player player, me.friedhof.hyperbuilder.Game game, int mouseX, int mouseY) {
         // Clear the buffer
         graphics.setColor(Color.BLACK);
         graphics.fillRect(0, 0, width, height);

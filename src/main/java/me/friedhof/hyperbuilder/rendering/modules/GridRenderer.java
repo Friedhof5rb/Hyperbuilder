@@ -1,10 +1,10 @@
-package com.adventure4d.rendering.modules;
-
-import com.adventure4d.computation.modules.Vector4D;
-import com.adventure4d.computation.modules.World;
+package me.friedhof.hyperbuilder.rendering.modules;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+
+import me.friedhof.hyperbuilder.computation.modules.Vector4D;
+import me.friedhof.hyperbuilder.computation.modules.World;
 
 /**
  * Renders a 7x7 grid of 2D slices representing the 4D world.
@@ -97,7 +97,7 @@ public class GridRenderer {
      * @param mouseY The mouse Y coordinate
      * @return The rendered grid image
      */
-    public BufferedImage renderGrid(World world, Camera camera, com.adventure4d.computation.modules.Player player, com.adventure4d.Game game, int mouseX, int mouseY) {
+    public BufferedImage renderGrid(World world, Camera camera, me.friedhof.hyperbuilder.computation.modules.Player player, me.friedhof.hyperbuilder.Game game, int mouseX, int mouseY) {
         // Clear the image
         graphics.setColor(Color.BLACK);
         graphics.fillRect(0, 0, gridImage.getWidth(), gridImage.getHeight());

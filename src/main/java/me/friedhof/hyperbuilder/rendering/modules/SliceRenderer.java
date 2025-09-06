@@ -1,14 +1,14 @@
-package com.adventure4d.rendering.modules;
-
-import com.adventure4d.computation.modules.Block;
-import com.adventure4d.computation.modules.Player;
-import com.adventure4d.computation.modules.Vector4D;
-import com.adventure4d.computation.modules.Vector4DInt;
-import com.adventure4d.computation.modules.World;
+package me.friedhof.hyperbuilder.rendering.modules;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+
+import me.friedhof.hyperbuilder.computation.modules.Block;
+import me.friedhof.hyperbuilder.computation.modules.Player;
+import me.friedhof.hyperbuilder.computation.modules.Vector4D;
+import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
+import me.friedhof.hyperbuilder.computation.modules.World;
 
 /**
  * Renders a single 2D slice of the 4D world.
@@ -161,7 +161,7 @@ public class SliceRenderer {
      * @param mouseY The mouse Y coordinate for hover detection
      * @return The rendered slice image
      */
-    public BufferedImage renderSlice(World world, int sliceHorizontal, int sliceVertical, Camera camera, com.adventure4d.computation.modules.Player player, com.adventure4d.Game game, int mouseX, int mouseY) {
+    public BufferedImage renderSlice(World world, int sliceHorizontal, int sliceVertical, Camera camera, me.friedhof.hyperbuilder.computation.modules.Player player, me.friedhof.hyperbuilder.Game game, int mouseX, int mouseY) {
         // Create a fresh image for each slice to avoid artifacts
         BufferedImage freshSliceImage = new BufferedImage(
             sliceImage.getWidth(), 
@@ -351,7 +351,7 @@ public class SliceRenderer {
      * @param mouseX The mouse X coordinate
      * @param mouseY The mouse Y coordinate
      */
-    private void drawBlockWithOffset(Graphics2D g, int x, int y, Block block, double fracX, double fracY, double fracZ, double fracW, Vector4DInt blockPos, com.adventure4d.Game game, int sliceHorizontal, int sliceVertical, int mouseX, int mouseY) {
+    private void drawBlockWithOffset(Graphics2D g, int x, int y, Block block, double fracX, double fracY, double fracZ, double fracW, Vector4DInt blockPos, me.friedhof.hyperbuilder.Game game, int sliceHorizontal, int sliceVertical, int mouseX, int mouseY) {
         // Calculate the pixel coordinates with fractional offset
         // Add 0.5 * BLOCK_SIZE to center blocks on the grid
         int pixelX = (int)((x + 0.5) * BLOCK_SIZE - fracX * BLOCK_SIZE);
@@ -494,7 +494,7 @@ public class SliceRenderer {
      * @param game The game instance for coordinate conversion
      * @return true if the block is being hovered over
      */
-    private boolean isBlockHovered(int blockX, int blockY, int sliceHorizontal, int sliceVertical, int mouseX, int mouseY, com.adventure4d.Game game) {
+    private boolean isBlockHovered(int blockX, int blockY, int sliceHorizontal, int sliceVertical, int mouseX, int mouseY, me.friedhof.hyperbuilder.Game game) {
         // Convert mouse coordinates to world coordinates
         Vector4DInt hoveredBlock = game.screenToWorldCoordinates(mouseX, mouseY);
         
