@@ -27,7 +27,7 @@ public class MainMenu extends JFrame {
     
     private void initializeUI() {
         setTitle(GAME_TITLE + " v" + VERSION);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setSize(600, 400);
         setLocationRelativeTo(null);
         setResizable(false);

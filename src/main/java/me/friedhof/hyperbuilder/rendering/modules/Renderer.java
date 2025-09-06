@@ -41,7 +41,7 @@ public class Renderer {
         // Create the frame
         frame = new JFrame(title);
         frame.setSize(width, height);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Disable close button during gameplay
         frame.setResizable(false);
         
         // Create the buffer

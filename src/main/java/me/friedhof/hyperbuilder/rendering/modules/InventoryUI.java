@@ -604,11 +604,11 @@ public class InventoryUI {
             case Block.TYPE_GRASS:
                 return TextureManager2D.getTexture2D("Grass.png");
             case Block.TYPE_STONE:
-                return TextureManager2D.getTexture2D("stone.png");
+                return TextureManager2D.getTexture2D("Stone.png");
             case Block.TYPE_WOOD:
-                return TextureManager2D.getTexture2D("wood_log.png");
-            // case Block.TYPE_LEAVES:
-            //     return TextureManager2D.getTexture2D("Leaves.png");
+                return TextureManager2D.getTexture2D("Wood_log.png");
+            case Block.TYPE_LEAVES:
+                return TextureManager2D.getTexture2D("Leaves.png");
             default:
                 return null; // No texture available, will use fallback rendering
         }
