@@ -3,7 +3,6 @@ package me.friedhof.hyperbuilder.rendering.modules;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import me.friedhof.hyperbuilder.computation.modules.Vector4D;
 import me.friedhof.hyperbuilder.computation.modules.World;
 
 /**

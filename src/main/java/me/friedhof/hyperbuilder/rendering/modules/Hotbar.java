@@ -6,8 +6,6 @@ import java.awt.image.BufferedImage;
 import me.friedhof.hyperbuilder.computation.modules.Block;
 import me.friedhof.hyperbuilder.computation.modules.Inventory;
 import me.friedhof.hyperbuilder.computation.modules.Item;
-import me.friedhof.hyperbuilder.rendering.modules.Texture2D;
-import me.friedhof.hyperbuilder.rendering.modules.TextureManager2D;
 
 /**
  * Hotbar UI component for displaying and selecting items.

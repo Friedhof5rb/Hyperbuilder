@@ -380,17 +380,4 @@ public class Player extends Entity {
                (maxW > blockW && minW < blockW + 1);
     }
     
-    /**
-     * Checks if a position is within the player's reach.
-     * 
-     * @param position The position to check
-     * @return true if the position is within reach, false otherwise
-     */
-    private boolean isWithinReach(Vector4DInt position) {
-        // Calculate the distance between the player and the position
-        double distance = getPosition().distance(position.toVector4D());
-        
-        // Check if the distance is within reach (3 blocks)
-        return distance <= 3.0;
-    }
 }

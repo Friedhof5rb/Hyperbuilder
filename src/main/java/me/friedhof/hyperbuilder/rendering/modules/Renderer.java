@@ -2,8 +2,6 @@ package me.friedhof.hyperbuilder.rendering.modules;
 
 import javax.swing.*;
 
-import me.friedhof.hyperbuilder.computation.modules.Player;
-import me.friedhof.hyperbuilder.computation.modules.Vector4D;
 import me.friedhof.hyperbuilder.computation.modules.World;
 
 import java.awt.*;

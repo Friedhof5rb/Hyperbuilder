@@ -1,11 +1,8 @@
 package me.friedhof.hyperbuilder.rendering.modules;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import javax.imageio.ImageIO;
 
 /**
  * Represents a 4D texture.
