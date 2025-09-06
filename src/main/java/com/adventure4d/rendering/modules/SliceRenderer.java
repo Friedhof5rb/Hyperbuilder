@@ -27,7 +27,8 @@ public class SliceRenderer {
     private Texture4D grassTexture;
     private Texture4D dirtTexture;
     private Texture4D stoneTexture;
-
+    private Texture4D woodLogTexture;
+    private Texture4D leavesTexture;
 
 
 
@@ -102,11 +103,15 @@ public class SliceRenderer {
             grassTexture = TextureManager.loadTexture4D("Grass.png");
             dirtTexture = TextureManager.loadTexture4D("Dirt.png");
             stoneTexture = TextureManager.loadTexture4D("stone.png");
+            woodLogTexture = TextureManager.loadTexture4D("wood_log.png");
+            leavesTexture = TextureManager.loadTexture4D("Leaves.png");
         } catch (IOException e) {
             System.err.println("Failed to load grass texture: " + e.getMessage());
             grassTexture = null;
             dirtTexture = null;
             stoneTexture = null;
+            woodLogTexture = null;
+            leavesTexture = null;
         }
     }
     
@@ -388,7 +393,24 @@ public class SliceRenderer {
                         g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
                     }
                     break;
-                    
+                 case Block.TYPE_WOOD:
+                    if (woodLogTexture != null) {
+                        drawTexturedBlock(g, pixelX, pixelY, woodLogTexture, blockPos, fracZ, fracW);
+                    } else {
+                        // Fallback to solid color if texture failed to load
+                        g.setColor(new Color(255, 0, 220));
+                        g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                    break;
+                case Block.TYPE_LEAVES:
+                    if (leavesTexture != null) {
+                        drawTexturedBlock(g, pixelX, pixelY, leavesTexture, blockPos, fracZ, fracW);
+                    } else {
+                        // Fallback to solid color if texture failed to load
+                        g.setColor(new Color(255, 0, 220));
+                        g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+            break;
                 default:
                     // Unknown block type, draw as purple
                     g.setColor(Color.MAGENTA);

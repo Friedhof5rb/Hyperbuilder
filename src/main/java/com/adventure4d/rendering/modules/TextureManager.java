@@ -93,6 +93,8 @@ public class TextureManager {
             loadTexture4D("Grass.png");
             loadTexture4D("Dirt.png");
             loadTexture4D("stone.png");
+            loadTexture4D("wood_log.png");
+            loadTexture4D("Leaves.png");
             System.out.println("All textures preloaded successfully");
         } catch (IOException e) {
             System.err.println("Failed to preload textures: " + e.getMessage());

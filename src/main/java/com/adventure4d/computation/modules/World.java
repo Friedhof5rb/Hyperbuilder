@@ -73,6 +73,9 @@ public class World {
             chunks.put(position, chunk);
         }
         
+        // Generate trees after basic terrain
+        generateTrees(chunk, position);
+        
         return chunk;
     }
     
@@ -156,6 +159,124 @@ public class World {
         
         return height;
     }
+    
+    /**
+     * Generates trees in the given chunk (optimized version).
+     * 
+     * @param chunk The chunk to generate trees in
+     * @param chunkPosition The position of the chunk in the world
+     */
+    private void generateTrees(Chunk4D chunk, Vector4DInt chunkPosition) {
+        // Optimized tree generation parameters
+        int treesPerChunk = 4; // Fixed number of trees per chunk for predictable performance
+        int minTreeHeight = 3;
+        int maxTreeHeight = 5;
+        
+        // Generate a fixed number of trees at pseudo-random locations
+        for (int treeIndex = 0; treeIndex < treesPerChunk; treeIndex++) {
+            // Use chunk position and tree index to generate deterministic but varied positions
+            long treeSeed = seed + chunkPosition.getX() * 1000 + chunkPosition.getZ() * 100 + chunkPosition.getW() * 10 + treeIndex;
+            
+            // Generate tree position within chunk using simple hash-based randomization
+            int x = Math.abs((int)(treeSeed * 31)) % Chunk4D.CHUNK_SIZE;
+            int z = Math.abs((int)(treeSeed * 37)) % Chunk4D.CHUNK_SIZE;
+            int w = Math.abs((int)(treeSeed * 41)) % Chunk4D.CHUNK_SIZE;
+            
+            // Find surface level
+            int surfaceY = findSurfaceLevel(chunk, x, z, w);
+            if (surfaceY == -1 || surfaceY >= Chunk4D.CHUNK_SIZE - maxTreeHeight) continue;
+            
+            // Check if surface block is grass (suitable for tree growth)
+            Block surfaceBlock = chunk.getBlock(x, surfaceY, z, w);
+            if (surfaceBlock == null || surfaceBlock.getType() != Block.TYPE_GRASS) continue;
+            
+            // Generate tree height using simple deterministic calculation
+            int treeHeight = minTreeHeight + (Math.abs((int)(treeSeed * 43)) % (maxTreeHeight - minTreeHeight + 1));
+            
+            // Generate the tree
+             generateSimpleTree(chunk, chunkPosition, x, surfaceY + 1, z, w, treeHeight);
+        }
+    }
+    
+    /**
+     * Finds the surface level (highest non-air block) at the given local coordinates.
+     * 
+     * @param chunk The chunk to search in
+     * @param x Local x coordinate
+     * @param z Local z coordinate
+     * @param w Local w coordinate
+     * @return The Y coordinate of the surface, or -1 if no surface found
+     */
+    private int findSurfaceLevel(Chunk4D chunk, int x, int z, int w) {
+        for (int y = Chunk4D.CHUNK_SIZE - 1; y >= 0; y--) {
+            Block block = chunk.getBlock(x, y, z, w);
+            if (block != null && !block.isAir()) {
+                return y;
+            }
+        }
+        return -1;
+    }
+    
+    /**
+     * Generates a simple, efficient 4D tree at the specified location.
+     * 
+     * @param chunk The chunk to place the tree in
+     * @param chunkPosition The position of the chunk in the world
+     * @param x Local x coordinate for tree base
+     * @param y Local y coordinate for tree base
+     * @param z Local z coordinate for tree base
+     * @param w Local w coordinate for tree base
+     * @param height Height of the tree trunk
+     */
+    private void generateSimpleTree(Chunk4D chunk, Vector4DInt chunkPosition, int x, int y, int z, int w, int height) {
+        // Convert local coordinates to world coordinates
+        int worldX = x + chunkPosition.getX() * Chunk4D.CHUNK_SIZE;
+        int worldZ = z + chunkPosition.getZ() * Chunk4D.CHUNK_SIZE;
+        int worldW = w + chunkPosition.getW() * Chunk4D.CHUNK_SIZE;
+        
+        // Generate trunk (always within the current chunk)
+        for (int i = 0; i < height; i++) {
+            int trunkY = y + i;
+            if (trunkY >= 0 && trunkY < Chunk4D.CHUNK_SIZE) {
+                chunk.setBlock(x, trunkY, z, w, new Block(Block.TYPE_WOOD));
+            }
+        }
+        
+        // Generate simple 4D leaves - just a small cross pattern in each dimension
+        int leavesY = y + height - 1;
+        
+        // Place leaves in a simple 4D cross pattern (much more efficient than sphere)
+        int[] offsets = {-1, 0, 1};
+        
+        for (int dx : offsets) {
+            for (int dy : offsets) {
+                for (int dz : offsets) {
+                    for (int dw : offsets) {
+                        // Only place leaves if not too many dimensions are at maximum offset
+                        int nonZeroCount = (dx != 0 ? 1 : 0) + (dy != 0 ? 1 : 0) + (dz != 0 ? 1 : 0) + (dw != 0 ? 1 : 0);
+                        if (nonZeroCount <= 2) { // Limit to create a cross-like pattern
+                            // Calculate world coordinates for the leaf
+                            int leafWorldX = worldX + dx;
+                            int leafWorldY = leavesY + dy;
+                            int leafWorldZ = worldZ + dz;
+                            int leafWorldW = worldW + dw;
+                            
+                            // Use world coordinates to place leaves (can cross chunk boundaries)
+                            Vector4DInt leafPos = new Vector4DInt(leafWorldX, leafWorldY, leafWorldZ, leafWorldW);
+                            
+                            // Only place leaves in air blocks
+                            Block existingBlock = getBlock(leafPos);
+                            if (existingBlock == null || existingBlock.isAir()) {
+                                setBlock(leafPos, new Block(Block.TYPE_LEAVES));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+
     
     /**
      * 4D Perlin noise implementation for realistic terrain generation.
@@ -360,6 +481,41 @@ public class World {
         Player player = new Player(id, position, username);
         addEntity(player);
         return player;
+    }
+    
+    /**
+     * Finds a safe spawn position by starting at Y=100 and moving down until solid ground is found.
+     * 
+     * @param x The X coordinate for the spawn position
+     * @param z The Z coordinate for the spawn position
+     * @param w The W coordinate for the spawn position
+     * @return A safe spawn position with the player positioned just above solid ground
+     */
+    public Vector4D findSafeSpawnPosition(double x, double z, double w) {
+        int startY = 100;
+        int minY = -50; // Don't search below this level to avoid infinite loops
+        
+        System.out.println("Searching for safe spawn position at X=" + x + ", Z=" + z + ", W=" + w);
+        
+        // Start from Y=100 and move down
+        for (int y = startY; y >= minY; y--) {
+            Vector4DInt blockPos = new Vector4DInt((int)Math.floor(x), y, (int)Math.floor(z), (int)Math.floor(w));
+            Block block = getBlock(blockPos);
+            
+            // Check if this block is solid (not air)
+            if (block != null && !block.isAir()) {
+                // Found solid ground, spawn player 1.25 blocks above it
+                // (Player center at Y+1.25 means feet at Y+1, just above the solid block at Y)
+                double spawnY = y + 1.25;
+                Vector4D spawnPos = new Vector4D(x, spawnY, z, w);
+                System.out.println("Safe spawn position found: (" + x + ", " + spawnY + ", " + z + ", " + w + ") above block at Y=" + y);
+                return spawnPos;
+            }
+        }
+        
+        // If no solid ground found, spawn at a default safe position
+        System.out.println("No solid ground found, using default spawn position");
+        return new Vector4D(x, 10, z, w); // Default to Y=10 if no ground found
     }
     
     /**

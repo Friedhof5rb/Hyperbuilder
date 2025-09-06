@@ -57,9 +57,8 @@ public class TextureManager2D {
             loadTexture2D("Grass.png");
             loadTexture2D("Dirt.png");
             loadTexture2D("stone.png");
-            // Add more textures as they become available
-            // loadTexture2D("Wood.png");
-            // loadTexture2D("Leaves.png");
+            loadTexture2D("wood_log.png");
+            loadTexture2D("Leaves.png");
             
             System.out.println("All 2D item textures preloaded successfully");
         } catch (IOException e) {

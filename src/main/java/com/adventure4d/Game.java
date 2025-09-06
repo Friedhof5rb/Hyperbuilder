@@ -51,10 +51,11 @@ public class Game {
         // Create a new world
         world = new World("Test World", System.currentTimeMillis());
         
-        // Create a player at spawn position (center at Y=1.25, so feet at Y=1, just above grass at Y=0)
-        // Player size is 0.5, so center needs to be at Y=1.25 for feet to be at Y=1
-        // Position at (0.5, 1.25, 0.5, 0.5) to avoid overlapping with blocks at negative coordinates
-        player = world.createPlayer("Player1", new Vector4D(0, 4, 0, 0));
+        // Find a safe spawn position starting from Y=100 and moving down
+        Vector4D safeSpawnPos = world.findSafeSpawnPosition(0.5, 0.5, 0.5);
+        
+        // Create a player at the safe spawn position
+        player = world.createPlayer("Player1", safeSpawnPos);
         
         // Debug: Check what blocks exist around spawn
         System.out.println("Debug: Checking blocks around spawn position:");
