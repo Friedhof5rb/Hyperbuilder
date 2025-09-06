@@ -133,6 +133,9 @@ public class World {
             }
         }
         
+        // Generate caves in this chunk
+        generateCaves(chunk, position);
+        
         // Generate trees for this chunk
         generateTrees(chunk, position);
         
@@ -335,6 +338,178 @@ public class World {
                 }
             }
         }
+    }
+    
+    /**
+     * Generates caves in the given chunk using 3D Perlin noise and cellular automata.
+     * Creates realistic cave systems with varying sizes and complexity.
+     * 
+     * @param chunk The chunk to generate caves in
+     * @param chunkPosition The position of the chunk in the world
+     */
+    private void generateCaves(Chunk4D chunk, Vector4DInt chunkPosition) {
+        // Cave generation parameters - 4D-optimized for balanced distribution
+        double caveThreshold = 0.45; // Moderate threshold optimized for 4D noise complexity
+        int minCaveDepth = 5;         // Minimum depth for cave generation
+        int maxCaveDepth = 60;        // Maximum depth for cave generation
+        
+        // Generate sparse cave pockets using single noise layer
+        for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
+            for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
+                for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
+                    for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
+                        // Convert to world coordinates
+                        int worldX = x + chunkPosition.getX() * Chunk4D.CHUNK_SIZE;
+                        int worldY = y + chunkPosition.getY() * Chunk4D.CHUNK_SIZE;
+                        int worldZ = z + chunkPosition.getZ() * Chunk4D.CHUNK_SIZE;
+                        int worldW = w + chunkPosition.getW() * Chunk4D.CHUNK_SIZE;
+                        
+                        // Only generate caves underground
+                        double terrainHeight = generateTerrainHeight(worldX, worldZ, worldW);
+                        if (worldY > terrainHeight - minCaveDepth || worldY < terrainHeight - maxCaveDepth) {
+                            continue;
+                        }
+                        
+                        // Generate cave noise value
+                        double caveNoise = generateCaveNoise(worldX, worldY, worldZ, worldW);
+                        
+                        // Check if this position should be a cave
+                        if (caveNoise > caveThreshold) {
+                            Block currentBlock = chunk.getBlock(x, y, z, w);
+                            if (currentBlock != null && !currentBlock.isAir()) {
+                                // Create cave by setting block to air
+                                chunk.setBlock(x, y, z, w, new Block(Block.TYPE_AIR));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Apply minimal smoothing to preserve small cave pockets
+         smoothCaves(chunk, chunkPosition);
+    }
+    
+    /**
+     * Generates 4D-optimized cave noise for balanced cave distribution.
+     * Uses multiple noise layers scaled appropriately for 4D space complexity.
+     * 
+     * @param x World X coordinate
+     * @param y World Y coordinate
+     * @param z World Z coordinate
+     * @param w World W coordinate
+     * @return Combined noise value for cave generation
+     */
+    private double generateCaveNoise(int x, int y, int z, int w) {
+        // Primary cave structure - medium frequency for main cave networks
+        double primaryCaves = Math.abs(perlinNoise(x * 0.08, y * 0.08, z * 0.08, seed + w * 1000));
+        
+        // Secondary cave details - higher frequency for cave variation
+        double secondaryCaves = Math.abs(perlinNoise(x * 0.15, y * 0.15, z * 0.15, seed + w * 1500)) * 0.6;
+        
+        // 4D connectivity layer - lower frequency to ensure caves connect across 4D
+        double connectivity4D = Math.abs(perlinNoise(x * 0.04, y * 0.04, z * 0.04, seed + w * 500)) * 0.8;
+        
+        // Depth-based variation - caves become rarer at extreme depths
+        double depthFactor = Math.sin(y * 0.05) * 0.3;
+        
+        // Combine all layers with 4D-appropriate weighting
+        double combinedNoise = primaryCaves + secondaryCaves * 0.4 + connectivity4D * 0.3 + depthFactor;
+        
+        // 4D-optimized noise cap - higher than 3D but controlled
+        return Math.min(Math.abs(combinedNoise), 0.85);
+    }
+    
+    /**
+     * Applies 4D-optimized smoothing to create natural cave structures.
+     * Balances cave connectivity with structural integrity in 4D space.
+     * 
+     * @param chunk The chunk to smooth
+     * @param chunkPosition The position of the chunk in the world
+     */
+    private void smoothCaves(Chunk4D chunk, Vector4DInt chunkPosition) {
+        // Create a copy of the chunk to work with
+        Block[][][][] originalBlocks = new Block[Chunk4D.CHUNK_SIZE][Chunk4D.CHUNK_SIZE][Chunk4D.CHUNK_SIZE][Chunk4D.CHUNK_SIZE];
+        
+        // Copy current state
+        for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
+            for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
+                for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
+                    for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
+                        originalBlocks[x][y][z][w] = chunk.getBlock(x, y, z, w);
+                    }
+                }
+            }
+        }
+        
+        // Apply 4D-appropriate smoothing for natural cave formation
+        for (int x = 1; x < Chunk4D.CHUNK_SIZE - 1; x++) {
+            for (int y = 1; y < Chunk4D.CHUNK_SIZE - 1; y++) {
+                for (int z = 1; z < Chunk4D.CHUNK_SIZE - 1; z++) {
+                    for (int w = 1; w < Chunk4D.CHUNK_SIZE - 1; w++) {
+                        // Count solid neighbors in 3D space (ignoring W dimension for this check)
+                        int solidNeighbors = countSolidNeighbors(originalBlocks, x, y, z, w);
+                        
+                        // Apply 4D-appropriate rules for cave connectivity
+                        Block currentBlock = originalBlocks[x][y][z][w];
+                        if (currentBlock != null && currentBlock.isAir()) {
+                            // Fill isolated air pockets (5+ solid neighbors in 4D)
+                            if (solidNeighbors >= 5) {
+                                chunk.setBlock(x, y, z, w, new Block(Block.TYPE_STONE));
+                            }
+                        } else if (currentBlock != null && !currentBlock.isAir()) {
+                            // Create air in very isolated solid blocks (0-1 solid neighbors)
+                            if (solidNeighbors <= 1) {
+                                chunk.setBlock(x, y, z, w, new Block(Block.TYPE_AIR));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Counts solid neighbors around a position for cellular automata smoothing.
+     * 
+     * @param blocks The block array to check
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param z Z coordinate
+     * @param w W coordinate
+     * @return Number of solid neighbors
+     */
+    private int countSolidNeighbors(Block[][][][] blocks, int x, int y, int z, int w) {
+        int count = 0;
+        
+        // Check 6 adjacent neighbors (3D adjacency)
+        int[][] directions = {
+            {-1, 0, 0}, {1, 0, 0},  // X axis
+            {0, -1, 0}, {0, 1, 0},  // Y axis
+            {0, 0, -1}, {0, 0, 1}   // Z axis
+        };
+        
+        for (int[] dir : directions) {
+            int nx = x + dir[0];
+            int ny = y + dir[1];
+            int nz = z + dir[2];
+            
+            // Check bounds
+            if (nx >= 0 && nx < Chunk4D.CHUNK_SIZE && 
+                ny >= 0 && ny < Chunk4D.CHUNK_SIZE && 
+                nz >= 0 && nz < Chunk4D.CHUNK_SIZE) {
+                
+                Block neighbor = blocks[nx][ny][nz][w];
+                if (neighbor != null && !neighbor.isAir()) {
+                    count++;
+                }
+            } else {
+                // Treat out-of-bounds as solid for edge stability
+                count++;
+            }
+        }
+        
+        return count;
     }
     
     /**

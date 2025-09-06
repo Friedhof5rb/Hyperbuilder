@@ -9,6 +9,13 @@
             "name": "MainMenu",
             "request": "launch",
             "mainClass": "me.friedhof.hyperbuilder.ui.MainMenu",
+            "projectName": "Hyperbuilder"
+        },
+        {
+            "type": "java",
+            "name": "MainMenu",
+            "request": "launch",
+            "mainClass": "me.friedhof.hyperbuilder.ui.MainMenu",
             "projectName": "hyperbuilder"
         },
         {

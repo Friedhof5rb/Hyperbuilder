@@ -58,12 +58,13 @@ public class Game {
     private int mouseX = 0;
     private int mouseY = 0;
     
-    // Block breaking progress tracking
+    // Block breaking state
     private boolean isBreakingBlock = false;
     private Vector4DInt breakingBlockPos = null;
     private long breakingStartTime = 0;
     private static final long BLOCK_BREAK_TIME = 1000; // 1 second to break a block
     private float breakingProgress = 0.0f;
+    private boolean leftMousePressed = false; // Track if left mouse button is held down
     
     /**
      * Gets whether a block is currently being broken.
@@ -524,13 +525,16 @@ public class Game {
             return; // Inventory UI handled the click, don't process block interaction
         }
         
-        // Convert screen coordinates to world coordinates for block interaction
-        Vector4DInt worldPos = screenToWorldCoordinates(x, y);
-        
-        if (worldPos != null) {
-            if (button == 1) { // Left click - start breaking block with progress
+        if (button == 1) { // Left click - set flag for continuous breaking
+            leftMousePressed = true;
+            // Convert screen coordinates to world coordinates for block interaction
+            Vector4DInt worldPos = screenToWorldCoordinates(x, y);
+            if (worldPos != null) {
                 startBlockBreaking(worldPos.getX(), worldPos.getY(), worldPos.getZ(), worldPos.getW());
-            } else if (button == 3) { // Right click - place block
+            }
+        } else if (button == 3) { // Right click - place block
+            Vector4DInt worldPos = screenToWorldCoordinates(x, y);
+            if (worldPos != null) {
                 handleBlockPlacement(worldPos.getX(), worldPos.getY(), worldPos.getZ(), worldPos.getW());
             }
         }
@@ -545,6 +549,7 @@ public class Game {
      */
     private void handleMouseReleased(int x, int y, int button) {
         if (button == 1) { // Left click released - stop breaking block
+            leftMousePressed = false;
             stopBlockBreaking();
         }
     }
@@ -592,8 +597,23 @@ public class Game {
     
     /**
      * Updates the block breaking progress and completes breaking if time elapsed.
+     * Also handles continuous breaking when left mouse is held down.
      */
     private void updateBlockBreaking() {
+        // If left mouse is pressed, check for new blocks under cursor
+        if (leftMousePressed) {
+            Vector4DInt currentMouseBlock = screenToWorldCoordinates(mouseX, mouseY);
+            
+            // If we're hovering over a different block, switch to it
+            if (currentMouseBlock != null && !currentMouseBlock.equals(breakingBlockPos)) {
+                Block block = world.getBlock(currentMouseBlock);
+                if (block != null && !block.isAir() && isInSightOfPlayer(currentMouseBlock.getX(), currentMouseBlock.getY(), currentMouseBlock.getZ(), currentMouseBlock.getW())) {
+                    // Start breaking the new block
+                    startBlockBreaking(currentMouseBlock.getX(), currentMouseBlock.getY(), currentMouseBlock.getZ(), currentMouseBlock.getW());
+                }
+            }
+        }
+        
         if (isBreakingBlock && breakingBlockPos != null) {
             long currentTime = System.currentTimeMillis();
             long elapsedTime = currentTime - breakingStartTime;
@@ -631,8 +651,21 @@ public class Game {
             }
         }
         
-        // Reset breaking state
-        stopBlockBreaking();
+        // Reset breaking state but continue if left mouse is still pressed
+        isBreakingBlock = false;
+        breakingBlockPos = null;
+        breakingProgress = 0.0f;
+        
+        // If left mouse is still pressed, immediately check for next block
+        if (leftMousePressed) {
+            Vector4DInt nextBlock = screenToWorldCoordinates(mouseX, mouseY);
+            if (nextBlock != null) {
+                Block block = world.getBlock(nextBlock);
+                if (block != null && !block.isAir() && isInSightOfPlayer(nextBlock.getX(), nextBlock.getY(), nextBlock.getZ(), nextBlock.getW())) {
+                    startBlockBreaking(nextBlock.getX(), nextBlock.getY(), nextBlock.getZ(), nextBlock.getW());
+                }
+            }
+        }
     }
     
     /**
