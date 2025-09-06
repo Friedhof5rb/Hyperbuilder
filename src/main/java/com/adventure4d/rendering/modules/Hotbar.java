@@ -5,6 +5,9 @@ import com.adventure4d.computation.modules.Item;
 import com.adventure4d.computation.modules.Block;
 
 import java.awt.*;
+import com.adventure4d.rendering.modules.Texture2D;
+import com.adventure4d.rendering.modules.TextureManager2D;
+import java.awt.image.BufferedImage;
 
 /**
  * Hotbar UI component for displaying and selecting items.
@@ -184,20 +187,37 @@ public class Hotbar {
      * @param size The slot size
      */
     private void drawItem(Graphics2D g, Item item, int x, int y, int size) {
-        // Get item color based on type
-        Color itemColor = getItemColor(item.getType());
-        
-        // Draw a simple colored rectangle representing the block/item
-        g.setColor(itemColor);
         int itemSize = size - 8; // Leave some padding
         int itemX = x + 4;
         int itemY = y + 4;
-        g.fillRect(itemX, itemY, itemSize, itemSize);
         
-        // Draw item border
-        g.setColor(itemColor.darker());
-        g.setStroke(new BasicStroke(1));
-        g.drawRect(itemX, itemY, itemSize, itemSize);
+        // Try to get the 2D texture for this item type
+        Texture2D texture = getTexture2DForItemType(item.getType());
+        
+        if (texture != null) {
+            // Use the 2D PNG texture directly for the item
+            BufferedImage textureImage = texture.getImage();
+            
+            // Draw the texture scaled to fit the item slot
+            g.drawImage(textureImage, itemX, itemY, itemSize, itemSize, null);
+            
+            // Draw a subtle border around the textured item
+            g.setColor(new Color(0, 0, 0, 100));
+            g.setStroke(new BasicStroke(1));
+            g.drawRect(itemX, itemY, itemSize, itemSize);
+        } else {
+            // Fallback to the old colored rectangle method for items without textures
+            Color itemColor = getItemColor(item.getType());
+            
+            // Draw a simple colored rectangle representing the block/item
+            g.setColor(itemColor);
+            g.fillRect(itemX, itemY, itemSize, itemSize);
+            
+            // Draw item border
+            g.setColor(itemColor.darker());
+            g.setStroke(new BasicStroke(1));
+            g.drawRect(itemX, itemY, itemSize, itemSize);
+        }
         
         // Draw item name (abbreviated)
         g.setColor(TEXT_COLOR);
@@ -296,5 +316,30 @@ public class Hotbar {
      */
     public Item getSelectedItem(Inventory inventory) {
         return inventory.getItem(selectedSlot);
+    }
+    
+    /**
+     * Gets the corresponding 2D texture for an item type.
+     * This allows items to use the same PNG textures as their block counterparts.
+     * 
+     * @param itemType The item type
+     * @return The corresponding Texture2D, or null if no texture is available
+     */
+    private Texture2D getTexture2DForItemType(byte itemType) {
+        switch (itemType) {
+            case Block.TYPE_DIRT:
+                return TextureManager2D.getTexture2D("Dirt.png");
+            case Block.TYPE_GRASS:
+                return TextureManager2D.getTexture2D("Grass.png");
+            case Block.TYPE_STONE:
+                return TextureManager2D.getTexture2D("stone.png");
+            // Add more texture mappings as needed
+            // case Block.TYPE_WOOD:
+            //     return TextureManager2D.getTexture2D("Wood.png");
+            // case Block.TYPE_LEAVES:
+            //     return TextureManager2D.getTexture2D("Leaves.png");
+            default:
+                return null; // No texture available, will use fallback rendering
+        }
     }
 }

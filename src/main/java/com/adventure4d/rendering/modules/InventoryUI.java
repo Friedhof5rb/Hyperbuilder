@@ -5,7 +5,10 @@ import com.adventure4d.computation.modules.Item;
 import com.adventure4d.computation.modules.Block;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.awt.event.MouseEvent;
+import com.adventure4d.rendering.modules.Texture2D;
+import com.adventure4d.rendering.modules.TextureManager2D;
 
 /**
  * Inventory UI component for displaying and managing items.
@@ -27,6 +30,9 @@ public class InventoryUI {
     private static final Color HOVER_BORDER = new Color(255, 255, 255);
     private static final Color TEXT_COLOR = Color.WHITE;
     private static final Color COUNT_COLOR = new Color(255, 255, 0);
+    private static final Color TOOLTIP_BACKGROUND = new Color(0, 0, 0, 200);
+    private static final Color TOOLTIP_BORDER = new Color(255, 255, 255, 150);
+    private static final Color TOOLTIP_TEXT = Color.WHITE;
     
     // State
     private final int screenWidth;
@@ -133,6 +139,11 @@ public class InventoryUI {
             drawDraggedItem(g, draggedItem, mouseX, mouseY);
         }
         
+        // Draw item tooltip if hovering over a slot
+        if (hoveredSlot != -1) {
+            drawItemTooltip(g, inventory);
+        }
+        
         // Restore original settings
         g.setFont(originalFont);
         g.setColor(originalColor);
@@ -210,29 +221,46 @@ public class InventoryUI {
      * Draws an item in a slot.
      */
     private void drawItemInSlot(Graphics2D g, Item item, int x, int y, int size) {
-        // Get item color based on type
-        Color itemColor = getItemColor(item.getType());
-        
-        // Draw item background
-        g.setColor(itemColor);
         int itemSize = size - 8;
         int itemX = x + 4;
         int itemY = y + 4;
-        g.fillRect(itemX, itemY, itemSize, itemSize);
         
-        // Draw item border
-        g.setColor(itemColor.darker());
-        g.setStroke(new BasicStroke(1));
-        g.drawRect(itemX, itemY, itemSize, itemSize);
+        // Try to get the 2D texture for this item type
+        Texture2D texture = getTexture2DForItemType(item.getType());
         
-        // Draw item abbreviation
-        g.setColor(TEXT_COLOR);
-        g.setFont(new Font("Arial", Font.BOLD, 8));
-        String abbrev = getItemAbbreviation(item.getType());
-        FontMetrics fm = g.getFontMetrics();
-        int textX = itemX + (itemSize - fm.stringWidth(abbrev)) / 2;
-        int textY = itemY + (itemSize + fm.getAscent()) / 2;
-        g.drawString(abbrev, textX, textY);
+        if (texture != null) {
+            // Use the 2D PNG texture directly for the item
+            BufferedImage textureImage = texture.getImage();
+            
+            // Draw the texture scaled to fit the item slot
+            g.drawImage(textureImage, itemX, itemY, itemSize, itemSize, null);
+            
+            // Draw a subtle border around the textured item
+            g.setColor(new Color(0, 0, 0, 100));
+            g.setStroke(new BasicStroke(1));
+            g.drawRect(itemX, itemY, itemSize, itemSize);
+        } else {
+            // Fallback to the old colored rectangle method for items without textures
+            Color itemColor = getItemColor(item.getType());
+            
+            // Draw item background
+            g.setColor(itemColor);
+            g.fillRect(itemX, itemY, itemSize, itemSize);
+            
+            // Draw item border
+            g.setColor(itemColor.darker());
+            g.setStroke(new BasicStroke(1));
+            g.drawRect(itemX, itemY, itemSize, itemSize);
+            
+            // Draw item abbreviation
+            g.setColor(TEXT_COLOR);
+            g.setFont(new Font("Arial", Font.BOLD, 8));
+            String abbrev = getItemAbbreviation(item.getType());
+            FontMetrics fm = g.getFontMetrics();
+            int textX = itemX + (itemSize - fm.stringWidth(abbrev)) / 2;
+            int textY = itemY + (itemSize + fm.getAscent()) / 2;
+            g.drawString(abbrev, textX, textY);
+        }
         
         // Draw item count if > 1
         if (item.getCount() > 1) {
@@ -259,6 +287,65 @@ public class InventoryUI {
         g.fillRect(drawX, drawY, size, size);
         
         drawItemInSlot(g, item, drawX, drawY, size);
+    }
+    
+    /**
+     * Draws a tooltip showing the name of the hovered item.
+     */
+    private void drawItemTooltip(Graphics2D g, Inventory inventory) {
+        // Get the item from the hovered slot
+        Item item = inventory.getItem(hoveredSlot);
+        if (item == null || item.getCount() <= 0) {
+            return; // No item to show tooltip for
+        }
+        
+        // Get item name
+        String itemName = item.getName();
+        if (item.getCount() > 1) {
+            itemName += " x" + item.getCount();
+        }
+        
+        // Set font for tooltip
+        Font tooltipFont = new Font("Arial", Font.PLAIN, 12);
+        g.setFont(tooltipFont);
+        FontMetrics fm = g.getFontMetrics();
+        
+        // Calculate tooltip dimensions
+        int textWidth = fm.stringWidth(itemName);
+        int textHeight = fm.getHeight();
+        int tooltipPadding = 6;
+        int tooltipWidth = textWidth + 2 * tooltipPadding;
+        int tooltipHeight = textHeight + 2 * tooltipPadding;
+        
+        // Position tooltip near mouse cursor, but keep it on screen
+        int tooltipX = mouseX + 10; // Offset from cursor
+        int tooltipY = mouseY - tooltipHeight - 5; // Above cursor
+        
+        // Keep tooltip on screen
+        if (tooltipX + tooltipWidth > screenWidth) {
+            tooltipX = mouseX - tooltipWidth - 10; // Move to left of cursor
+        }
+        if (tooltipY < 0) {
+            tooltipY = mouseY + 20; // Move below cursor
+        }
+        if (tooltipY + tooltipHeight > screenHeight) {
+            tooltipY = screenHeight - tooltipHeight - 5;
+        }
+        
+        // Draw tooltip background
+        g.setColor(TOOLTIP_BACKGROUND);
+        g.fillRoundRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 4, 4);
+        
+        // Draw tooltip border
+        g.setColor(TOOLTIP_BORDER);
+        g.setStroke(new BasicStroke(1));
+        g.drawRoundRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 4, 4);
+        
+        // Draw tooltip text
+        g.setColor(TOOLTIP_TEXT);
+        int textX = tooltipX + tooltipPadding;
+        int textY = tooltipY + tooltipPadding + fm.getAscent();
+        g.drawString(itemName, textX, textY);
     }
     
     /**
@@ -502,6 +589,31 @@ public class InventoryUI {
         if (draggedItem != null) {
             inventory.setItem(draggedFromSlot, draggedItem);
             draggedItem = null;
+        }
+    }
+    
+    /**
+     * Gets the corresponding 2D texture for an item type.
+     * This allows items to use the same PNG textures as their block counterparts.
+     * 
+     * @param itemType The item type
+     * @return The corresponding Texture2D, or null if no texture is available
+     */
+    private Texture2D getTexture2DForItemType(byte itemType) {
+        switch (itemType) {
+            case Block.TYPE_DIRT:
+                return TextureManager2D.getTexture2D("Dirt.png");
+            case Block.TYPE_GRASS:
+                return TextureManager2D.getTexture2D("Grass.png");
+            case Block.TYPE_STONE:
+                return TextureManager2D.getTexture2D("stone.png");
+            // Add more texture mappings as needed
+            // case Block.TYPE_WOOD:
+            //     return TextureManager2D.getTexture2D("Wood.png");
+            // case Block.TYPE_LEAVES:
+            //     return TextureManager2D.getTexture2D("Leaves.png");
+            default:
+                return null; // No texture available, will use fallback rendering
         }
     }
 }

@@ -3,6 +3,8 @@ package com.adventure4d.rendering.modules;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import javax.imageio.ImageIO;
 
 /**
@@ -18,6 +20,10 @@ public class Texture4D {
     private final int height;
     private final int depth;
     private final int wSize;
+    
+    // Cache for frequently used texture slices to improve performance
+    private final Map<String, BufferedImage> sliceCache = new HashMap<>();
+    private static final int MAX_CACHE_SIZE = 100; // Limit cache size to prevent memory issues
     
     /**
      * Creates a new 4D texture with the specified dimensions.
@@ -156,17 +162,36 @@ public class Texture4D {
     /**
      * Gets a 2D texture slice using fractional coordinates for smooth transitions.
      * Interpolates between adjacent slices based on fractional parts.
+     * Uses caching to improve performance for frequently accessed slices.
      * 
      * @param fracZ The fractional z coordinate (e.g., 2.3 means 30% between slice 2 and 3)
      * @param fracW The fractional w coordinate (e.g., 1.7 means 70% between slice 1 and 2)
      * @return A BufferedImage representing the interpolated texture slice
      */
     public BufferedImage getSlice2DFractional(double fracZ, double fracW) {
+        // Round to reasonable precision to improve cache hit rate
+        double roundedZ = Math.round(fracZ * 8.0) / 8.0; // 1/8th precision
+        double roundedW = Math.round(fracW * 8.0) / 8.0;
+        
+        // Create cache key
+        String cacheKey = roundedZ + "," + roundedW;
+        
+        // Check cache first
+        BufferedImage cached = sliceCache.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+        
+        // If cache is getting too large, clear it to prevent memory issues
+        if (sliceCache.size() >= MAX_CACHE_SIZE) {
+            sliceCache.clear();
+        }
+        
         // Extract integer and fractional parts
-        int z1 = (int) Math.floor(fracZ);
-        int w1 = (int) Math.floor(fracW);
-        double fracZPart = fracZ - z1;
-        double fracWPart = fracW - w1;
+        int z1 = (int) Math.floor(roundedZ);
+        int w1 = (int) Math.floor(roundedW);
+        double fracZPart = roundedZ - z1;
+        double fracWPart = roundedW - w1;
         
         // Calculate adjacent slice coordinates
         int z2 = z1 + 1;
@@ -195,6 +220,9 @@ public class Texture4D {
                 result.setRGB(x, y, interpolated);
             }
         }
+        
+        // Cache the result
+        sliceCache.put(cacheKey, result);
         
         return result;
     }
@@ -250,5 +278,22 @@ public class Texture4D {
         b = Math.max(0, Math.min(255, b));
         
         return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+    
+    /**
+     * Clears the texture slice cache to free up memory.
+     * This can be called when memory usage becomes a concern.
+     */
+    public void clearCache() {
+        sliceCache.clear();
+    }
+    
+    /**
+     * Gets the current size of the texture slice cache.
+     * 
+     * @return The number of cached texture slices
+     */
+    public int getCacheSize() {
+        return sliceCache.size();
     }
 }

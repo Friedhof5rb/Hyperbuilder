@@ -9,6 +9,7 @@ import com.adventure4d.rendering.modules.Renderer;
 import com.adventure4d.rendering.modules.SliceRenderer;
 import com.adventure4d.rendering.modules.Camera;
 import com.adventure4d.rendering.modules.TextureManager;
+import com.adventure4d.rendering.modules.TextureManager2D;
 
 import java.awt.Component;
 import java.awt.event.KeyEvent;
@@ -84,6 +85,9 @@ public class Game {
         
         // Preload textures
         TextureManager.preloadTextures();
+        
+        // Preload 2D textures for items
+        TextureManager2D.preloadItemTextures();
         
         // Initialize the renderer
         renderer = new Renderer(WIDTH, HEIGHT, GAME_TITLE + " v" + VERSION);
