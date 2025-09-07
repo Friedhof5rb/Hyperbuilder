@@ -610,7 +610,7 @@ public class Game {
             breakingStartTime = System.currentTimeMillis();
             breakingProgress = 0.0f;
             
-            System.out.println("Started breaking block at (" + x + ", " + y + ", " + z + ", " + w + ")");
+    
         }
     }
     
@@ -619,7 +619,6 @@ public class Game {
      */
     private void stopBlockBreaking() {
         if (isBreakingBlock) {
-            System.out.println("Stopped breaking block - progress reset");
             isBreakingBlock = false;
             breakingBlockPos = null;
             breakingProgress = 0.0f;
@@ -676,9 +675,6 @@ public class Game {
                 // Add the block to the player's inventory
                 player.getInventory().addItem(blockId, 1);
                 
-                System.out.println("Completed breaking block at (" + breakingBlockPos.getX() + ", " + 
-                                 breakingBlockPos.getY() + ", " + breakingBlockPos.getZ() + ", " + 
-                                 breakingBlockPos.getW() + ")");
             }
         }
         
@@ -923,10 +919,7 @@ public class Game {
             // Add the block to the player's inventory
             player.getInventory().addItem(blockId, 1);
             
-            System.out.println("Destroyed block at (" + x + ", " + y + ", " + z + ", " + w + ")");
-        } else if (block != null && block.isSolid()) {
-            System.out.println("Cannot destroy block - not in line of sight");
-        }
+        } 
     }
      
      /**
@@ -957,22 +950,14 @@ public class Game {
                     if (blockToPlace != null) {
                         world.setBlock(new Vector4DInt(x, y, z, w), blockToPlace);
                     } else {
-                        System.out.println("Cannot place item - item is not placeable");
                         return;
                     }
                     
                     // Remove one item from inventory
                     player.getInventory().removeItem(selectedItem.getItemId(), 1);
                     
-                    System.out.println("Placed block at (" + x + ", " + y + ", " + z + ", " + w + ")");
-                } else {
-                    System.out.println("Cannot place block - no adjacent blocks found");
                 }
-            } else {
-                System.out.println("No item selected or item count is 0");
-            }
-        } else {
-            System.out.println("Cannot place block - position is occupied");
+            } 
         }
     }
 

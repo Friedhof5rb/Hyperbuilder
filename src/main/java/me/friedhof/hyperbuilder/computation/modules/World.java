@@ -81,10 +81,6 @@ public class World {
             chunk = generateChunk(position);
             chunks.put(position, chunk);
         }
-        
-        // Generate trees after basic terrain
-        generateTrees(chunk, position);
-        
         return chunk;
     }
     
