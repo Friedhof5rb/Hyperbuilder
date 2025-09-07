@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
+
 /**
  * Manages 2D textures for item rendering.
  * Provides caching and loading functionality for PNG textures.
@@ -76,13 +78,13 @@ public class TextureManager2D {
      */
     public static void preloadItemTextures() {
         try {
-            // Load the same textures that are used for blocks
-            loadTexture2D("Grass.png");
-            loadTexture2D("Dirt.png");
-            loadTexture2D("Stone.png");
-            loadTexture2D("Wood_log.png");
-            loadTexture2D("Leaves.png");
-            
+
+            for(String s : ItemRegistry.itemFactories.keySet()){
+                if(ItemRegistry.itemFactories.get(s).HasTexture()){
+                    loadTexture2D(s + ".png");
+                }
+            }
+
             System.out.println("All 2D item textures preloaded successfully");
         } catch (IOException e) {
             System.err.println("Failed to preload 2D item textures: " + e.getMessage());

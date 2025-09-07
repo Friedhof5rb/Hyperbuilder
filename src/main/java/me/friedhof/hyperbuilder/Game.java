@@ -32,6 +32,9 @@ import me.friedhof.hyperbuilder.rendering.modules.TextureManager2D;
 import me.friedhof.hyperbuilder.ui.MainMenu;
 import me.friedhof.hyperbuilder.save.SavedWorldInfo;
 import me.friedhof.hyperbuilder.save.WorldSaveManager;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
+import me.friedhof.hyperbuilder.computation.modules.Inventory;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -119,7 +122,8 @@ public class Game {
         this.mainMenu = menu;
         this.saveManager = new WorldSaveManager();
         this.currentState = GameState.PLAYING;
-        
+
+
         // Create a new world
         world = new World(worldName, seed);
         initGameWorld();
@@ -209,8 +213,8 @@ public class Game {
                     for (int w = -1; w <= 1; w++) {
                         Vector4DInt pos = new Vector4DInt(x, y, z, w);
                         Block block = world.getBlock(pos);
-                        if (block != null && !block.isAir()) {
-                            System.out.println("  Block at (" + x + ", " + y + ", " + z + ", " + w + "): " + block.getType());
+                        if (block != null && block.isSolid()) {
+                System.out.println("  Block at (" + x + ", " + y + ", " + z + ", " + w + "): " + block.getBlockId());
                         }
                     }
                 }
@@ -218,12 +222,12 @@ public class Game {
         }
         
         // Give the player some starting blocks
-        me.friedhof.hyperbuilder.computation.modules.Inventory inventory = player.getInventory();
-        inventory.addItem(me.friedhof.hyperbuilder.computation.modules.Block.TYPE_DIRT, 64);
-        inventory.addItem(me.friedhof.hyperbuilder.computation.modules.Block.TYPE_STONE, 32);
-        inventory.addItem(me.friedhof.hyperbuilder.computation.modules.Block.TYPE_WOOD, 16);
-        inventory.addItem(me.friedhof.hyperbuilder.computation.modules.Block.TYPE_GRASS, 32);
-        inventory.addItem(me.friedhof.hyperbuilder.computation.modules.Block.TYPE_LEAVES, 16);
+       Inventory inventory = player.getInventory();
+        inventory.addItem("dirt", 64);
+        inventory.addItem("stone", 32);
+        inventory.addItem("wood_log", 16);
+        inventory.addItem("grass", 32);
+        inventory.addItem("leaves", 16);
         
         // Create a camera starting at the player's initial world position
         camera = new Camera(new Vector4D(0, 1, 0, 0));
@@ -594,7 +598,7 @@ public class Game {
         Block block = world.getBlock(position);
         
         // Check if there's a block to break and if it's in sight
-        if (block != null && !block.isAir() && isInSightOfPlayer(x, y, z, w)) {
+        if (block != null && block.isSolid() && isInSightOfPlayer(x, y, z, w)) {
             // If already breaking a different block, stop the previous one
             if (isBreakingBlock && !position.equals(breakingBlockPos)) {
                 stopBlockBreaking();
@@ -634,7 +638,7 @@ public class Game {
             // If we're hovering over a different block, switch to it
             if (currentMouseBlock != null && !currentMouseBlock.equals(breakingBlockPos)) {
                 Block block = world.getBlock(currentMouseBlock);
-                if (block != null && !block.isAir() && isInSightOfPlayer(currentMouseBlock.getX(), currentMouseBlock.getY(), currentMouseBlock.getZ(), currentMouseBlock.getW())) {
+                if (block != null && block.isSolid() && isInSightOfPlayer(currentMouseBlock.getX(), currentMouseBlock.getY(), currentMouseBlock.getZ(), currentMouseBlock.getW())) {
                     // Start breaking the new block
                     startBlockBreaking(currentMouseBlock.getX(), currentMouseBlock.getY(), currentMouseBlock.getZ(), currentMouseBlock.getW());
                 }
@@ -663,14 +667,14 @@ public class Game {
         if (breakingBlockPos != null) {
             // Get the block type before destroying it
             Block block = world.getBlock(breakingBlockPos);
-            if (block != null && !block.isAir()) {
-                byte blockType = block.getType();
+            if (block != null && block.isSolid()) {
+                String blockId = block.getBlockId();
                 
                 // Remove the block from the world by setting it to air
-                world.setBlock(breakingBlockPos, new Block(Block.TYPE_AIR));
+                world.setBlock(breakingBlockPos, new Block("air"));
                 
                 // Add the block to the player's inventory
-                player.getInventory().addItem(blockType, 1);
+                player.getInventory().addItem(blockId, 1);
                 
                 System.out.println("Completed breaking block at (" + breakingBlockPos.getX() + ", " + 
                                  breakingBlockPos.getY() + ", " + breakingBlockPos.getZ() + ", " + 
@@ -688,7 +692,7 @@ public class Game {
             Vector4DInt nextBlock = screenToWorldCoordinates(mouseX, mouseY);
             if (nextBlock != null) {
                 Block block = world.getBlock(nextBlock);
-                if (block != null && !block.isAir() && isInSightOfPlayer(nextBlock.getX(), nextBlock.getY(), nextBlock.getZ(), nextBlock.getW())) {
+                if (block != null && block.isSolid() && isInSightOfPlayer(nextBlock.getX(), nextBlock.getY(), nextBlock.getZ(), nextBlock.getW())) {
                     startBlockBreaking(nextBlock.getX(), nextBlock.getY(), nextBlock.getZ(), nextBlock.getW());
                 }
             }
@@ -909,18 +913,18 @@ public class Game {
         Block block = world.getBlock(position);
         
         // Check if there's a block at this position (not null and not air) and if it's in sight
-        if (block != null && !block.isAir() && isInSightOfPlayer(x, y, z, w)) {
+        if (block != null && block.isSolid() && isInSightOfPlayer(x, y, z, w)) {
             // Get the block type before destroying it
-            byte blockType = block.getType();
+            String blockId = block.getBlockId();
             
             // Remove the block from the world by setting it to air
-            world.setBlock(position, new Block(Block.TYPE_AIR));
+            world.setBlock(position, new Block("air"));
             
             // Add the block to the player's inventory
-            player.getInventory().addItem(blockType, 1);
+            player.getInventory().addItem(blockId, 1);
             
             System.out.println("Destroyed block at (" + x + ", " + y + ", " + z + ", " + w + ")");
-        } else if (block != null && !block.isAir()) {
+        } else if (block != null && block.isSolid()) {
             System.out.println("Cannot destroy block - not in line of sight");
         }
     }
@@ -941,18 +945,24 @@ public class Game {
         Block block = world.getBlock(position);
         
         // Check if the position is empty (null or air) and is in line of sight
-        if ((block == null || block.isAir()) && !checkCollisionWithBlockPosition(x, y, z, w) && isInSightOfPlayer(x, y, z, w)) {
+        if ((block == null || !block.isSolid()) && !checkCollisionWithBlockPosition(x, y, z, w) && isInSightOfPlayer(x, y, z, w)) {
             // Get the selected item from the hotbar
-            me.friedhof.hyperbuilder.computation.modules.Item selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
+            BaseItem selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
             
             if (selectedItem != null && selectedItem.getCount() > 0) {
                 // Check if there's an adjacent block (adjacency validation)
                 if (hasAdjacentBlock(x, y, z, w)) {
-                    // Place the block
-                    world.setBlock(position, new Block(selectedItem.getType()));
+                    // Create block from the placeable item using its properties
+                    Block blockToPlace = ItemRegistry.createBlockFromItem(selectedItem);
+                    if (blockToPlace != null) {
+                        world.setBlock(new Vector4DInt(x, y, z, w), blockToPlace);
+                    } else {
+                        System.out.println("Cannot place item - item is not placeable");
+                        return;
+                    }
                     
                     // Remove one item from inventory
-                    player.getInventory().removeItem(selectedItem.getType(), 1);
+                    player.getInventory().removeItem(selectedItem.getItemId(), 1);
                     
                     System.out.println("Placed block at (" + x + ", " + y + ", " + z + ", " + w + ")");
                 } else {
@@ -1029,7 +1039,7 @@ public class Game {
             Block block = world.getBlock(blockPos);
             
             // If there's a solid block (not null and not air), the view is blocked
-            if (block != null && !block.isAir()) {
+            if (block != null && block.isSolid()) {
                 return false;
             }
         }
@@ -1069,7 +1079,7 @@ public class Game {
             Block adjacentBlock = world.getBlock(adjacentPos);
             
             // Check if there's a solid block (not null and not air)
-            if (adjacentBlock != null && !adjacentBlock.isAir()) {
+            if (adjacentBlock != null && adjacentBlock.isSolid()) {
                 return true;
             }
         }

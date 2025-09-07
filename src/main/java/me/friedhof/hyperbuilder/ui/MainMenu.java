@@ -2,12 +2,11 @@ package me.friedhof.hyperbuilder.ui;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import me.friedhof.hyperbuilder.Game;
 import me.friedhof.hyperbuilder.save.SavedWorldInfo;
 import me.friedhof.hyperbuilder.save.WorldSaveManager;
+import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 
 /**
  * Main menu GUI for the Hyperbuilder game.
@@ -315,6 +314,7 @@ public class MainMenu extends JFrame {
     }
     
     public static void main(String[] args) {
+        registerContent();
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -325,4 +325,10 @@ public class MainMenu extends JFrame {
             new MainMenu().setVisible(true);
         });
     }
+
+    public static void registerContent(){
+        ItemRegistry.registerDefaultItems();
+    }
+
+
 }

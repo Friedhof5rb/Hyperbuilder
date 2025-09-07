@@ -5,7 +5,8 @@ import java.awt.image.BufferedImage;
 
 import me.friedhof.hyperbuilder.computation.modules.Block;
 import me.friedhof.hyperbuilder.computation.modules.Inventory;
-import me.friedhof.hyperbuilder.computation.modules.Item;
+import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 
 /**
  * Hotbar UI component for displaying and selecting items.
@@ -94,7 +95,7 @@ public class Hotbar {
             g.drawRect(slotX, slotY, SLOT_SIZE, SLOT_SIZE);
             
             // Get item from inventory
-            Item item = inventory.getItem(i);
+            BaseItem item = inventory.getItem(i);
             if (item != null && item.getCount() > 0) {
                 // Draw item representation
                 drawItem(g, item, slotX, slotY, SLOT_SIZE);
@@ -184,13 +185,13 @@ public class Hotbar {
      * @param y The slot y position
      * @param size The slot size
      */
-    private void drawItem(Graphics2D g, Item item, int x, int y, int size) {
+    private void drawItem(Graphics2D g, me.friedhof.hyperbuilder.computation.modules.items.BaseItem item, int x, int y, int size) {
         int itemSize = size - 8; // Leave some padding
         int itemX = x + 4;
         int itemY = y + 4;
         
         // Try to get the 2D texture for this item type
-        Texture2D texture = getTexture2DForItemType(item.getType());
+        Texture2D texture = getTexture2DForItemType(item.getItemId());
         
         if (texture != null) {
             // Use the 2D PNG texture directly for the item
@@ -205,7 +206,7 @@ public class Hotbar {
             g.drawRect(itemX, itemY, itemSize, itemSize);
         } else {
             // Fallback to the old colored rectangle method for items without textures
-            Color itemColor = getItemColor(item.getType());
+            Color itemColor = getItemColor();
             
             // Draw a simple colored rectangle representing the block/item
             g.setColor(itemColor);
@@ -220,47 +221,20 @@ public class Hotbar {
         // Draw item name (abbreviated)
         g.setColor(TEXT_COLOR);
         g.setFont(new Font("Arial", Font.PLAIN, 8));
-        String itemName = getItemAbbreviation(item.getType());
-        FontMetrics fm = g.getFontMetrics();
-        int textX = itemX + (itemSize - fm.stringWidth(itemName)) / 2;
-        int textY = itemY + (itemSize + fm.getAscent()) / 2;
-        g.drawString(itemName, textX, textY);
+       
     }
     
     /**
      * Gets the color for an item type.
      * 
-     * @param itemType The item type
+     * @param itemId The item ID
      * @return The color for the item
      */
-    private Color getItemColor(byte itemType) {
-        switch (itemType) {
-            case Block.TYPE_DIRT: return new Color(139, 69, 19);
-            case Block.TYPE_GRASS: return new Color(34, 139, 34);
-            case Block.TYPE_STONE: return new Color(128, 128, 128);
-            case Block.TYPE_WOOD: return new Color(160, 82, 45);
-            case Block.TYPE_LEAVES: return new Color(0, 128, 0);
-            default: return new Color(64, 64, 64);
-        }
+    private Color getItemColor() {
+      return new Color(255, 0, 220);
     }
     
-    /**
-     * Gets the abbreviation for an item type.
-     * 
-     * @param itemType The item type
-     * @return The abbreviation for the item
-     */
-    private String getItemAbbreviation(byte itemType) {
-        switch (itemType) {
-            case Block.TYPE_DIRT: return "D";
-            case Block.TYPE_GRASS: return "G";
-            case Block.TYPE_STONE: return "S";
-            case Block.TYPE_WOOD: return "W";
-            case Block.TYPE_LEAVES: return "L";
-            default: return "?";
-        }
-    }
-    
+   
     /**
      * Sets the selected hotbar slot.
      * 
@@ -285,9 +259,9 @@ public class Hotbar {
         if (slot >= 0 && slot < HOTBAR_SLOTS) {
             this.selectedSlot = slot;
             // Get the item name for display
-            Item selectedItem = inventory.getItem(slot);
+            me.friedhof.hyperbuilder.computation.modules.items.BaseItem selectedItem = inventory.getItem(slot);
             if (selectedItem != null && selectedItem.getCount() > 0) {
-                this.displayedItemName = selectedItem.getName();
+                this.displayedItemName = selectedItem.getDisplayName();
             } else {
                 this.displayedItemName = "Empty";
             }
@@ -312,7 +286,7 @@ public class Hotbar {
      * @param inventory The player's inventory
      * @return The selected item, or null if no item is selected
      */
-    public Item getSelectedItem(Inventory inventory) {
+    public me.friedhof.hyperbuilder.computation.modules.items.BaseItem getSelectedItem(Inventory inventory) {
         return inventory.getItem(selectedSlot);
     }
     
@@ -320,23 +294,11 @@ public class Hotbar {
      * Gets the corresponding 2D texture for an item type.
      * This allows items to use the same PNG textures as their block counterparts.
      * 
-     * @param itemType The item type
+     * @param itemId The item ID
      * @return The corresponding Texture2D, or null if no texture is available
      */
-    private Texture2D getTexture2DForItemType(byte itemType) {
-        switch (itemType) {
-            case Block.TYPE_DIRT:
-                return TextureManager2D.getTexture2D("Dirt.png");
-            case Block.TYPE_GRASS:
-                return TextureManager2D.getTexture2D("Grass.png");
-            case Block.TYPE_STONE:
-                return TextureManager2D.getTexture2D("Stone.png");
-            case Block.TYPE_WOOD:
-                return TextureManager2D.getTexture2D("Wood_log.png");
-            case Block.TYPE_LEAVES:
-                 return TextureManager2D.getTexture2D("Leaves.png");
-            default:
-                return null; // No texture available, will use fallback rendering
-        }
+    private Texture2D getTexture2DForItemType(String itemId) {
+
+        return ItemRegistry.getItemTexture(itemId);
     }
 }

@@ -100,11 +100,11 @@ public class SliceRenderer {
      */
     private void loadTextures() {
         try {
-            grassTexture = TextureManager.loadTexture4D("Grass.png");
-            dirtTexture = TextureManager.loadTexture4D("Dirt.png");
-            stoneTexture = TextureManager.loadTexture4D("Stone.png");
-            woodLogTexture = TextureManager.loadTexture4D("Wood_log.png");
-            leavesTexture = TextureManager.loadTexture4D("Leaves.png");
+            grassTexture = TextureManager.loadTexture4D("grass.png");
+            dirtTexture = TextureManager.loadTexture4D("dirt.png");
+            stoneTexture = TextureManager.loadTexture4D("stone.png");
+            woodLogTexture = TextureManager.loadTexture4D("wood_log.png");
+            leavesTexture = TextureManager.loadTexture4D("leaves.png");
         } catch (IOException e) {
             System.err.println("Failed to load grass texture: " + e.getMessage());
             grassTexture = null;
@@ -358,13 +358,10 @@ public class SliceRenderer {
         int pixelY = (int)((y - 0.5) * BLOCK_SIZE + fracY * BLOCK_SIZE); // Note: + because Y is inverted
         
         // Draw the block based on its type
-        if (block != null) {
-            switch (block.getType()) {
-                case Block.TYPE_AIR:
-                    // Air is transparent
-                    break;
-                    
-                case Block.TYPE_DIRT:
+        if (block != null && !block.getBlockId().equals(new Block("air").getBlockId())) {
+            String blockId = block.getBlockId();
+            switch (blockId) {
+                case "dirt":
                     if (dirtTexture != null) {
                         drawTexturedBlock(g, pixelX, pixelY, dirtTexture, blockPos, fracZ, fracW);
                     } else {
@@ -374,7 +371,7 @@ public class SliceRenderer {
                     }
                     break;
                     
-                case Block.TYPE_GRASS:
+                case "grass":
                     if (grassTexture != null) {
                         drawTexturedBlock(g, pixelX, pixelY, grassTexture, blockPos, fracZ, fracW);
                     } else {
@@ -384,7 +381,7 @@ public class SliceRenderer {
                     }
                     break;
                     
-                case Block.TYPE_STONE:
+                case "stone":
                     if (stoneTexture != null) {
                         drawTexturedBlock(g, pixelX, pixelY, stoneTexture, blockPos, fracZ, fracW);
                     } else {
@@ -393,7 +390,8 @@ public class SliceRenderer {
                         g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
                     }
                     break;
-                 case Block.TYPE_WOOD:
+                    
+                case "wood_log":
                     if (woodLogTexture != null) {
                         drawTexturedBlock(g, pixelX, pixelY, woodLogTexture, blockPos, fracZ, fracW);
                     } else {
@@ -402,7 +400,8 @@ public class SliceRenderer {
                         g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
                     }
                     break;
-                case Block.TYPE_LEAVES:
+                    
+                case "leaves":
                     if (leavesTexture != null) {
                         drawTexturedBlock(g, pixelX, pixelY, leavesTexture, blockPos, fracZ, fracW);
                     } else {
@@ -410,7 +409,8 @@ public class SliceRenderer {
                         g.setColor(new Color(255, 0, 220));
                         g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
                     }
-            break;
+                    break;
+                    
                 default:
                     // Unknown block type, draw as purple
                     g.setColor(Color.MAGENTA);
@@ -418,46 +418,41 @@ public class SliceRenderer {
                     break;
             }
             
-            // Border around blocks removed for cleaner appearance
-            // g.setColor(Color.BLACK);
-            // g.drawRect(pixelX, pixelY, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
-            
-            // Add visual indicator for line-of-sight
-            
-            boolean canDestroy = game.isInSightOfPlayer(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW());
-            
-            // Check if this block is being hovered over
-            boolean isHovered = isBlockHovered(x, y, sliceHorizontal, sliceVertical, mouseX, mouseY, game);
-            
-            // Set outline color based on line-of-sight
-            Color outlineColor;
-            int outlineThickness;
-            
-            if (canDestroy && (!block.isAir() || game.hasAdjacentBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW()))) {
-                // Green for blocks that can be destroyed
-                outlineColor = new Color(0, 255, 0, 200) ;
-            } else {
-                // Red for blocks that cannot be destroyed
-                outlineColor =  new Color(255, 0, 0, 200);
-            }
-            if(game.checkCollisionWithBlockPosition(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW())){
-                // Red for blocks that cannot be destroyed
-                outlineColor =  new Color(255, 0, 0, 200);
-            }
 
-
-
-
-            outlineThickness = 3;
-            
-            if(isHovered){
-                // Draw the outline
-                g.setColor(outlineColor);
-                g.setStroke(new BasicStroke(outlineThickness));
-                g.drawRect(pixelX + 1, pixelY + 1, BLOCK_SIZE - 3, BLOCK_SIZE - 3);
-            }
-            g.setStroke(new BasicStroke(1)); // Reset stroke
         }
+        // Add visual indicator for line-of-sight
+        
+        boolean canDestroy = game.isInSightOfPlayer(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW());
+        
+        // Check if this block is being hovered over
+        boolean isHovered = isBlockHovered(x, y, sliceHorizontal, sliceVertical, mouseX, mouseY, game);
+        
+        // Set outline color based on line-of-sight
+        Color outlineColor;
+        int outlineThickness;
+
+        if (canDestroy && (!block.getBlockId().equals(new Block("air").getBlockId()) || game.hasAdjacentBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW()))) {
+            // Green for blocks that can be destroyed
+            outlineColor = new Color(0, 255, 0, 200) ;
+        } else {
+            // Red for blocks that cannot be destroyed
+            outlineColor =  new Color(255, 0, 0, 200);
+        }
+        if(game.checkCollisionWithBlockPosition(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW())){
+            // Red for blocks that cannot be destroyed
+            outlineColor =  new Color(255, 0, 0, 200);
+        }
+
+        outlineThickness = 3;
+        
+        if(isHovered){
+            // Draw the outline
+            g.setColor(outlineColor);
+            g.setStroke(new BasicStroke(outlineThickness));
+            g.drawRect(pixelX + 1, pixelY + 1, BLOCK_SIZE - 3, BLOCK_SIZE - 3);
+        }
+        g.setStroke(new BasicStroke(1)); // Reset stroke
+        
     }
     
     /**
@@ -501,7 +496,8 @@ public class SliceRenderer {
         if (hoveredBlock == null) {
             return false;
         }
-        
+
+
         // Get the world coordinates for this block
         // This logic should match the coordinate calculation in renderSlice
         Camera camera = game.getCamera();

@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import javax.imageio.ImageIO;
+import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
+import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 
 /**
  * Manages loading and caching of 4D textures.
@@ -125,12 +127,16 @@ public class TextureManager {
      */
     public static void preloadTextures() {
         try {
-            // Load the grass texture
-            loadTexture4D("Grass.png");
-            loadTexture4D("Dirt.png");
-            loadTexture4D("Stone.png");
-            loadTexture4D("Wood_log.png");
-            loadTexture4D("Leaves.png");
+           
+              for(String s : ItemRegistry.itemFactories.keySet()){
+                if(ItemRegistry.itemFactories.get(s) instanceof IsPlaceable){
+                    loadTexture4D(s + ".png");
+                }
+            }
+
+
+
+
             System.out.println("All textures preloaded successfully");
         } catch (IOException e) {
             System.err.println("Failed to preload textures: " + e.getMessage());

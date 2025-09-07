@@ -88,10 +88,6 @@ public class HUD {
             drawBlockBreakingProgress(g, game.getBreakingProgress(), game);
         }
         
-        // W-slice bar removed for cleaner display
-        
-        // Draw mouse crosshair for debugging
-        //drawMouseCrosshair(g, mouseX, mouseY);
         
         // Restore the original font and color
         g.setFont(originalFont);

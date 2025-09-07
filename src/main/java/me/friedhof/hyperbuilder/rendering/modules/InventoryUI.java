@@ -3,10 +3,11 @@ package me.friedhof.hyperbuilder.rendering.modules;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import me.friedhof.hyperbuilder.computation.modules.Block;
 import me.friedhof.hyperbuilder.computation.modules.Inventory;
-import me.friedhof.hyperbuilder.computation.modules.Item;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import java.awt.event.MouseEvent;
+import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
+
 
 /**
  * Inventory UI component for displaying and managing items.
@@ -38,7 +39,7 @@ public class InventoryUI {
     private boolean visible = false;
     
     // Drag and drop state
-    private Item draggedItem = null;
+    private BaseItem draggedItem = null;
     private int draggedFromSlot = -1;
     private boolean draggedFromHotbar = false;
     private int mouseX = 0;
@@ -208,7 +209,7 @@ public class InventoryUI {
         g.drawRect(x, y, SLOT_SIZE, SLOT_SIZE);
         
         // Get item from inventory
-        Item item = inventory.getItem(slotIndex);
+        me.friedhof.hyperbuilder.computation.modules.items.BaseItem item = inventory.getItem(slotIndex);
         if (item != null && item.getCount() > 0 && !(draggedFromSlot == slotIndex && draggedFromHotbar == isHotbar && draggedItem != null)) {
             // Draw item representation
             drawItemInSlot(g, item, x, y, SLOT_SIZE);
@@ -218,13 +219,13 @@ public class InventoryUI {
     /**
      * Draws an item in a slot.
      */
-    private void drawItemInSlot(Graphics2D g, Item item, int x, int y, int size) {
+    private void drawItemInSlot(Graphics2D g, me.friedhof.hyperbuilder.computation.modules.items.BaseItem item, int x, int y, int size) {
         int itemSize = size - 8;
         int itemX = x + 4;
         int itemY = y + 4;
         
         // Try to get the 2D texture for this item type
-        Texture2D texture = getTexture2DForItemType(item.getType());
+        Texture2D texture = getTexture2DForItemType(item.getItemId());
         
         if (texture != null) {
             // Use the 2D PNG texture directly for the item
@@ -239,7 +240,7 @@ public class InventoryUI {
             g.drawRect(itemX, itemY, itemSize, itemSize);
         } else {
             // Fallback to the old colored rectangle method for items without textures
-            Color itemColor = getItemColor(item.getType());
+            Color itemColor = getItemColor();
             
             // Draw item background
             g.setColor(itemColor);
@@ -253,11 +254,7 @@ public class InventoryUI {
             // Draw item abbreviation
             g.setColor(TEXT_COLOR);
             g.setFont(new Font("Arial", Font.BOLD, 8));
-            String abbrev = getItemAbbreviation(item.getType());
-            FontMetrics fm = g.getFontMetrics();
-            int textX = itemX + (itemSize - fm.stringWidth(abbrev)) / 2;
-            int textY = itemY + (itemSize + fm.getAscent()) / 2;
-            g.drawString(abbrev, textX, textY);
+
         }
         
         // Draw item count if > 1
@@ -275,7 +272,7 @@ public class InventoryUI {
     /**
      * Draws the currently dragged item.
      */
-    private void drawDraggedItem(Graphics2D g, Item item, int x, int y) {
+    private void drawDraggedItem(Graphics2D g, me.friedhof.hyperbuilder.computation.modules.items.BaseItem item, int x, int y) {
         int size = SLOT_SIZE;
         int drawX = x - size / 2;
         int drawY = y - size / 2;
@@ -292,13 +289,13 @@ public class InventoryUI {
      */
     private void drawItemTooltip(Graphics2D g, Inventory inventory) {
         // Get the item from the hovered slot
-        Item item = inventory.getItem(hoveredSlot);
+        me.friedhof.hyperbuilder.computation.modules.items.BaseItem item = inventory.getItem(hoveredSlot);
         if (item == null || item.getCount() <= 0) {
             return; // No item to show tooltip for
         }
         
         // Get item name
-        String itemName = item.getName();
+        String itemName = item.getDisplayName();
         if (item.getCount() > 1) {
             itemName += " x" + item.getCount();
         }
@@ -349,30 +346,11 @@ public class InventoryUI {
     /**
      * Gets the color for an item type.
      */
-    private Color getItemColor(byte itemType) {
-        switch (itemType) {
-            case Block.TYPE_DIRT: return new Color(139, 69, 19);
-            case Block.TYPE_GRASS: return new Color(34, 139, 34);
-            case Block.TYPE_STONE: return new Color(128, 128, 128);
-            case Block.TYPE_WOOD: return new Color(160, 82, 45);
-            case Block.TYPE_LEAVES: return new Color(0, 128, 0);
-            default: return new Color(64, 64, 64);
-        }
+    private Color getItemColor() {
+      return new Color(255, 0, 220);
     }
     
-    /**
-     * Gets the abbreviation for an item type.
-     */
-    private String getItemAbbreviation(byte itemType) {
-        switch (itemType) {
-            case Block.TYPE_DIRT: return "D";
-            case Block.TYPE_GRASS: return "G";
-            case Block.TYPE_STONE: return "S";
-            case Block.TYPE_WOOD: return "W";
-            case Block.TYPE_LEAVES: return "L";
-            default: return "?";
-        }
-    }
+ 
     
     // Getters and setters
     public boolean isVisible() { return visible; }
@@ -448,7 +426,7 @@ public class InventoryUI {
     private boolean handleLeftClick(Inventory inventory) {
         if (draggedItem == null) {
             // Start dragging
-            Item item = inventory.getItem(hoveredSlot);
+            me.friedhof.hyperbuilder.computation.modules.items.BaseItem item = inventory.getItem(hoveredSlot);
             if (item != null && item.getCount() > 0) {
                 draggedItem = item;
                 draggedFromSlot = hoveredSlot;
@@ -470,7 +448,7 @@ public class InventoryUI {
      */
     private boolean handleRightClick(Inventory inventory) {
         if (draggedItem == null) {
-            Item item = inventory.getItem(hoveredSlot);
+            me.friedhof.hyperbuilder.computation.modules.items.BaseItem item = inventory.getItem(hoveredSlot);
             if (item != null && item.getCount() > 1) {
                 // Split stack in half
                 int halfCount = item.getCount() / 2;
@@ -498,7 +476,7 @@ public class InventoryUI {
      * Drops the dragged item.
      */
     private boolean dropItem(Inventory inventory) {
-        Item targetItem = inventory.getItem(hoveredSlot);
+        BaseItem targetItem = inventory.getItem(hoveredSlot);
         
         if (targetItem == null) {
             // Empty slot - place item
@@ -549,7 +527,7 @@ public class InventoryUI {
      * Drops a single item from the dragged stack.
      */
     private boolean dropSingleItem(Inventory inventory) {
-        Item targetItem = inventory.getItem(hoveredSlot);
+        BaseItem targetItem = inventory.getItem(hoveredSlot);
         
         if (targetItem == null) {
             // Empty slot - place single item
@@ -594,23 +572,10 @@ public class InventoryUI {
      * Gets the corresponding 2D texture for an item type.
      * This allows items to use the same PNG textures as their block counterparts.
      * 
-     * @param itemType The item type
+     * @param itemId The item ID
      * @return The corresponding Texture2D, or null if no texture is available
      */
-    private Texture2D getTexture2DForItemType(byte itemType) {
-        switch (itemType) {
-            case Block.TYPE_DIRT:
-                return TextureManager2D.getTexture2D("Dirt.png");
-            case Block.TYPE_GRASS:
-                return TextureManager2D.getTexture2D("Grass.png");
-            case Block.TYPE_STONE:
-                return TextureManager2D.getTexture2D("Stone.png");
-            case Block.TYPE_WOOD:
-                return TextureManager2D.getTexture2D("Wood_log.png");
-            case Block.TYPE_LEAVES:
-                return TextureManager2D.getTexture2D("Leaves.png");
-            default:
-                return null; // No texture available, will use fallback rendering
-        }
+    private Texture2D getTexture2DForItemType(String itemId) {
+       return ItemRegistry.getItemTexture(itemId);
     }
 }

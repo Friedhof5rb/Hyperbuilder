@@ -1,11 +1,13 @@
 package me.friedhof.hyperbuilder.computation.modules;
 
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+
 /**
  * Represents an inventory that can store items.
  * Used by players and other entities that can hold items.
  */
 public class Inventory {
-    private final Item[] slots;
+    private final BaseItem[] slots;
     
     /**
      * Creates a new inventory with the specified number of slots.
@@ -13,7 +15,7 @@ public class Inventory {
      * @param size The number of slots in this inventory
      */
     public Inventory(int size) {
-        this.slots = new Item[size];
+        this.slots = new BaseItem[size];
     }
     
     /**
@@ -31,7 +33,7 @@ public class Inventory {
      * @param slot The slot index
      * @return The item in the slot, or null if the slot is empty
      */
-    public Item getItem(int slot) {
+    public BaseItem getItem(int slot) {
         if (isValidSlot(slot)) {
             return slots[slot];
         }
@@ -45,7 +47,7 @@ public class Inventory {
      * @param item The item to set, or null to clear the slot
      * @return true if the item was set, false otherwise
      */
-    public boolean setItem(int slot, Item item) {
+    public boolean setItem(int slot, BaseItem item) {
         if (isValidSlot(slot)) {
             slots[slot] = item;
             return true;
@@ -60,14 +62,14 @@ public class Inventory {
      * @param item The item to add
      * @return true if the item was added, false if there was no room
      */
-    public boolean addItem(Item item) {
+    public boolean addItem(BaseItem item) {
         if (item == null) {
             return true;
         }
         
         // Try to stack with existing items
         for (int i = 0; i < slots.length; i++) {
-            if (slots[i] != null && slots[i].equals(item)) {
+            if (slots[i] != null && slots[i].getItemId().equals(item.getItemId())) {
                 int currentCount = slots[i].getCount();
                 int maxStackSize = slots[i].getMaxStackSize();
                 
@@ -101,19 +103,19 @@ public class Inventory {
     }
     
     /**
-     * Adds an item to the inventory by type and count.
-     * Convenience method that creates an Item object internally.
+     * Adds an item to the inventory by item ID and count.
+     * Convenience method that creates a BaseItem object internally.
      * 
-     * @param type The item type
+     * @param itemId The item ID
      * @param count The number of items to add
      * @return true if the item was added, false if there was no room
      */
-    public boolean addItem(byte type, int count) {
+    public boolean addItem(String itemId, int count) {
         if (count <= 0) {
             return true;
         }
         
-        Item item = new Item(type, count);
+        BaseItem item = ItemRegistry.createItem(itemId, count);
         return addItem(item);
     }
     
@@ -123,7 +125,7 @@ public class Inventory {
      * @param item The item to remove
      * @return true if the item was removed, false otherwise
      */
-    public boolean removeItem(Item item) {
+    public boolean removeItem(BaseItem item) {
         if (item == null) {
             return true;
         }
@@ -132,7 +134,7 @@ public class Inventory {
         
         // Find matching items
         for (int i = 0; i < slots.length && remainingToRemove > 0; i++) {
-            if (slots[i] != null && slots[i].equals(item)) {
+            if (slots[i] != null && slots[i].getItemId().equals(item.getItemId())) {
                 int currentCount = slots[i].getCount();
                 
                 if (currentCount <= remainingToRemove) {
@@ -152,19 +154,19 @@ public class Inventory {
     }
     
     /**
-     * Removes an item from the inventory by type and count.
-     * Convenience method that creates an Item object internally.
+     * Removes an item from the inventory by item ID and count.
+     * Convenience method that creates a BaseItem object internally.
      * 
-     * @param type The item type
+     * @param itemId The item ID
      * @param count The number of items to remove
      * @return true if the item was removed, false otherwise
      */
-    public boolean removeItem(byte type, int count) {
+    public boolean removeItem(String itemId, int count) {
         if (count <= 0) {
             return true;
         }
         
-        Item item = new Item(type, count);
+        BaseItem item = ItemRegistry.createItem(itemId, count);
         return removeItem(item);
     }
     
@@ -174,7 +176,7 @@ public class Inventory {
      * @param item The item to check for
      * @return true if the inventory contains the item, false otherwise
      */
-    public boolean contains(Item item) {
+    public boolean contains(BaseItem item) {
         if (item == null) {
             return true;
         }
@@ -182,8 +184,8 @@ public class Inventory {
         int count = 0;
         
         // Count matching items
-        for (Item slotItem : slots) {
-            if (slotItem != null && slotItem.equals(item)) {
+        for (BaseItem slotItem : slots) {
+            if (slotItem != null && slotItem.getItemId().equals(item.getItemId())) {
                 count += slotItem.getCount();
                 
                 if (count >= item.getCount()) {

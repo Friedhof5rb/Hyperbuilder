@@ -16,7 +16,7 @@ public class ChunkSaveData implements Serializable {
     private final int posX, posY, posZ, posW;
     
     // Block data - stored as a flattened array for efficiency
-    private final byte[] blockTypes;
+    private final String[] blockIds;
     
     // Entity data
     private final Map<Integer, EntitySaveData> entities;
@@ -37,14 +37,14 @@ public class ChunkSaveData implements Serializable {
         this.posW = pos.getW();
         
         // Serialize blocks
-        this.blockTypes = new byte[Chunk4D.CHUNK_VOLUME];
+        this.blockIds = new String[Chunk4D.CHUNK_VOLUME];
         int index = 0;
         for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
             for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
                 for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
                     for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
                         Block block = chunk.getBlock(x, y, z, w);
-                        blockTypes[index++] = (block != null) ? block.getType() : Block.TYPE_AIR;
+                        blockIds[index++] = (block != null) ? block.getBlockId() : "air";
                     }
                 }
             }
@@ -77,8 +77,9 @@ public class ChunkSaveData implements Serializable {
             for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
                 for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
                     for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
-                        byte blockType = blockTypes[index++];
-                        chunk.setBlock(x, y, z, w, new Block(blockType));
+                        String blockId = blockIds[index++];
+                        Block block = new Block(blockId);
+                        chunk.setBlock(x, y, z, w, block);
                     }
                 }
             }
@@ -102,7 +103,6 @@ public class ChunkSaveData implements Serializable {
     
     // Getters for debugging/inspection
     public Vector4DInt getPosition() { return new Vector4DInt(posX, posY, posZ, posW); }
-    public byte[] getBlockTypes() { return blockTypes.clone(); }
     public Map<Integer, EntitySaveData> getEntities() { return new HashMap<>(entities); }
     public boolean isDirty() { return dirty; }
 }

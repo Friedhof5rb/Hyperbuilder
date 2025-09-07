@@ -2,6 +2,8 @@ package me.friedhof.hyperbuilder.save;
 
 import me.friedhof.hyperbuilder.computation.modules.*;
 import java.io.Serializable;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+
 
 /**
  * Serializable data class for saving and loading Player data.
@@ -61,7 +63,7 @@ public class PlayerSaveData implements Serializable {
         Inventory inventory = player.getInventory();
         this.inventoryItems = new ItemSaveData[inventory.getSize()];
         for (int i = 0; i < inventory.getSize(); i++) {
-            Item item = inventory.getItem(i);
+            me.friedhof.hyperbuilder.computation.modules.items.BaseItem item = inventory.getItem(i);
             if (item != null) {
                 this.inventoryItems[i] = new ItemSaveData(item);
             }
@@ -91,7 +93,7 @@ public class PlayerSaveData implements Serializable {
         Inventory inventory = player.getInventory();
         for (int i = 0; i < inventoryItems.length && i < inventory.getSize(); i++) {
             if (inventoryItems[i] != null) {
-                Item item = inventoryItems[i].toItem();
+                me.friedhof.hyperbuilder.computation.modules.items.BaseItem item = inventoryItems[i].toItem();
                 inventory.setItem(i, item);
             }
         }
@@ -114,20 +116,20 @@ public class PlayerSaveData implements Serializable {
  * Serializable data class for Item objects.
  */
 class ItemSaveData implements Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L; // Updated version
     
-    private final byte type;
+    private final String itemId;
     private final int count;
     
-    public ItemSaveData(Item item) {
-        this.type = item.getType();
+    public ItemSaveData(BaseItem item) {
+        this.itemId = item.getItemId();
         this.count = item.getCount();
     }
     
-    public Item toItem() {
-        return new Item(type, count);
+    public BaseItem toItem() {
+        return ItemRegistry.createItem(itemId, count);
     }
     
-    public byte getType() { return type; }
+    public String getItemId() { return itemId; }
     public int getCount() { return count; }
 }
