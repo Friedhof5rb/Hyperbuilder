@@ -1,6 +1,13 @@
 package me.friedhof.hyperbuilder;
 
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -10,6 +17,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+
 
 import me.friedhof.hyperbuilder.computation.modules.Block;
 import me.friedhof.hyperbuilder.computation.modules.Player;
@@ -41,9 +49,11 @@ public class Game {
     private static final String GAME_TITLE = "Hyperbuilder";
     private static final String VERSION = "0.1.0";
     
-    // Window dimensions
-    private static final int WIDTH = 1400;
-    private static final int HEIGHT = 1000;
+    // Window dimensions - automatically fit screen size with padding
+    private static final Dimension SCREEN_SIZE = Toolkit.getDefaultToolkit().getScreenSize();
+    private static final int SCREEN_PADDING = 100; // Padding from screen edges
+    private static final int WIDTH = (int) SCREEN_SIZE.getWidth() - (SCREEN_PADDING * 2);
+    private static final int HEIGHT = (int) SCREEN_SIZE.getHeight() - (SCREEN_PADDING * 2);
     
     private World world;
     private Player player;
@@ -99,6 +109,8 @@ public class Game {
     
     // Rendering synchronization
     private volatile boolean renderPending = false;
+    
+
     
     /**
      * Constructor for creating a game from menu.
@@ -339,6 +351,21 @@ public class Game {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
                 handleMouseWheel(e.getWheelRotation());
+            }
+        });
+        
+        // Add ComponentListener for manual window resizing
+        frame.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                // Get content pane dimensions (excluding window decorations)
+                int newWidth = frame.getContentPane().getWidth();
+                int newHeight = frame.getContentPane().getHeight();
+                
+                // Only update if dimensions are valid
+                if (newWidth > 0 && newHeight > 0 && renderer != null) {
+                    renderer.updateDimensions(newWidth, newHeight);
+                }
             }
         });
     }
@@ -678,8 +705,11 @@ public class Game {
     public Vector4DInt screenToWorldCoordinates(int screenX, int screenY) {
         // Get grid dimensions and positioning
         int gridSizePixels = renderer.getGridRenderer().getGridSizePixels();
-        int gridX = (WIDTH - gridSizePixels) / 2;
-        int gridY = (HEIGHT - gridSizePixels) / 2;
+        // Use actual current window dimensions instead of static constants
+        int currentWidth = renderer.getFrame().getContentPane().getWidth();
+        int currentHeight = renderer.getFrame().getContentPane().getHeight();
+        int gridX = (currentWidth - gridSizePixels) / 2;
+        int gridY = (currentHeight - gridSizePixels) / 2;
         
         // Check if click is within the grid bounds
         if (screenX < gridX || screenX >= gridX + gridSizePixels ||
@@ -777,8 +807,11 @@ public class Game {
     public java.awt.Point worldToScreenCoordinates(Vector4DInt worldPos) {
         // Get grid dimensions and positioning
         int gridSizePixels = renderer.getGridRenderer().getGridSizePixels();
-        int gridX = (WIDTH - gridSizePixels) / 2;
-        int gridY = (HEIGHT - gridSizePixels) / 2;
+        // Use actual current window dimensions instead of static constants
+        int currentWidth = renderer.getFrame().getContentPane().getWidth();
+        int currentHeight = renderer.getFrame().getContentPane().getHeight();
+        int gridX = (currentWidth - gridSizePixels) / 2;
+        int gridY = (currentHeight - gridSizePixels) / 2;
         
         // Calculate slice size in pixels (7x7 blocks per slice)
         int sliceSizePixels = gridSizePixels / SliceRenderer.getSliceSize();

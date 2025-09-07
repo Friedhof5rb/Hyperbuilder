@@ -42,7 +42,7 @@ public class Renderer {
         frame = new JFrame(title);
         frame.setSize(width, height);
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Disable close button during gameplay
-        frame.setResizable(false);
+        frame.setResizable(true);
         
         // Create the buffer
         buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -105,6 +105,44 @@ public class Renderer {
      */
     public GridRenderer getGridRenderer() {
         return gridRenderer;
+    }
+    
+    /**
+     * Updates the renderer dimensions when the window is resized.
+     * 
+     * @param newWidth The new width
+     * @param newHeight The new height
+     */
+    public void updateDimensions(int newWidth, int newHeight) {
+        this.width = newWidth;
+        this.height = newHeight;
+        
+        // Dispose old graphics and buffer
+        if (graphics != null) {
+            graphics.dispose();
+        }
+        
+        // Create new buffer with updated dimensions
+        buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        graphics = buffer.createGraphics();
+        
+        // Update HUD dimensions
+        hud = new HUD(width, height);
+        
+        // Update dynamic block sizing
+        SliceRenderer.setDynamicBlockSize(width, height);
+        
+        // Update grid renderer to recreate slices with new block size
+        gridRenderer.updateBlockSize();
+        
+        // Update the panel size and force repaint
+        Component panel = frame.getContentPane().getComponent(0);
+        if (panel instanceof JPanel) {
+            ((JPanel) panel).setPreferredSize(new Dimension(width, height));
+            panel.setSize(new Dimension(width, height));
+            panel.revalidate();
+            panel.repaint();
+        }
     }
     
     /**
