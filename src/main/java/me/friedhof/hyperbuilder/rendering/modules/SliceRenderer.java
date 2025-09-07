@@ -3,12 +3,16 @@ package me.friedhof.hyperbuilder.rendering.modules;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.HashMap;
 
 import me.friedhof.hyperbuilder.computation.modules.Block;
 import me.friedhof.hyperbuilder.computation.modules.Player;
 import me.friedhof.hyperbuilder.computation.modules.Vector4D;
 import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
 import me.friedhof.hyperbuilder.computation.modules.World;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
+import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 
 /**
  * Renders a single 2D slice of the 4D world.
@@ -24,14 +28,8 @@ public class SliceRenderer {
     private BufferedImage sliceImage;
     
     // 4D texture for grass blocks
-    private Texture4D grassTexture;
-    private Texture4D dirtTexture;
-    private Texture4D stoneTexture;
-    private Texture4D woodLogTexture;
-    private Texture4D leavesTexture;
-
-
-
+    private HashMap<String, Texture4D> texturelist = new HashMap<>();
+   
     
     /**
      * Gets the size of a slice in pixels.
@@ -99,20 +97,18 @@ public class SliceRenderer {
      * Loads the textures needed for rendering.
      */
     private void loadTextures() {
-        try {
-            grassTexture = TextureManager.loadTexture4D("grass.png");
-            dirtTexture = TextureManager.loadTexture4D("dirt.png");
-            stoneTexture = TextureManager.loadTexture4D("stone.png");
-            woodLogTexture = TextureManager.loadTexture4D("wood_log.png");
-            leavesTexture = TextureManager.loadTexture4D("leaves.png");
-        } catch (IOException e) {
-            System.err.println("Failed to load grass texture: " + e.getMessage());
-            grassTexture = null;
-            dirtTexture = null;
-            stoneTexture = null;
-            woodLogTexture = null;
-            leavesTexture = null;
-        }
+        
+           for(String s : ItemRegistry.itemFactories.keySet()){
+                if(ItemRegistry.itemFactories.get(s) instanceof IsPlaceable){
+                    try {
+                        texturelist.put(s, TextureManager.loadTexture4D(s + ".png"));
+                    } catch (IOException e) {
+                        System.err.println("Failed to load texture for item " + s + ": " + e.getMessage());
+                         texturelist.put(s, null);
+                    }       
+                }
+            }
+        
     }
     
     /**
@@ -360,65 +356,17 @@ public class SliceRenderer {
         // Draw the block based on its type
         if (block != null && !block.getBlockId().equals(new Block("air").getBlockId())) {
             String blockId = block.getBlockId();
-            switch (blockId) {
-                case "dirt":
-                    if (dirtTexture != null) {
-                        drawTexturedBlock(g, pixelX, pixelY, dirtTexture, blockPos, fracZ, fracW);
-                    } else {
-                        // Fallback to solid color if texture failed to load
-                        g.setColor(new Color(255, 0, 220));
-                        g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
-                    }
-                    break;
-                    
-                case "grass":
-                    if (grassTexture != null) {
-                        drawTexturedBlock(g, pixelX, pixelY, grassTexture, blockPos, fracZ, fracW);
-                    } else {
-                        // Fallback to solid color if texture failed to load
-                        g.setColor(new Color(255, 0, 220));
-                        g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
-                    }
-                    break;
-                    
-                case "stone":
-                    if (stoneTexture != null) {
-                        drawTexturedBlock(g, pixelX, pixelY, stoneTexture, blockPos, fracZ, fracW);
-                    } else {
-                        // Fallback to solid color if texture failed to load
-                        g.setColor(new Color(255, 0, 220));
-                        g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
-                    }
-                    break;
-                    
-                case "wood_log":
-                    if (woodLogTexture != null) {
-                        drawTexturedBlock(g, pixelX, pixelY, woodLogTexture, blockPos, fracZ, fracW);
-                    } else {
-                        // Fallback to solid color if texture failed to load
-                        g.setColor(new Color(255, 0, 220));
-                        g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
-                    }
-                    break;
-                    
-                case "leaves":
-                    if (leavesTexture != null) {
-                        drawTexturedBlock(g, pixelX, pixelY, leavesTexture, blockPos, fracZ, fracW);
-                    } else {
-                        // Fallback to solid color if texture failed to load
-                        g.setColor(new Color(255, 0, 220));
-                        g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
-                    }
-                    break;
-                    
-                default:
-                    // Unknown block type, draw as purple
-                    g.setColor(Color.MAGENTA);
-                    g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
-                    break;
-            }
-            
 
+            for(String s : texturelist.keySet()){
+                if(s.equals(blockId)){
+                    if(texturelist.get(s) != null){
+                        drawTexturedBlock(g, pixelX, pixelY, texturelist.get(s), blockPos, fracZ, fracW);
+                    }else{
+                        g.setColor(new Color(255, 0, 220));
+                        g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                }
+            }
         }
         // Add visual indicator for line-of-sight
         

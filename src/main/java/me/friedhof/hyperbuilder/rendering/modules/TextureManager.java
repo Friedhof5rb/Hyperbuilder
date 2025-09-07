@@ -128,7 +128,7 @@ public class TextureManager {
     public static void preloadTextures() {
         try {
            
-              for(String s : ItemRegistry.itemFactories.keySet()){
+            for(String s : ItemRegistry.itemFactories.keySet()){
                 if(ItemRegistry.itemFactories.get(s) instanceof IsPlaceable){
                     loadTexture4D(s + ".png");
                 }
