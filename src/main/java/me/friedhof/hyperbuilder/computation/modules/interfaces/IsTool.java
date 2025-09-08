@@ -1,6 +1,6 @@
 package me.friedhof.hyperbuilder.computation.modules.interfaces;
 
-import me.friedhof.hyperbuilder.computation.modules.Block;
+import me.friedhof.hyperbuilder.computation.modules.items.Block;
 
 /**
  * Interface for items that function as tools.

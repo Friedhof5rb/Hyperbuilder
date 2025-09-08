@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
+import me.friedhof.hyperbuilder.computation.modules.items.Block;
 /**
  * Represents the 4D world containing chunks and entities.
  * Manages chunk loading/unloading and entity tracking.

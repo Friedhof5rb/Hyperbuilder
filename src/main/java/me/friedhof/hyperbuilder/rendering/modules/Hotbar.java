@@ -3,7 +3,6 @@ package me.friedhof.hyperbuilder.rendering.modules;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import me.friedhof.hyperbuilder.computation.modules.Block;
 import me.friedhof.hyperbuilder.computation.modules.Inventory;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;

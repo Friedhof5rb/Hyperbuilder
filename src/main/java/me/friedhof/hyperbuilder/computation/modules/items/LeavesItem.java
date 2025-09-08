@@ -1,12 +1,10 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
-import me.friedhof.hyperbuilder.computation.modules.interfaces.HasCollision;
-import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 
 /**
  * Represents leaves blocks - placeable blocks with low collision resistance.
  */
-public class LeavesItem extends BaseItem implements IsPlaceable, HasCollision {
+public class LeavesItem extends Block{
     
     public LeavesItem(int count) {
         super("leaves", "Leaves", 64, count);
@@ -29,6 +27,11 @@ public class LeavesItem extends BaseItem implements IsPlaceable, HasCollision {
     }
 @Override
     public boolean isSolid() {
+        return true;
+    }
+
+    @Override
+    public boolean isBreakable() {
         return true;
     }
 }

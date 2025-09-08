@@ -3,7 +3,7 @@ package me.friedhof.hyperbuilder.computation.modules.items;
 /**
  * Represents air blocks - special case item that is not placeable or solid.
  */
-public class AirItem extends BaseItem {
+public class AirItem extends Block {
 
     public AirItem(int count) {
         super("air", "Air", 64, count);
@@ -26,6 +26,11 @@ public class AirItem extends BaseItem {
    
     @Override
     public boolean isSolid() {
+        return false;
+    }
+    
+    @Override
+    public boolean isBreakable() {
         return false;
     }
 }

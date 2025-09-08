@@ -2,9 +2,6 @@ package me.friedhof.hyperbuilder;
 
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -19,7 +16,7 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 
-import me.friedhof.hyperbuilder.computation.modules.Block;
+import me.friedhof.hyperbuilder.computation.modules.items.Block;
 import me.friedhof.hyperbuilder.computation.modules.Player;
 import me.friedhof.hyperbuilder.computation.modules.Vector4D;
 import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
@@ -518,30 +515,6 @@ public class Game {
         return camera;
     }
     
-    /**
-     * Handles mouse click events for UI and block interaction.
-     * 
-     * @param x The x coordinate of the click
-     * @param y The y coordinate of the click
-     * @param button The mouse button (1=left, 3=right)
-     */
-    private void handleMouseClick(int x, int y, int button) {
-        // First, check if the inventory UI handles the click
-        if (renderer.getHUD().getInventoryUI().handleMouseClick(x, y, button, player.getInventory())) {
-            return; // Inventory UI handled the click, don't process block interaction
-        }
-        
-        // Convert screen coordinates to world coordinates for block interaction
-        Vector4DInt worldPos = screenToWorldCoordinates(x, y);
-        
-        if (worldPos != null) {
-            if (button == 1) { // Left click - destroy block
-                handleBlockDestruction(worldPos.getX(), worldPos.getY(), worldPos.getZ(), worldPos.getW());
-            } else if (button == 3) { // Right click - place block
-                handleBlockPlacement(worldPos.getX(), worldPos.getY(), worldPos.getZ(), worldPos.getW());
-            }
-        }
-    }
     
     /**
      * Handles mouse press events for UI and block interaction.
@@ -598,7 +571,7 @@ public class Game {
         Block block = world.getBlock(position);
         
         // Check if there's a block to break and if it's in sight
-        if (block != null && block.isSolid() && isInSightOfPlayer(x, y, z, w)) {
+        if (block != null && block.isBreakable() && isInSightOfPlayer(x, y, z, w)) {
             // If already breaking a different block, stop the previous one
             if (isBreakingBlock && !position.equals(breakingBlockPos)) {
                 stopBlockBreaking();
@@ -637,7 +610,7 @@ public class Game {
             // If we're hovering over a different block, switch to it
             if (currentMouseBlock != null && !currentMouseBlock.equals(breakingBlockPos)) {
                 Block block = world.getBlock(currentMouseBlock);
-                if (block != null && block.isSolid() && isInSightOfPlayer(currentMouseBlock.getX(), currentMouseBlock.getY(), currentMouseBlock.getZ(), currentMouseBlock.getW())) {
+                if (block != null && block.isBreakable() && isInSightOfPlayer(currentMouseBlock.getX(), currentMouseBlock.getY(), currentMouseBlock.getZ(), currentMouseBlock.getW())) {
                     // Start breaking the new block
                     startBlockBreaking(currentMouseBlock.getX(), currentMouseBlock.getY(), currentMouseBlock.getZ(), currentMouseBlock.getW());
                 }
@@ -666,14 +639,27 @@ public class Game {
         if (breakingBlockPos != null) {
             // Get the block type before destroying it
             Block block = world.getBlock(breakingBlockPos);
-            if (block != null && block.isSolid()) {
+            if (block != null && block.isBreakable()) {
                 String blockId = block.getBlockId();
                 
                 // Remove the block from the world by setting it to air
                 world.setBlock(breakingBlockPos, new Block("air"));
                 
-                // Add the block to the player's inventory
-                player.getInventory().addItem(blockId, 1);
+                // Handle custom drops for leaves
+                if ("leaves".equals(blockId)) {
+                    // Random chance for sapling drop (10% chance)
+                    if (Math.random() < 0.1) {
+                        player.getInventory().addItem("sapling", 1);
+                    }
+                    // Random chance for sticks drop (20% chance)
+                    if (Math.random() < 0.2) {
+                        player.getInventory().addItem("sticks", 1);
+                    }
+                    // Note: No leaves are added to inventory
+                } else {
+                    // Add the block to the player's inventory for all other blocks
+                    player.getInventory().addItem(blockId, 1);
+                }
                 
             }
         }
@@ -891,35 +877,6 @@ public class Game {
         
         // Return the center of the block
         return new java.awt.Point(blockScreenX + blockSize / 2, blockScreenY + blockSize / 2);
-    }
-     
-     /**
-     * Handles block destruction at the specified world coordinates.
-     * 
-     * @param x World X coordinate
-     * @param y World Y coordinate
-     * @param z World Z coordinate
-     * @param w World W coordinate
-     */
-    private void handleBlockDestruction(int x, int y, int z, int w) {
-        // Create Vector4DInt for the position
-        Vector4DInt position = new Vector4DInt(x, y, z, w);
-        
-        // Get the block at this position
-        Block block = world.getBlock(position);
-        
-        // Check if there's a block at this position (not null and not air) and if it's in sight
-        if (block != null && block.isSolid() && isInSightOfPlayer(x, y, z, w)) {
-            // Get the block type before destroying it
-            String blockId = block.getBlockId();
-            
-            // Remove the block from the world by setting it to air
-            world.setBlock(position, new Block("air"));
-            
-            // Add the block to the player's inventory
-            player.getInventory().addItem(blockId, 1);
-            
-        } 
     }
      
      /**

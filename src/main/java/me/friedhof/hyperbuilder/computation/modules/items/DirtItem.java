@@ -6,7 +6,7 @@ import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 /**
  * Represents dirt blocks - placeable solid blocks.
  */
-public class DirtItem extends BaseItem implements IsPlaceable, HasCollision {
+public class DirtItem extends Block implements IsPlaceable, HasCollision {
     
     public DirtItem(int count) {
         super("dirt", "Dirt", 64, count);
@@ -23,6 +23,11 @@ public class DirtItem extends BaseItem implements IsPlaceable, HasCollision {
     }
     @Override
     public boolean isSolid() {
+        return true;
+    }
+
+    @Override
+    public boolean isBreakable() {
         return true;
     }
 }

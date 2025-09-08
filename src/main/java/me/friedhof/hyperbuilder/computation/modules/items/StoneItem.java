@@ -6,7 +6,7 @@ import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 /**
  * Represents stone blocks - placeable solid blocks with higher resistance.
  */
-public class StoneItem extends BaseItem implements IsPlaceable, HasCollision {
+public class StoneItem extends Block{
     
     public StoneItem(int count) {
         super("stone", "Stone", 64, count);
@@ -26,8 +26,12 @@ public class StoneItem extends BaseItem implements IsPlaceable, HasCollision {
     public BaseItem withCount(int newCount) {
         return new StoneItem(newCount);
     }
-@Override
+    @Override
     public boolean isSolid() {
+        return true;
+    }
+    @Override
+    public boolean isBreakable() {
         return true;
     }
 }

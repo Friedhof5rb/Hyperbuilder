@@ -3,6 +3,8 @@ package me.friedhof.hyperbuilder.computation.modules;
 import java.util.HashMap;
 import java.util.Map;
 
+import me.friedhof.hyperbuilder.computation.modules.items.Block;
+
 /**
  * Represents a 4D chunk in the voxel world.
  * A chunk is a 16x16x16x16 section of blocks that is loaded and unloaded as a unit.

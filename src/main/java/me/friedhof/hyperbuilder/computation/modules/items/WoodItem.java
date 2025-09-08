@@ -1,12 +1,10 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
-import me.friedhof.hyperbuilder.computation.modules.interfaces.HasCollision;
-import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 
 /**
  * Represents wood blocks - placeable solid blocks.
  */
-public class WoodItem extends BaseItem implements IsPlaceable, HasCollision {
+public class WoodItem extends Block {
     
     public WoodItem(int count) {
         super("wood_log", "Wood Log", 64, count);
@@ -31,6 +29,10 @@ public class WoodItem extends BaseItem implements IsPlaceable, HasCollision {
     }
     @Override
     public boolean isSolid() {
+        return true;
+    }
+    @Override
+    public boolean isBreakable() {
         return true;
     }
 }

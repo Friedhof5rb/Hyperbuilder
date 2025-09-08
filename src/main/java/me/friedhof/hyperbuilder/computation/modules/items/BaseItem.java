@@ -148,7 +148,15 @@ public abstract class BaseItem implements HasTexture, HasCollision{
         return true;
     }
 
-   
+    @Override
+    public boolean isSolid() {
+        return false;
+    }
+
+    @Override
+    public boolean isBreakable() {
+        return false;
+    }
 
 
 }

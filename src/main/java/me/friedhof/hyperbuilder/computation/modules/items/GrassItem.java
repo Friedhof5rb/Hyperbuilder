@@ -1,12 +1,11 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
-import me.friedhof.hyperbuilder.computation.modules.interfaces.HasCollision;
-import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
+
 
 /**
  * Represents grass blocks - placeable solid blocks.
  */
-public class GrassItem extends BaseItem implements IsPlaceable, HasCollision {
+public class GrassItem extends Block {
     
     public GrassItem(int count) {
         super("grass", "Grass", 64, count);
@@ -24,6 +23,11 @@ public class GrassItem extends BaseItem implements IsPlaceable, HasCollision {
     }
    @Override
     public boolean isSolid() {
+        return true;
+    }
+
+    @Override
+    public boolean isBreakable() {
         return true;
     }
 }

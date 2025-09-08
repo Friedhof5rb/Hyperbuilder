@@ -77,19 +77,23 @@ public class TextureManager2D {
      * Preloads all standard item textures.
      */
     public static void preloadItemTextures() {
-        try {
+      
 
             for(String s : ItemRegistry.itemFactories.keySet()){
                 if(ItemRegistry.itemFactories.get(s).HasTexture()){
-                    loadTexture2D(s + ".png");
+
+                    try {
+                        loadTexture2D(s + ".png");
+                        System.out.println("Loaded: " + s);
+                    } catch (IOException e) {
+                        System.err.println("Failed to preload: "+s + " " + e.getMessage());
+                       
+                    }
                 }
             }
 
-            System.out.println("All 2D item textures preloaded successfully");
-        } catch (IOException e) {
-            System.err.println("Failed to preload 2D item textures: " + e.getMessage());
-            e.printStackTrace();
-        }
+           
+      
     }
     
     /**

@@ -7,13 +7,18 @@ import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 import me.friedhof.hyperbuilder.computation.modules.items.AirItem;
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import me.friedhof.hyperbuilder.computation.modules.items.DirtItem;
+import me.friedhof.hyperbuilder.computation.modules.items.FlintItem;
+import me.friedhof.hyperbuilder.computation.modules.items.GrassBlockItem;
 import me.friedhof.hyperbuilder.computation.modules.items.GrassItem;
 import me.friedhof.hyperbuilder.computation.modules.items.LeavesItem;
+import me.friedhof.hyperbuilder.computation.modules.items.PlantFiberItem;
+import me.friedhof.hyperbuilder.computation.modules.items.SaplingItem;
+import me.friedhof.hyperbuilder.computation.modules.items.SticksItem;
 import me.friedhof.hyperbuilder.computation.modules.items.StoneItem;
 import me.friedhof.hyperbuilder.computation.modules.items.WoodItem;
 import me.friedhof.hyperbuilder.rendering.modules.Texture4D;
 import me.friedhof.hyperbuilder.rendering.modules.Texture2D;
-
+import me.friedhof.hyperbuilder.computation.modules.items.Block;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -99,8 +104,13 @@ public class ItemRegistry {
         
         registerItem(new AirItem(0));
         registerItem(new DirtItem(0));
+        registerItem(new FlintItem(0));
+        registerItem(new GrassBlockItem(0));
         registerItem(new GrassItem(0));
         registerItem(new LeavesItem(0));
+        registerItem(new PlantFiberItem(0));
+        registerItem(new SaplingItem(0));
+        registerItem(new SticksItem(0));
         registerItem(new StoneItem(0));
         registerItem(new WoodItem(0));
     

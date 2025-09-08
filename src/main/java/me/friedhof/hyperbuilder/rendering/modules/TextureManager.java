@@ -126,22 +126,20 @@ public class TextureManager {
      * Preloads all standard block textures.
      */
     public static void preloadTextures() {
-        try {
+      
            
             for(String s : ItemRegistry.itemFactories.keySet()){
                 if(ItemRegistry.itemFactories.get(s) instanceof IsPlaceable){
-                    loadTexture4D(s + ".png");
+                    try {
+                        loadTexture4D(s + ".png");
+                        System.out.println("Loaded: " + s);
+                    } catch (IOException e) {
+                        System.err.println("Failed to preload texture " + s + ": " + e.getMessage());   
+                      
+                    }
                 }
             }
-
-
-
-
-            System.out.println("All textures preloaded successfully");
-        } catch (IOException e) {
-            System.err.println("Failed to preload textures: " + e.getMessage());
-            e.printStackTrace();
-        }
+      
     }
     
     /**
