@@ -4,7 +4,8 @@ package me.friedhof.hyperbuilder.computation.modules.items;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.Material;
-
+import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
+import me.friedhof.hyperbuilder.computation.modules.World;
 
 public class Block extends BaseItem implements IsPlaceable{
 
@@ -25,12 +26,19 @@ public class Block extends BaseItem implements IsPlaceable{
         return true;
     }
 
-@Override
+    @Override
     public boolean HasTexture() {
         return true;
     }
 
+    public boolean canPlaceAt(int x, int y, int z, int w, World world) {
+        Material material = world.getBlock(new Vector4DInt(x,y,z,w)).getBlockId();
 
+        if(material== Material.AIR){
+            return true;
+        }
+        return false;
+    }
     /**
      * Gets the unique identifier for this block type.
      * 

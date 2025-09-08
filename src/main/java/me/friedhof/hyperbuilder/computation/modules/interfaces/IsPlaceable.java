@@ -19,12 +19,5 @@ public interface IsPlaceable {
      * @param w World W coordinate
      * @return true if the item can be placed at this position
      */
-    default boolean canPlaceAt(int x, int y, int z, int w, World world) {
-        Material material = world.getBlock(new Vector4DInt(x,y,z,w)).getBlockId();
-
-        if(material== Material.AIR){
-            return true;
-        }
-        return false;
-    }
+     boolean canPlaceAt(int x, int y, int z, int w, World world);
 }
