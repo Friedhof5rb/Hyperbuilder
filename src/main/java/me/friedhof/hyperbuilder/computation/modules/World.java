@@ -962,11 +962,57 @@ public class World {
     /**
      * Sets a chunk at the specified position.
      * Used for loading chunks from save data.
+     * Also registers all entities from the chunk into the world's entity map.
      * 
      * @param position The chunk position
      * @param chunk The chunk to set
      */
     public void setChunk(Vector4DInt position, Chunk4D chunk) {
         chunks.put(position, chunk);
+        
+        // Register all entities from the chunk into the world's entity map
+        for (Entity entity : chunk.getEntities().values()) {
+            entities.put(entity.getId(), entity);
+            
+            // Update nextEntityId to avoid conflicts
+            if (entity.getId() >= nextEntityId) {
+                nextEntityId = entity.getId() + 1;
+            }
+        }
+    }
+    
+    /**
+     * Syncs all entities from the world entity map to their appropriate chunk entity maps.
+     * This ensures that entities are properly saved with their chunks.
+     * Should be called before saving the world.
+     */
+    public void syncEntitiesToChunks() {
+        // Clear all non-player entities from chunks first to avoid duplicates
+        for (Chunk4D chunk : chunks.values()) {
+            // Remove non-player entities from chunk
+            java.util.Iterator<java.util.Map.Entry<Integer, Entity>> iterator = 
+                chunk.getEntities().entrySet().iterator();
+            while (iterator.hasNext()) {
+                java.util.Map.Entry<Integer, Entity> entry = iterator.next();
+                if (!(entry.getValue() instanceof Player)) {
+                    iterator.remove();
+                }
+            }
+        }
+        
+        // Add all world entities to their appropriate chunks
+        for (Entity entity : entities.values()) {
+            // Skip players as they are saved separately
+            if (entity instanceof Player) {
+                continue;
+            }
+            
+            Vector4DInt chunkPos = getChunkPosition(entity.getPosition());
+            Chunk4D chunk = getChunk(chunkPos);
+            
+            if (chunk != null) {
+                chunk.addEntity(entity);
+            }
+        }
     }
 }

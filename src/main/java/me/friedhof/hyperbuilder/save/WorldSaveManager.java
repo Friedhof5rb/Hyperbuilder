@@ -250,6 +250,9 @@ public class WorldSaveManager {
             Files.createDirectories(chunksDir);
         }
         
+        // Sync entities from world to chunks before saving
+        world.syncEntitiesToChunks();
+        
         // Get all loaded chunks from the world
         Map<Vector4DInt, Chunk4D> chunks = world.getLoadedChunks();
         

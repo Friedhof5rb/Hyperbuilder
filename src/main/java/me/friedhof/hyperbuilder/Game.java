@@ -658,20 +658,40 @@ public class Game {
                 // Remove the block from the world by setting it to air
                 world.setBlock(breakingBlockPos, new AirItem());
                 
+                // Calculate drop position (center of the broken block)
+                Vector4D dropPos = new Vector4D(
+                    breakingBlockPos.getX() + 0.5,
+                    breakingBlockPos.getY() + 0.5,
+                    breakingBlockPos.getZ() + 0.5,
+                    breakingBlockPos.getW() + 0.5
+                );
+                
                 // Handle custom drops for leaves
                 if (Material.LEAVES.equals(blockId)) {
                     // Random chance for sapling drop (10% chance)
                     if (Math.random() < 0.1) {
-                        player.getInventory().addItem(Material.SAPLING, 1);
+                        BaseItem saplingItem = ItemRegistry.createItem(Material.SAPLING, 1);
+                        if (saplingItem != null) {
+                            DroppedItem droppedSapling = new DroppedItem(world.getNextEntityId(), dropPos, saplingItem);
+                            world.addEntity(droppedSapling);
+                        }
                     }
                     // Random chance for sticks drop (20% chance)
                     if (Math.random() < 0.2) {
-                        player.getInventory().addItem(Material.STICKS, 1);
+                        BaseItem sticksItem = ItemRegistry.createItem(Material.STICKS, 1);
+                        if (sticksItem != null) {
+                            DroppedItem droppedSticks = new DroppedItem(world.getNextEntityId(), dropPos, sticksItem);
+                            world.addEntity(droppedSticks);
+                        }
                     }
-                    // Note: No leaves are added to inventory
+                    // Note: No leaves are dropped
                 } else {
-                    // Add the block to the player's inventory for all other blocks
-                    player.getInventory().addItem(blockId, 1);
+                    // Drop the block as an item for all other blocks
+                    BaseItem blockItem = ItemRegistry.createItem(blockId, 1);
+                    if (blockItem != null) {
+                        DroppedItem droppedBlock = new DroppedItem(world.getNextEntityId(), dropPos, blockItem);
+                        world.addEntity(droppedBlock);
+                    }
                 }
                 
             }
