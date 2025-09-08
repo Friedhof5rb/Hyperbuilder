@@ -118,7 +118,7 @@ public class PlayerSaveData implements Serializable {
 class ItemSaveData implements Serializable {
     private static final long serialVersionUID = 2L; // Updated version
     
-    private final String itemId;
+    private final Material itemId;
     private final int count;
     
     public ItemSaveData(BaseItem item) {
@@ -130,6 +130,6 @@ class ItemSaveData implements Serializable {
         return ItemRegistry.createItem(itemId, count);
     }
     
-    public String getItemId() { return itemId; }
+    public Material getItemId() { return itemId; }
     public int getCount() { return count; }
 }

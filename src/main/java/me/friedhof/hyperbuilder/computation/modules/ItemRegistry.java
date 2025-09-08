@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public class ItemRegistry {
   
-    public static Map<String, BaseItem> itemFactories = new HashMap<>();
+    public static Map<Material, BaseItem> itemFactories = new HashMap<>();
     
     
     /**
@@ -41,7 +41,7 @@ public class ItemRegistry {
         itemFactories.put(factory.getItemId(), factory);
     }
 
-    public static BaseItem createItem(String itemID, int count) {
+    public static BaseItem createItem(Material itemID, int count) {
         BaseItem item = itemFactories.get(itemID);
         if (item != null) {
             return item.withCount(count);
@@ -56,7 +56,7 @@ public class ItemRegistry {
      * @param itemID The item to get the texture for
      * @return The 4D texture, or null if not available
      */
-    public static Texture4D getBlockTexture(String itemID) {
+    public static Texture4D getBlockTexture(Material itemID) {
         BaseItem item = createItem(itemID, 1);
         if (item instanceof HasTexture) {
             String textureName = ((HasTexture) item).getBlockTextureName();
@@ -74,7 +74,7 @@ public class ItemRegistry {
      * @param iteID The item to get the texture for
      * @return The 4D texture, or null if not available
      */
-    public static Texture2D getItemTexture(String itemID) {
+    public static Texture2D getItemTexture(Material itemID) {
         BaseItem item = createItem(itemID, 1);
         if (item instanceof HasTexture) {
             String textureName = ((HasTexture) item).getBlockTextureName();

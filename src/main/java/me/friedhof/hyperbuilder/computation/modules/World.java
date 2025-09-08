@@ -111,16 +111,16 @@ public class World {
                         Block block;
                         if (worldY < terrainHeight - 3) {
                             // Deep underground: stone
-                            block = new Block("stone");
+                            block = new Block(Material.STONE);
                         } else if (worldY < terrainHeight - 1) {
                             // Shallow underground: dirt
-                            block = new Block("dirt");
+                            block = new Block(Material.DIRT);
                         } else if (worldY <= terrainHeight) {
                             // Surface: grass
-                            block = new Block("grass");
+                            block = new Block(Material.GRASS_BLOCK);
                         } else {
                             // Above surface: air
-                            block =  new Block("air");
+                            block =  new Block(Material.AIR);
                         }
                         
                         chunk.setBlock(x, y, z, w, block);
@@ -202,7 +202,7 @@ public class World {
             
             // Check if surface block is grass (suitable for tree growth)
             Block surfaceBlock = chunk.getBlock(x, surfaceY, z, w);
-            if (surfaceBlock == null || !"grass".equals(surfaceBlock.getBlockId())) continue;
+            if (surfaceBlock == null || !Material.GRASS_BLOCK.equals(surfaceBlock.getBlockId())) continue;
             
             // Generate tree height using simple deterministic calculation
             int treeHeight = minTreeHeight + (Math.abs((int)(treeSeed * 43)) % (maxTreeHeight - minTreeHeight + 1));
@@ -224,7 +224,7 @@ public class World {
     private int findSurfaceLevel(Chunk4D chunk, int x, int z, int w) {
         for (int y = Chunk4D.CHUNK_SIZE - 1; y >= 0; y--) {
             Block block = chunk.getBlock(x, y, z, w);
-            if (block != null && !new Block("air").equals(block)) {
+            if (block != null && !new Block(Material.AIR).equals(block)) {
                 return y;
             }
         }
@@ -246,7 +246,7 @@ public class World {
         // Generate trunk
         for (int i = 0; i < height; i++) {
             if (y + i < Chunk4D.CHUNK_SIZE) {
-                chunk.setBlock(x, y + i, z, w, new Block("wood_log"));
+                chunk.setBlock(x, y + i, z, w, new Block(Material.WOOD_LOG));
             }
         }
         
@@ -310,8 +310,8 @@ public class World {
         if (targetChunk != null) {
             // Chunk exists, place the leaf if the position is air
             Block existingBlock = targetChunk.getBlock(localX, localY, localZ, localW);
-            if (existingBlock != null && existingBlock.equals(new Block("air"))) {
-                targetChunk.setBlock(localX, localY, localZ, localW, new Block("leaves"));
+            if (existingBlock != null && existingBlock.equals(new Block(Material.AIR))) {
+                targetChunk.setBlock(localX, localY, localZ, localW, new Block(Material.LEAVES));
             }
         } else {
             // Chunk doesn't exist, add to pending leaves
@@ -329,8 +329,8 @@ public class World {
             for (Vector4DInt leafPos : pendingForThisChunk) {
                 // Only place leaf if the position is air
                 Block existingBlock = chunk.getBlock(leafPos.getX(), leafPos.getY(), leafPos.getZ(), leafPos.getW());
-                if (existingBlock != null && existingBlock.equals(new Block("air"))) {
-                    chunk.setBlock(leafPos.getX(), leafPos.getY(), leafPos.getZ(), leafPos.getW(), new Block("leaves"));
+                if (existingBlock != null && existingBlock.equals(new Block(Material.AIR))) {
+                    chunk.setBlock(leafPos.getX(), leafPos.getY(), leafPos.getZ(), leafPos.getW(), new Block(Material.LEAVES));
                 }
             }
         }
@@ -372,9 +372,9 @@ public class World {
                         // Check if this position should be a cave
                         if (caveNoise > caveThreshold) {
                             Block currentBlock = chunk.getBlock(x, y, z, w);
-                            if (currentBlock != null && !currentBlock.equals(new Block("air"))) {
+                            if (currentBlock != null && !currentBlock.equals(new Block(Material.AIR))) {
                                 // Create cave by setting block to air
-                                chunk.setBlock(x, y, z, w, new Block("air"));
+                                chunk.setBlock(x, y, z, w, new Block(Material.AIR));
                             }
                         }
                     }
@@ -448,15 +448,15 @@ public class World {
                         
                         // Apply 4D-appropriate rules for cave connectivity
                         Block currentBlock = originalBlocks[x][y][z][w];
-                        if (currentBlock != null && currentBlock.equals(new Block("air"))) {
+                        if (currentBlock != null && currentBlock.equals(new Block(Material.AIR))) {
                             // Fill isolated air pockets (5+ solid neighbors in 4D)
                             if (solidNeighbors >= 5) {
-                                chunk.setBlock(x, y, z, w, new Block("stone"));
+                                chunk.setBlock(x, y, z, w, new Block(Material.STONE));
                             }
-                        } else if (currentBlock != null && !currentBlock.equals(new Block("air"))) {
+                        } else if (currentBlock != null && !currentBlock.equals(new Block(Material.AIR))) {
                             // Create air in very isolated solid blocks (0-1 solid neighbors)
                             if (solidNeighbors <= 1) {
-                                chunk.setBlock(x, y, z, w, new Block("air"));
+                                chunk.setBlock(x, y, z, w, new Block(Material.AIR));
                             }
                         }
                     }
@@ -496,7 +496,7 @@ public class World {
                 nz >= 0 && nz < Chunk4D.CHUNK_SIZE) {
                 
                 Block neighbor = blocks[nx][ny][nz][w];
-                if (neighbor != null && !neighbor.equals(new Block("air"))) {
+                if (neighbor != null && !neighbor.equals(new Block(Material.AIR))) {
                     count++;
                 }
             } else {
@@ -757,7 +757,7 @@ public class World {
             Block block = getBlock(blockPos);
             
             // Check if this block is solid (not air)
-            if (block != null && !block.equals(new Block("air"))) {
+            if (block != null && !block.equals(new Block(Material.AIR))) {
                 // Found solid ground, spawn player 1.25 blocks above it
                 // (Player center at Y+1.25 means feet at Y+1, just above the solid block at Y)
                 double spawnY = y + 1.25;

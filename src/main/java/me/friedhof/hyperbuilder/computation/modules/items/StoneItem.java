@@ -1,5 +1,6 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
+import me.friedhof.hyperbuilder.computation.modules.Material;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.HasCollision;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 
@@ -9,13 +10,10 @@ import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 public class StoneItem extends Block{
     
     public StoneItem(int count) {
-        super("stone", "Stone", 64, count);
+        super(Material.STONE, "Stone", 64, count);
     }
     
-    @Override
-    public String getBlockTextureName() {
-        return "stone";
-    }
+  
     // HasCollision implementation with higher resistance
     @Override
     public float getCollisionResistance() {

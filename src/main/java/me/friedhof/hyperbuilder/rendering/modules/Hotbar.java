@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 import me.friedhof.hyperbuilder.computation.modules.Inventory;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+import me.friedhof.hyperbuilder.computation.modules.Material;
 
 /**
  * Hotbar UI component for displaying and selecting items.
@@ -184,7 +185,7 @@ public class Hotbar {
      * @param y The slot y position
      * @param size The slot size
      */
-    private void drawItem(Graphics2D g, me.friedhof.hyperbuilder.computation.modules.items.BaseItem item, int x, int y, int size) {
+    private void drawItem(Graphics2D g, BaseItem item, int x, int y, int size) {
         int itemSize = size - 8; // Leave some padding
         int itemX = x + 4;
         int itemY = y + 4;
@@ -296,7 +297,7 @@ public class Hotbar {
      * @param itemId The item ID
      * @return The corresponding Texture2D, or null if no texture is available
      */
-    private Texture2D getTexture2DForItemType(String itemId) {
+    private Texture2D getTexture2DForItemType(Material itemId) {
 
         return ItemRegistry.getItemTexture(itemId);
     }

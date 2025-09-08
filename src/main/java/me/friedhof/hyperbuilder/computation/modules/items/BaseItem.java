@@ -2,14 +2,14 @@ package me.friedhof.hyperbuilder.computation.modules.items;
 
 import me.friedhof.hyperbuilder.computation.modules.interfaces.HasCollision;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.HasTexture;
-import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
+import me.friedhof.hyperbuilder.computation.modules.Material;
 
 /**
  * Abstract base class for all items in the game.
  * Provides common functionality and properties that all items share.
  */
 public abstract class BaseItem implements HasTexture, HasCollision{
-    protected final String itemId;
+    protected final Material itemId;
     protected final String displayName;
     protected final int maxStackSize;
     protected int count;
@@ -23,7 +23,7 @@ public abstract class BaseItem implements HasTexture, HasCollision{
      * @param maxStackSize The maximum number of items that can be stacked
      * @param count The current number of items in this stack
      */
-    protected BaseItem(String itemId, String displayName, int maxStackSize, int count) {
+    protected BaseItem(Material itemId, String displayName, int maxStackSize, int count) {
         this.itemId = itemId;
         this.displayName = displayName;
         this.maxStackSize = maxStackSize;
@@ -40,7 +40,7 @@ public abstract class BaseItem implements HasTexture, HasCollision{
      * @param count The current number of items in this stack
      * @param metadata Additional data about the item
      */
-    protected BaseItem(String itemId, String displayName, int maxStackSize, int count, byte metadata) {
+    protected BaseItem(Material itemId, String displayName, int maxStackSize, int count, byte metadata) {
         this.itemId = itemId;
         this.displayName = displayName;
         this.maxStackSize = maxStackSize;
@@ -48,13 +48,18 @@ public abstract class BaseItem implements HasTexture, HasCollision{
         this.metadata = metadata;
     }
 
+    @Override
+    public String getBlockTextureName() {
+        return itemId.toString();
+    }
 
+    
     /**
      * Gets the unique identifier for this item type.
      * 
      * @return The item ID
      */
-    public String getItemId() {
+    public Material getItemId() {
         return itemId;
     }
     

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
+import me.friedhof.hyperbuilder.computation.modules.Material;
 
 /**
  * Manages 2D textures for item rendering.
@@ -79,7 +80,7 @@ public class TextureManager2D {
     public static void preloadItemTextures() {
       
 
-            for(String s : ItemRegistry.itemFactories.keySet()){
+            for(Material s : ItemRegistry.itemFactories.keySet()){
                 if(ItemRegistry.itemFactories.get(s).HasTexture()){
 
                     try {

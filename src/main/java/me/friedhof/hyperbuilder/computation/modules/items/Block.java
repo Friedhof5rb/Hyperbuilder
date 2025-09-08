@@ -3,17 +3,16 @@ package me.friedhof.hyperbuilder.computation.modules.items;
 
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
-import me.friedhof.hyperbuilder.computation.modules.interfaces.HasCollision;
+import me.friedhof.hyperbuilder.computation.modules.Material;
 
 
+public class Block extends BaseItem implements IsPlaceable{
 
-public class Block extends BaseItem implements IsPlaceable, HasCollision{
-
-    public Block(String itemId) {
+    public Block(Material itemId) {
         super(itemId, ItemRegistry.itemFactories.get(itemId).getDisplayName(), 64, 0);
     }
 
-  public Block(String itemId,String displayName,int maxStackSize, int count) {
+  public Block(Material itemId,String displayName,int maxStackSize, int count) {
         super(itemId,displayName,maxStackSize,count);
     }
 
@@ -43,13 +42,13 @@ public class Block extends BaseItem implements IsPlaceable, HasCollision{
      * 
      * @return The block ID
      */
-    public String getBlockId() {
+    public Material getBlockId() {
         return itemId;
     }
     
     @Override
     public String getBlockTextureName() {
-        return itemId;
+        return itemId.toString();
     }
     
 

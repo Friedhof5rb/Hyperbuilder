@@ -339,7 +339,7 @@ public class Player extends Entity {
                         // Check if there's a solid block at this position
                          Vector4DInt blockPos = new Vector4DInt(x, y, z, w);
                          Block block = world.getBlock(blockPos);
-                         if (block != null && !block.getBlockId().equals(new Block("air").getBlockId())) { // Check if block exists and is not air
+                         if (block != null && !block.getBlockId().equals(new Block(Material.AIR).getBlockId())) { // Check if block exists and is not air
                              // Check if player's bounding box intersects with this block
                              if (intersectsBlock(minX, maxX, minY, maxY, minZ, maxZ, minW, maxW, x, y, z, w)) {
                                  return true; // Collision detected

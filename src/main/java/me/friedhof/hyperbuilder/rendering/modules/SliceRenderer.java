@@ -12,6 +12,7 @@ import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
 import me.friedhof.hyperbuilder.computation.modules.World;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
+import me.friedhof.hyperbuilder.computation.modules.Material;
 
 /**
  * Renders a single 2D slice of the 4D world.
@@ -26,8 +27,7 @@ public class SliceRenderer {
     // The rendered image
     private BufferedImage sliceImage;
     
-    // 4D texture for grass blocks
-    private HashMap<String, Texture4D> texturelist = new HashMap<>();
+    private HashMap<Material, Texture4D> texturelist = new HashMap<>();
    
     
     /**
@@ -97,7 +97,7 @@ public class SliceRenderer {
      */
     private void loadTextures() {
         
-           for(String s : ItemRegistry.itemFactories.keySet()){
+           for(Material s : ItemRegistry.itemFactories.keySet()){
                 if(ItemRegistry.itemFactories.get(s) instanceof IsPlaceable){
                     try {
                         texturelist.put(s, TextureManager.loadTexture4D(s + ".png"));
@@ -353,10 +353,10 @@ public class SliceRenderer {
         int pixelY = (int)((y - 0.5) * BLOCK_SIZE + fracY * BLOCK_SIZE); // Note: + because Y is inverted
         
         // Draw the block based on its type
-        if (block != null && !block.getBlockId().equals(new Block("air").getBlockId())) {
-            String blockId = block.getBlockId();
+        if (block != null && !block.getBlockId().equals(new Block(Material.AIR).getBlockId())) {
+            Material blockId = block.getBlockId();
 
-            for(String s : texturelist.keySet()){
+            for(Material s : texturelist.keySet()){
                 if(s.equals(blockId)){
                     if(texturelist.get(s) != null){
                         drawTexturedBlock(g, pixelX, pixelY, texturelist.get(s), blockPos, fracZ, fracW);
@@ -378,7 +378,7 @@ public class SliceRenderer {
         Color outlineColor;
         int outlineThickness;
 
-        if (canDestroy && (!block.getBlockId().equals(new Block("air").getBlockId()) || game.hasAdjacentBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW()))) {
+        if (canDestroy && (!block.getBlockId().equals(new Block(Material.AIR).getBlockId()) || game.hasAdjacentBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW()))) {
             // Green for blocks that can be destroyed
             outlineColor = new Color(0, 255, 0, 200) ;
         } else {

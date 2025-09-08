@@ -1,5 +1,6 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
+import me.friedhof.hyperbuilder.computation.modules.Material;
 
 /**
  * Represents flint - placeable item with no collision.
@@ -8,13 +9,10 @@ package me.friedhof.hyperbuilder.computation.modules.items;
 public class FlintItem extends Block {
     
     public FlintItem(int count) {
-        super("flint", "Flint", 64, count);
+        super(Material.FLINT, "Flint", 64, count);
     }
     
-    @Override
-    public String getBlockTextureName() {
-        return "flint";
-    }
+ 
     
     @Override
     public BaseItem withCount(int newCount) {

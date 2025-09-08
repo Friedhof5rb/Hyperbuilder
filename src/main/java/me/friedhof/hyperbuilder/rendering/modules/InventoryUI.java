@@ -7,6 +7,7 @@ import me.friedhof.hyperbuilder.computation.modules.Inventory;
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import java.awt.event.MouseEvent;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
+import me.friedhof.hyperbuilder.computation.modules.Material;
 
 
 /**
@@ -575,7 +576,7 @@ public class InventoryUI {
      * @param itemId The item ID
      * @return The corresponding Texture2D, or null if no texture is available
      */
-    private Texture2D getTexture2DForItemType(String itemId) {
+    private Texture2D getTexture2DForItemType(Material itemId) {
        return ItemRegistry.getItemTexture(itemId);
     }
 }

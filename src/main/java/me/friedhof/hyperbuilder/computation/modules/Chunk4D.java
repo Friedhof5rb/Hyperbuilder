@@ -42,7 +42,7 @@ public class Chunk4D {
             for (int y = 0; y < CHUNK_SIZE; y++) {
                 for (int z = 0; z < CHUNK_SIZE; z++) {
                     for (int w = 0; w < CHUNK_SIZE; w++) {
-                        blocks[x][y][z][w] = new Block("air");
+                        blocks[x][y][z][w] = new Block(Material.AIR);
                     }
                 }
             }

@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.imageio.ImageIO;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
+import me.friedhof.hyperbuilder.computation.modules.Material;
 
 /**
  * Manages loading and caching of 4D textures.
@@ -128,7 +129,7 @@ public class TextureManager {
     public static void preloadTextures() {
       
            
-            for(String s : ItemRegistry.itemFactories.keySet()){
+            for(Material s : ItemRegistry.itemFactories.keySet()){
                 if(ItemRegistry.itemFactories.get(s) instanceof IsPlaceable){
                     try {
                         loadTexture4D(s + ".png");

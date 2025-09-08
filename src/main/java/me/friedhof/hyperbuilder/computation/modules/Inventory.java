@@ -110,7 +110,7 @@ public class Inventory {
      * @param count The number of items to add
      * @return true if the item was added, false if there was no room
      */
-    public boolean addItem(String itemId, int count) {
+    public boolean addItem(Material itemId, int count) {
         if (count <= 0) {
             return true;
         }
@@ -161,7 +161,7 @@ public class Inventory {
      * @param count The number of items to remove
      * @return true if the item was removed, false otherwise
      */
-    public boolean removeItem(String itemId, int count) {
+    public boolean removeItem(Material itemId, int count) {
         if (count <= 0) {
             return true;
         }

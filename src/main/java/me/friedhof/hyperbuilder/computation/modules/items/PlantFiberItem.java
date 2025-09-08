@@ -1,5 +1,6 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
+import me.friedhof.hyperbuilder.computation.modules.Material;
 
 /**
  * Represents plant fiber - non-placeable crafting material.
@@ -8,13 +9,9 @@ package me.friedhof.hyperbuilder.computation.modules.items;
 public class PlantFiberItem extends BaseItem {
     
     public PlantFiberItem(int count) {
-        super("plant_fiber", "Plant Fiber", 64, count);
+        super(Material.PLANT_FIBER, "Plant Fiber", 64, count);
     }
     
-    @Override
-    public String getBlockTextureName() {
-        return "plant_fiber";
-    }
     
     @Override
     public BaseItem withCount(int newCount) {

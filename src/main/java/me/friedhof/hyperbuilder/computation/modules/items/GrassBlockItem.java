@@ -1,20 +1,17 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
-
+import me.friedhof.hyperbuilder.computation.modules.Material;
 /**
- * Represents grass blocks - placeable items with no collision.
+ * Represents grass blocks - placeable items with no collision.a
  * This is different from the existing grass item - these grass blocks can be placed but have no collision.
  */
 public class GrassBlockItem extends Block{
     
     public GrassBlockItem(int count) {
-        super("grass_block", "Grass Block", 64, count);
+        super(Material.GRASS_BLOCK, "Grass Block", 64, count);
     }
     
-    @Override
-    public String getBlockTextureName() {
-        return "grass_block";
-    }
+    
     
     @Override
     public BaseItem withCount(int newCount) {
@@ -23,14 +20,9 @@ public class GrassBlockItem extends Block{
     
     @Override
     public boolean isSolid() {
-        return false; // Grass blocks have no collision - players can walk through them
+        return true; // Grass blocks have no collision - players can walk through them
     }
-    
-    @Override
-    public float getCollisionResistance() {
-        return 0.0f; // No resistance since it has no collision
-    }
-    
+
     @Override
     public boolean isBreakable() {
         return true;

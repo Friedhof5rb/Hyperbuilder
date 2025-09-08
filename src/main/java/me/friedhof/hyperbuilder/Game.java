@@ -32,6 +32,8 @@ import me.friedhof.hyperbuilder.save.WorldSaveManager;
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.Inventory;
+import me.friedhof.hyperbuilder.computation.modules.Material;
+
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -220,11 +222,9 @@ public class Game {
         
         // Give the player some starting blocks
        Inventory inventory = player.getInventory();
-        inventory.addItem("dirt", 64);
-        inventory.addItem("stone", 32);
-        inventory.addItem("wood_log", 16);
-        inventory.addItem("grass", 32);
-        inventory.addItem("leaves", 16);
+        inventory.addItem(Material.DIRT, 64);
+        inventory.addItem(Material.STONE, 32);
+        inventory.addItem(Material.WOOD_LOG, 16);
         
         // Create a camera starting at the player's initial world position
         camera = new Camera(new Vector4D(0, 1, 0, 0));
@@ -640,20 +640,20 @@ public class Game {
             // Get the block type before destroying it
             Block block = world.getBlock(breakingBlockPos);
             if (block != null && block.isBreakable()) {
-                String blockId = block.getBlockId();
+                Material blockId = block.getBlockId();
                 
                 // Remove the block from the world by setting it to air
-                world.setBlock(breakingBlockPos, new Block("air"));
+                world.setBlock(breakingBlockPos, new Block(Material.AIR));
                 
                 // Handle custom drops for leaves
-                if ("leaves".equals(blockId)) {
+                if (Material.LEAVES.equals(blockId)) {
                     // Random chance for sapling drop (10% chance)
                     if (Math.random() < 0.1) {
-                        player.getInventory().addItem("sapling", 1);
+                        player.getInventory().addItem(Material.SAPLING, 1);
                     }
                     // Random chance for sticks drop (20% chance)
                     if (Math.random() < 0.2) {
-                        player.getInventory().addItem("sticks", 1);
+                        player.getInventory().addItem(Material.STICKS, 1);
                     }
                     // Note: No leaves are added to inventory
                 } else {

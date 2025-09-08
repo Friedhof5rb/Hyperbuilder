@@ -1,19 +1,16 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
-
+import me.friedhof.hyperbuilder.computation.modules.Material;
 /**
  * Represents wood blocks - placeable solid blocks.
  */
 public class WoodItem extends Block {
     
     public WoodItem(int count) {
-        super("wood_log", "Wood Log", 64, count);
+        super(Material.WOOD_LOG, "Wood Log", 64, count);
     }
     
-    @Override
-    public String getBlockTextureName() {
-        return "wood_log";
-    }
+ 
     
   
     

@@ -1,20 +1,16 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
-
+import me.friedhof.hyperbuilder.computation.modules.Material;
 /**
  * Represents leaves blocks - placeable blocks with low collision resistance.
  */
 public class LeavesItem extends Block{
     
     public LeavesItem(int count) {
-        super("leaves", "Leaves", 64, count);
+        super(Material.LEAVES, "Leaves", 64, count);
     }
     
-    @Override
-    public String getBlockTextureName() {
-        return "leaves";
-    }
-    
+  
     // HasCollision implementation with low resistance
     @Override
     public float getCollisionResistance() {

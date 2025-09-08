@@ -2,6 +2,7 @@ package me.friedhof.hyperbuilder.computation.modules.items;
 
 import me.friedhof.hyperbuilder.computation.modules.interfaces.HasCollision;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
+import me.friedhof.hyperbuilder.computation.modules.Material;
 
 /**
  * Represents saplings - placeable items with no collision.
@@ -11,13 +12,10 @@ import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 public class SaplingItem extends Block {
     
     public SaplingItem(int count) {
-        super("sapling", "Sapling", 64, count);
+        super(Material.SAPLING, "Sapling", 64, count);
     }
     
-    @Override
-    public String getBlockTextureName() {
-        return "sapling";
-    }
+  
     
     @Override
     public BaseItem withCount(int newCount) {

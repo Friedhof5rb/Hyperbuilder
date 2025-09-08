@@ -1,6 +1,6 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
-
+import me.friedhof.hyperbuilder.computation.modules.Material;
 
 /**
  * Represents grass blocks - placeable solid blocks.
@@ -8,13 +8,10 @@ package me.friedhof.hyperbuilder.computation.modules.items;
 public class GrassItem extends Block {
     
     public GrassItem(int count) {
-        super("grass", "Grass", 64, count);
+        super(Material.GRASS, "Grass", 64, count);
     }
     
-    @Override
-    public String getBlockTextureName() {
-        return "grass";
-    }
+    
     
   
       @Override
@@ -23,7 +20,7 @@ public class GrassItem extends Block {
     }
    @Override
     public boolean isSolid() {
-        return true;
+        return false;
     }
 
     @Override

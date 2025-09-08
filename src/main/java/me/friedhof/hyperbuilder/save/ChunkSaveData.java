@@ -16,7 +16,7 @@ public class ChunkSaveData implements Serializable {
     private final int posX, posY, posZ, posW;
     
     // Block data - stored as a flattened array for efficiency
-    private final String[] blockIds;
+    private final Material[] blockIds;
     
     // Entity data
     private final Map<Integer, EntitySaveData> entities;
@@ -37,14 +37,14 @@ public class ChunkSaveData implements Serializable {
         this.posW = pos.getW();
         
         // Serialize blocks
-        this.blockIds = new String[Chunk4D.CHUNK_VOLUME];
+        this.blockIds = new Material[Chunk4D.CHUNK_VOLUME];
         int index = 0;
         for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
             for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
                 for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
                     for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
                         Block block = chunk.getBlock(x, y, z, w);
-                        blockIds[index++] = (block != null) ? block.getBlockId() : "air";
+                        blockIds[index++] = (block != null) ? block.getBlockId() : Material.AIR;
                     }
                 }
             }
@@ -77,7 +77,7 @@ public class ChunkSaveData implements Serializable {
             for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
                 for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
                     for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
-                        String blockId = blockIds[index++];
+                        Material blockId = blockIds[index++];
                         Block block = new Block(blockId);
                         chunk.setBlock(x, y, z, w, block);
                     }
