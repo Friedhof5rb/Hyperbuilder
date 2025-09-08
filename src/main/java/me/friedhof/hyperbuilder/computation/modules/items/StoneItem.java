@@ -1,8 +1,6 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
 import me.friedhof.hyperbuilder.computation.modules.Material;
-import me.friedhof.hyperbuilder.computation.modules.interfaces.HasCollision;
-import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 
 /**
  * Represents stone blocks - placeable solid blocks with higher resistance.

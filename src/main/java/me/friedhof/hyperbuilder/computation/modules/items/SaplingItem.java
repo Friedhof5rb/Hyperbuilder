@@ -1,7 +1,5 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
-import me.friedhof.hyperbuilder.computation.modules.interfaces.HasCollision;
-import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 import me.friedhof.hyperbuilder.computation.modules.Material;
 
 /**
