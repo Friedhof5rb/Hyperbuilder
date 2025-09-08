@@ -13,6 +13,7 @@ public interface HasCollision {
     boolean isSolid();
     
     boolean isBreakable();
+    
 
 
 
