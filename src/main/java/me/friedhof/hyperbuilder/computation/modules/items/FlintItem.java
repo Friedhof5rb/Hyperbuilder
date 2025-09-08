@@ -11,7 +11,9 @@ public class FlintItem extends Block {
     public FlintItem(int count) {
         super(Material.FLINT, "Flint", 64, count);
     }
-    
+    public FlintItem() {
+        super(Material.FLINT, "Flint", 64, 0);
+    }
  
     
     @Override

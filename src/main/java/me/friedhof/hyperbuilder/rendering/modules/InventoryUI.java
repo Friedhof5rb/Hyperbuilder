@@ -24,8 +24,8 @@ public class InventoryUI {
     private static final int HOTBAR_INVENTORY_GAP = 30;
     
     // Colors
-    private static final Color BACKGROUND_COLOR = new Color(64, 64, 64, 220);
-    private static final Color SLOT_BACKGROUND = new Color(32, 32, 32, 200);
+    private static final Color BACKGROUND_COLOR = new Color(192, 192, 192, 220);
+    private static final Color SLOT_BACKGROUND = new Color(192, 192, 192, 200);
     private static final Color SLOT_BORDER = new Color(128, 128, 128);
     private static final Color HOVER_BORDER = new Color(255, 255, 255);
     private static final Color TEXT_COLOR = Color.WHITE;

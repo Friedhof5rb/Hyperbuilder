@@ -9,7 +9,9 @@ public class WoodItem extends Block {
     public WoodItem(int count) {
         super(Material.WOOD_LOG, "Wood Log", 64, count);
     }
-    
+    public WoodItem() {
+        super(Material.WOOD_LOG, "Wood Log", 64, 0);
+    }
  
     
   

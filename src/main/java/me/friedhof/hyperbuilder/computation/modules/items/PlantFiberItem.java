@@ -11,7 +11,9 @@ public class PlantFiberItem extends BaseItem {
     public PlantFiberItem(int count) {
         super(Material.PLANT_FIBER, "Plant Fiber", 64, count);
     }
-    
+    public PlantFiberItem() {
+        super(Material.PLANT_FIBER, "Plant Fiber", 64, 0);
+    }
     
     @Override
     public BaseItem withCount(int newCount) {

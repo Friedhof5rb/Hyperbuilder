@@ -9,7 +9,9 @@ public class LeavesItem extends Block{
     public LeavesItem(int count) {
         super(Material.LEAVES, "Leaves", 64, count);
     }
-    
+    public LeavesItem() {
+        super(Material.LEAVES, "Leaves", 64, 0);
+    }
   
     // HasCollision implementation with low resistance
     @Override

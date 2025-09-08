@@ -8,9 +8,7 @@ import me.friedhof.hyperbuilder.computation.modules.Material;
 
 public class Block extends BaseItem implements IsPlaceable{
 
-    public Block(Material itemId) {
-        super(itemId, ItemRegistry.itemFactories.get(itemId).getDisplayName(), 64, 0);
-    }
+  
 
   public Block(Material itemId,String displayName,int maxStackSize, int count) {
         super(itemId,displayName,maxStackSize,count);
@@ -25,10 +23,6 @@ public class Block extends BaseItem implements IsPlaceable{
     @Override
     public boolean isBreakable() {
         return true;
-    }
-    @Override
-    public boolean canPlaceAt(int x, int y, int z, int w) {
-        return IsPlaceable.super.canPlaceAt(x, y, z, w);
     }
 
 @Override

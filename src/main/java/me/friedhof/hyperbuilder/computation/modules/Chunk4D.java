@@ -3,6 +3,7 @@ package me.friedhof.hyperbuilder.computation.modules;
 import java.util.HashMap;
 import java.util.Map;
 
+import me.friedhof.hyperbuilder.computation.modules.items.AirItem;
 import me.friedhof.hyperbuilder.computation.modules.items.Block;
 
 /**
@@ -42,7 +43,7 @@ public class Chunk4D {
             for (int y = 0; y < CHUNK_SIZE; y++) {
                 for (int z = 0; z < CHUNK_SIZE; z++) {
                     for (int w = 0; w < CHUNK_SIZE; w++) {
-                        blocks[x][y][z][w] = new Block(Material.AIR);
+                        blocks[x][y][z][w] = new AirItem();
                     }
                 }
             }

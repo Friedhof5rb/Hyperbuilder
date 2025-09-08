@@ -12,7 +12,9 @@ public class StoneItem extends Block{
     public StoneItem(int count) {
         super(Material.STONE, "Stone", 64, count);
     }
-    
+    public StoneItem() {
+        super(Material.STONE, "Stone", 64, 0);
+    }
   
     // HasCollision implementation with higher resistance
     @Override

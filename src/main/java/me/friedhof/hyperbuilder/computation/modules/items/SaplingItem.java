@@ -14,8 +14,10 @@ public class SaplingItem extends Block {
     public SaplingItem(int count) {
         super(Material.SAPLING, "Sapling", 64, count);
     }
+    public SaplingItem() {
+        super(Material.SAPLING, "Sapling", 64, 0);
+    }
     
-  
     
     @Override
     public BaseItem withCount(int newCount) {

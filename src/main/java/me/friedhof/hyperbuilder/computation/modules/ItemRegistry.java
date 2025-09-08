@@ -30,6 +30,9 @@ public class ItemRegistry {
   
     public static Map<Material, BaseItem> itemFactories = new HashMap<>();
     
+
+
+
     
     /**
      * Registers an item factory with the registry.
@@ -89,12 +92,14 @@ public class ItemRegistry {
      * @param item The placeable item to create a block from
      * @return The corresponding block, or null if the item is not placeable
      */
-    public static Block createBlockFromItem(BaseItem item) {
+    public static Block createBlock(Material id) {
+
+        BaseItem item = ItemRegistry.createItem(id, 1);
         if (!(item instanceof IsPlaceable)) {
             return null;
         }
-        
-        return new Block(item.getItemId());
+    
+        return (Block) item;
     }
     
     /**

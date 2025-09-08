@@ -8,7 +8,9 @@ public class AirItem extends Block {
     public AirItem(int count) {
         super(Material.AIR, "Air", 64, count);
     }
-    
+     public AirItem() {
+        super(Material.AIR, "Air", 64, 0);
+    }
   
     
     @Override
@@ -30,4 +32,5 @@ public class AirItem extends Block {
     public boolean isBreakable() {
         return false;
     }
+    
 }

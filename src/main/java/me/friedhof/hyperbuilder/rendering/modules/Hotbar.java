@@ -19,7 +19,7 @@ public class Hotbar {
     private static final int HOTBAR_PADDING = 10;
     
     // Colors
-    private static final Color SLOT_BACKGROUND = new Color(64, 64, 64, 200);
+    private static final Color SLOT_BACKGROUND = new Color(192, 192, 192, 200);
     private static final Color SLOT_BORDER = new Color(128, 128, 128);
     private static final Color SELECTED_BORDER = new Color(255, 255, 255);
     private static final Color TEXT_COLOR = Color.WHITE;

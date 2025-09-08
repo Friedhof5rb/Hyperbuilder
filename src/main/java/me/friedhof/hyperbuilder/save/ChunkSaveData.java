@@ -78,7 +78,7 @@ public class ChunkSaveData implements Serializable {
                 for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
                     for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
                         Material blockId = blockIds[index++];
-                        Block block = new Block(blockId);
+                        Block block = ItemRegistry.createBlock(blockId);
                         chunk.setBlock(x, y, z, w, block);
                     }
                 }

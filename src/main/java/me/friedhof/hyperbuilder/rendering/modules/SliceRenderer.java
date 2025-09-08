@@ -353,7 +353,7 @@ public class SliceRenderer {
         int pixelY = (int)((y - 0.5) * BLOCK_SIZE + fracY * BLOCK_SIZE); // Note: + because Y is inverted
         
         // Draw the block based on its type
-        if (block != null && !block.getBlockId().equals(new Block(Material.AIR).getBlockId())) {
+        if (block != null && !block.getBlockId().equals(Material.AIR)) {
             Material blockId = block.getBlockId();
 
             for(Material s : texturelist.keySet()){
@@ -378,7 +378,7 @@ public class SliceRenderer {
         Color outlineColor;
         int outlineThickness;
 
-        if (canDestroy && (!block.getBlockId().equals(new Block(Material.AIR).getBlockId()) || game.hasAdjacentBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW()))) {
+        if (canDestroy && (!block.getBlockId().equals(Material.AIR) || game.hasAdjacentBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW()))) {
             // Green for blocks that can be destroyed
             outlineColor = new Color(0, 255, 0, 200) ;
         } else {

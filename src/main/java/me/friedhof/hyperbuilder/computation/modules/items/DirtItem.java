@@ -11,6 +11,9 @@ public class DirtItem extends Block implements IsPlaceable, HasCollision {
     public DirtItem(int count) {
         super(Material.DIRT, "Dirt", 64, count);
     }
+    public DirtItem() {
+        super(Material.DIRT, "Dirt", 64, 0);
+    }
     
     
     @Override

@@ -10,7 +10,9 @@ public class GrassItem extends Block {
     public GrassItem(int count) {
         super(Material.GRASS, "Grass", 64, count);
     }
-    
+    public GrassItem() {
+        super(Material.GRASS, "Grass", 64, 0);
+    }
     
     
   

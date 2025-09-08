@@ -10,7 +10,9 @@ public class SticksItem extends BaseItem {
     public SticksItem(int count) {
         super(Material.STICKS, "Sticks", 64, count);
     }
-    
+    public SticksItem() {
+        super(Material.STICKS, "Sticks", 64, 0);
+    }
  
     
     @Override

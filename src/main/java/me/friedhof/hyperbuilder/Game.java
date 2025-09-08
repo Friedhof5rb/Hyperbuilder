@@ -29,6 +29,7 @@ import me.friedhof.hyperbuilder.rendering.modules.TextureManager2D;
 import me.friedhof.hyperbuilder.ui.MainMenu;
 import me.friedhof.hyperbuilder.save.SavedWorldInfo;
 import me.friedhof.hyperbuilder.save.WorldSaveManager;
+import me.friedhof.hyperbuilder.computation.modules.items.AirItem;
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.Inventory;
@@ -643,7 +644,7 @@ public class Game {
                 Material blockId = block.getBlockId();
                 
                 // Remove the block from the world by setting it to air
-                world.setBlock(breakingBlockPos, new Block(Material.AIR));
+                world.setBlock(breakingBlockPos, new AirItem());
                 
                 // Handle custom drops for leaves
                 if (Material.LEAVES.equals(blockId)) {
@@ -895,7 +896,7 @@ public class Game {
         Block block = world.getBlock(position);
         
         // Check if the position is empty (null or air) and is in line of sight
-        if ((block == null || !block.isSolid()) && !checkCollisionWithBlockPosition(x, y, z, w) && isInSightOfPlayer(x, y, z, w)) {
+        if ((block == null || block.canPlaceAt(x,y,z,w, world)) && !checkCollisionWithBlockPosition(x, y, z, w) && isInSightOfPlayer(x, y, z, w)) {
             // Get the selected item from the hotbar
             BaseItem selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
             
@@ -903,7 +904,7 @@ public class Game {
                 // Check if there's an adjacent block (adjacency validation)
                 if (hasAdjacentBlock(x, y, z, w)) {
                     // Create block from the placeable item using its properties
-                    Block blockToPlace = ItemRegistry.createBlockFromItem(selectedItem);
+                    Block blockToPlace = ItemRegistry.createBlock(selectedItem.getItemId());
                     if (blockToPlace != null) {
                         world.setBlock(new Vector4DInt(x, y, z, w), blockToPlace);
                     } else {

@@ -111,16 +111,16 @@ public class World {
                         Block block;
                         if (worldY < terrainHeight - 3) {
                             // Deep underground: stone
-                            block = new Block(Material.STONE);
+                            block = ItemRegistry.createBlock(Material.STONE);
                         } else if (worldY < terrainHeight - 1) {
                             // Shallow underground: dirt
-                            block = new Block(Material.DIRT);
+                            block =  ItemRegistry.createBlock(Material.DIRT);
                         } else if (worldY <= terrainHeight) {
                             // Surface: grass
-                            block = new Block(Material.GRASS_BLOCK);
+                            block = ItemRegistry.createBlock(Material.GRASS_BLOCK);
                         } else {
                             // Above surface: air
-                            block =  new Block(Material.AIR);
+                            block =   ItemRegistry.createBlock(Material.AIR);
                         }
                         
                         chunk.setBlock(x, y, z, w, block);
@@ -134,6 +134,9 @@ public class World {
         
         // Generate trees for this chunk
         generateTrees(chunk, position);
+        
+        // Generate flint on grass blocks
+        generateFlint(chunk, position);
         
         // Process any pending leaves for this chunk
         processPendingLeaves(chunk, position);
@@ -213,6 +216,49 @@ public class World {
     }
     
     /**
+     * Generates flint on top of grass blocks in the given chunk.
+     * 
+     * @param chunk The chunk to generate flint in
+     * @param chunkPosition The position of the chunk in the world
+     */
+    private void generateFlint(Chunk4D chunk, Vector4DInt chunkPosition) {
+        // Flint generation parameters - moderately common
+        int maxFlintPerChunk = 5; // Maximum flint pieces per chunk
+        double flintSpawnChance = 0.25; // 25% chance per potential location
+        
+        // Generate flint at pseudo-random locations
+        for (int attempt = 0; attempt < maxFlintPerChunk * 2; attempt++) {
+            // Use chunk position and attempt to generate deterministic but varied positions
+            long flintSeed = seed + chunkPosition.getX() * 2000 + chunkPosition.getZ() * 200 + chunkPosition.getW() * 20 + attempt;
+            
+            // Check spawn chance first to avoid unnecessary calculations
+            if ((Math.abs((int)(flintSeed * 17)) % 100) >= (flintSpawnChance * 100)) {
+                continue;
+            }
+            
+            // Generate flint position within chunk using simple hash-based randomization
+            int x = Math.abs((int)(flintSeed * 23)) % Chunk4D.CHUNK_SIZE;
+            int z = Math.abs((int)(flintSeed * 29)) % Chunk4D.CHUNK_SIZE;
+            int w = Math.abs((int)(flintSeed * 31)) % Chunk4D.CHUNK_SIZE;
+            
+            // Find surface level
+            int surfaceY = findSurfaceLevel(chunk, x, z, w);
+            if (surfaceY == -1 || surfaceY >= Chunk4D.CHUNK_SIZE - 1) continue;
+            
+            // Check if surface block is grass (suitable for flint spawning)
+            Block surfaceBlock = chunk.getBlock(x, surfaceY, z, w);
+            if (surfaceBlock == null || !Material.GRASS_BLOCK.equals(surfaceBlock.getBlockId())) continue;
+            
+            // Check if the block above the grass is air (where flint will be placed)
+            Block aboveBlock = chunk.getBlock(x, surfaceY + 1, z, w);
+            if (aboveBlock == null || !Material.AIR.equals(aboveBlock.getBlockId())) continue;
+            
+            // Place flint on top of the grass block
+            chunk.setBlock(x, surfaceY + 1, z, w,  ItemRegistry.createBlock(Material.FLINT));
+        }
+    }
+    
+    /**
      * Finds the surface level (highest non-air block) at the given local coordinates.
      * 
      * @param chunk The chunk to search in
@@ -224,7 +270,7 @@ public class World {
     private int findSurfaceLevel(Chunk4D chunk, int x, int z, int w) {
         for (int y = Chunk4D.CHUNK_SIZE - 1; y >= 0; y--) {
             Block block = chunk.getBlock(x, y, z, w);
-            if (block != null && !new Block(Material.AIR).equals(block)) {
+            if (block != null && !block.getBlockId().equals(Material.AIR)) {
                 return y;
             }
         }
@@ -246,7 +292,7 @@ public class World {
         // Generate trunk
         for (int i = 0; i < height; i++) {
             if (y + i < Chunk4D.CHUNK_SIZE) {
-                chunk.setBlock(x, y + i, z, w, new Block(Material.WOOD_LOG));
+                chunk.setBlock(x, y + i, z, w, ItemRegistry.createBlock(Material.WOOD_LOG));
             }
         }
         
@@ -310,8 +356,8 @@ public class World {
         if (targetChunk != null) {
             // Chunk exists, place the leaf if the position is air
             Block existingBlock = targetChunk.getBlock(localX, localY, localZ, localW);
-            if (existingBlock != null && existingBlock.equals(new Block(Material.AIR))) {
-                targetChunk.setBlock(localX, localY, localZ, localW, new Block(Material.LEAVES));
+            if (existingBlock != null && existingBlock.equals(ItemRegistry.createBlock(Material.AIR))) {
+                targetChunk.setBlock(localX, localY, localZ, localW, ItemRegistry.createBlock(Material.LEAVES));
             }
         } else {
             // Chunk doesn't exist, add to pending leaves
@@ -329,8 +375,8 @@ public class World {
             for (Vector4DInt leafPos : pendingForThisChunk) {
                 // Only place leaf if the position is air
                 Block existingBlock = chunk.getBlock(leafPos.getX(), leafPos.getY(), leafPos.getZ(), leafPos.getW());
-                if (existingBlock != null && existingBlock.equals(new Block(Material.AIR))) {
-                    chunk.setBlock(leafPos.getX(), leafPos.getY(), leafPos.getZ(), leafPos.getW(), new Block(Material.LEAVES));
+                if (existingBlock != null && existingBlock.equals(ItemRegistry.createBlock(Material.AIR))) {
+                    chunk.setBlock(leafPos.getX(), leafPos.getY(), leafPos.getZ(), leafPos.getW(), ItemRegistry.createBlock(Material.LEAVES));
                 }
             }
         }
@@ -372,9 +418,9 @@ public class World {
                         // Check if this position should be a cave
                         if (caveNoise > caveThreshold) {
                             Block currentBlock = chunk.getBlock(x, y, z, w);
-                            if (currentBlock != null && !currentBlock.equals(new Block(Material.AIR))) {
+                            if (currentBlock != null && !currentBlock.getBlockId().equals(Material.AIR)) {
                                 // Create cave by setting block to air
-                                chunk.setBlock(x, y, z, w, new Block(Material.AIR));
+                                chunk.setBlock(x, y, z, w, ItemRegistry.createBlock(Material.AIR));
                             }
                         }
                     }
@@ -448,15 +494,15 @@ public class World {
                         
                         // Apply 4D-appropriate rules for cave connectivity
                         Block currentBlock = originalBlocks[x][y][z][w];
-                        if (currentBlock != null && currentBlock.equals(new Block(Material.AIR))) {
+                        if (currentBlock != null && currentBlock.getBlockId().equals(Material.AIR)) {
                             // Fill isolated air pockets (5+ solid neighbors in 4D)
                             if (solidNeighbors >= 5) {
-                                chunk.setBlock(x, y, z, w, new Block(Material.STONE));
+                                chunk.setBlock(x, y, z, w, ItemRegistry.createBlock(Material.STONE));
                             }
-                        } else if (currentBlock != null && !currentBlock.equals(new Block(Material.AIR))) {
+                        } else if (currentBlock != null && !currentBlock.getBlockId().equals(Material.AIR)) {
                             // Create air in very isolated solid blocks (0-1 solid neighbors)
                             if (solidNeighbors <= 1) {
-                                chunk.setBlock(x, y, z, w, new Block(Material.AIR));
+                                chunk.setBlock(x, y, z, w, ItemRegistry.createBlock(Material.AIR));
                             }
                         }
                     }
@@ -496,7 +542,7 @@ public class World {
                 nz >= 0 && nz < Chunk4D.CHUNK_SIZE) {
                 
                 Block neighbor = blocks[nx][ny][nz][w];
-                if (neighbor != null && !neighbor.equals(new Block(Material.AIR))) {
+                if (neighbor != null && !neighbor.getBlockId().equals(Material.AIR)) {
                     count++;
                 }
             } else {
@@ -757,7 +803,7 @@ public class World {
             Block block = getBlock(blockPos);
             
             // Check if this block is solid (not air)
-            if (block != null && !block.equals(new Block(Material.AIR))) {
+            if (block != null && !block.getBlockId().equals(Material.AIR)) {
                 // Found solid ground, spawn player 1.25 blocks above it
                 // (Player center at Y+1.25 means feet at Y+1, just above the solid block at Y)
                 double spawnY = y + 1.25;
