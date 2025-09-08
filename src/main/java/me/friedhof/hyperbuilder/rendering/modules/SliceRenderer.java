@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import me.friedhof.hyperbuilder.computation.modules.items.Block;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import me.friedhof.hyperbuilder.computation.modules.Player;
 import me.friedhof.hyperbuilder.computation.modules.Vector4D;
 import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
@@ -13,6 +14,9 @@ import me.friedhof.hyperbuilder.computation.modules.World;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 import me.friedhof.hyperbuilder.computation.modules.Material;
+import me.friedhof.hyperbuilder.computation.modules.Entity;
+import me.friedhof.hyperbuilder.computation.modules.DroppedItem;
+
 
 /**
  * Renders a single 2D slice of the 4D world.
@@ -318,6 +322,9 @@ public class SliceRenderer {
             drawPlayerOnGraphics(freshGraphics, player,camera);
         }
         
+        // Draw dropped items in this slice
+        drawDroppedItemsInSlice(freshGraphics, world, sliceHorizontal, sliceVertical, camera);
+        
         // Clean up graphics resources
         freshGraphics.dispose();
         
@@ -474,6 +481,113 @@ public class SliceRenderer {
         
         // Check if the hovered block matches this block's world position
         return hoveredBlock.equals(blockWorldPos);
+    }
+    
+    /**
+     * Draws dropped items that are in the specified slice.
+     * 
+     * @param g The graphics context to draw on
+     * @param world The world containing the entities
+     * @param sliceHorizontal The horizontal slice coordinate
+     * @param sliceVertical The vertical slice coordinate
+     * @param camera The camera for coordinate conversion
+     */
+    private void drawDroppedItemsInSlice(Graphics2D g, World world, int sliceHorizontal, int sliceVertical, Camera camera) {
+        // Get all entities from the world
+        java.util.List<Entity> entities = world.getEntitiesList();
+        
+        for (Entity entity : entities) {
+            if (entity instanceof DroppedItem) {
+                DroppedItem droppedItem = (DroppedItem) entity;
+                
+                // Convert dropped item world position to view coordinates
+                Vector4D itemWorldPos = droppedItem.getPosition();
+                Vector4D itemViewPos = camera.worldToView(itemWorldPos);
+                
+                // Calculate which slice the dropped item should appear in
+                int itemSliceHorizontal, itemSliceVertical;
+                switch (camera.getHorizontalDimension()) {
+                    case X:
+                        // X mode: viewing X-Y plane, grid represents Z (horizontal) and W (vertical)
+                        itemSliceHorizontal = (int) Math.round(itemViewPos.getZ()) + getSliceCenter();
+                        itemSliceVertical = (int) Math.round(itemViewPos.getW()) + getSliceCenter();
+                        break;
+                    case Z:
+                        // Z mode: viewing Z-Y plane, grid represents X (horizontal) and W (vertical)
+                        itemSliceHorizontal = (int) Math.round(itemViewPos.getX()) + getSliceCenter();
+                        itemSliceVertical = (int) Math.round(itemViewPos.getW()) + getSliceCenter();
+                        break;
+                    case W:
+                        // W mode: viewing W-Y plane, grid represents X (horizontal) and Z (vertical)
+                        itemSliceHorizontal = (int) Math.round(itemViewPos.getX()) + getSliceCenter();
+                        itemSliceVertical = (int) Math.round(itemViewPos.getZ()) + getSliceCenter();
+                        break;
+                    default:
+                        // Default to X mode: viewing X-Y plane, grid represents Z and W
+                        itemSliceHorizontal = (int) Math.round(itemViewPos.getZ()) + getSliceCenter();
+                        itemSliceVertical = (int) Math.round(itemViewPos.getW()) + getSliceCenter();
+                        break;
+                }
+                
+                // If this dropped item is in the current slice, draw it
+                if (sliceHorizontal == itemSliceHorizontal && sliceVertical == itemSliceVertical &&
+                    itemSliceHorizontal >= 0 && itemSliceHorizontal < SLICE_SIZE && itemSliceVertical >= 0 && itemSliceVertical < SLICE_SIZE) {
+                    
+                    drawDroppedItemOnGraphics(g, droppedItem, camera);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Draws a single dropped item on the graphics context.
+     * 
+     * @param g The graphics context to draw on
+     * @param droppedItem The dropped item to draw
+     * @param camera The camera for coordinate conversion
+     */
+    private void drawDroppedItemOnGraphics(Graphics2D g, DroppedItem droppedItem, Camera camera) {
+        Vector4D itemWorldPos = droppedItem.getPosition();
+        Vector4D itemViewPos = camera.worldToView(itemWorldPos);
+        
+        // Calculate the item's position within the slice
+        double relativeX = itemViewPos.getX();
+        double relativeY = itemViewPos.getY();
+        
+        // Convert to pixel coordinates within the slice
+        double pixelX = (getSliceCenter() + 0.5 + relativeX) * BLOCK_SIZE;
+        double pixelY = (getSliceCenter() + 0.5 - relativeY) * BLOCK_SIZE; // Subtract because Y is flipped
+        
+        // Dropped items are smaller than blocks (0.25 vs 1.0)
+        int itemSizePixels = (int)(droppedItem.getSizeX() * BLOCK_SIZE);
+        
+        // Try to get the texture for the item's material
+        BaseItem item = droppedItem.getItem();
+        Material itemMaterial = item.getItemId();
+        
+        // Check if we have a texture for this material
+        if (texturelist.containsKey(itemMaterial) && texturelist.get(itemMaterial) != null) {
+            // Draw the item using its texture (smaller than a block)
+            Texture4D texture = texturelist.get(itemMaterial);
+            BufferedImage textureSlice = texture.getSlice2D(0, 0); // Use base texture slice
+            
+            g.drawImage(textureSlice, 
+                (int)(pixelX - itemSizePixels / 2), 
+                (int)(pixelY - itemSizePixels / 2), 
+                itemSizePixels, 
+                itemSizePixels, 
+                null);
+        } else {
+            // Fallback: draw as a small colored square
+            g.setColor(Color.YELLOW);
+            g.fillRect(
+                (int)(pixelX - itemSizePixels / 2), 
+                (int)(pixelY - itemSizePixels / 2), 
+                itemSizePixels, 
+                itemSizePixels
+            );
+        }
+        
     }
     
     /**

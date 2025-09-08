@@ -34,6 +34,7 @@ import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.Inventory;
 import me.friedhof.hyperbuilder.computation.modules.Material;
+import me.friedhof.hyperbuilder.computation.modules.DroppedItem;
 
 
 import java.util.Set;
@@ -109,6 +110,10 @@ public class Game {
     // Auto-save functionality
     private long lastAutoSave = 0;
     private static final long AUTO_SAVE_INTERVAL = 300000; // 5 minutes in milliseconds
+    
+    // Drop rate limiting
+    private long lastDropTime = 0;
+    private static final long MIN_DROP_INTERVAL = 250; // 250ms minimum between drops
     
     // Rendering synchronization
     private volatile boolean renderPending = false;
@@ -251,7 +256,7 @@ public class Game {
             if (saveData != null) {
                 world = saveData.getWorld();
                 player = saveData.getPlayer();
-                
+                world.addEntity(player);
                 // Create camera at player position
                 camera = new Camera(new Vector4D(0, 1, 0, 0));
                 
@@ -428,6 +433,9 @@ public class Game {
                 if (pressedKeys.contains(KeyEvent.VK_CONTROL)) {
                     manualSave();
                 }
+                break;
+            case KeyEvent.VK_C:
+                dropSelectedItem();
                 break;
         }
         
@@ -1119,9 +1127,6 @@ public class Game {
                 // Update movement input continuously for smooth movement
                 updateMovementInput();
                 
-                // Update player physics (gravity, collision detection, etc.)
-                player.update(deltaTime, world);
-                
                 // Sync camera to follow player - keep player centered
                 Vector4D playerPos = player.getPosition();
                 camera.setWorldOffset(playerPos);
@@ -1218,6 +1223,77 @@ public class Game {
      */
     public WorldSaveManager getSaveManager() {
         return saveManager;
+    }
+    
+    /**
+     * Drops the currently selected item from the player's hotbar.
+     * Items are thrown toward the block the player is hovering over.
+     */
+    private void dropSelectedItem() {
+        if (player == null || world == null) return;
+        
+        // Check drop rate limiting
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastDropTime < MIN_DROP_INTERVAL) {
+            return; // Too soon since last drop
+        }
+        
+        // Get the selected item from the hotbar
+        BaseItem selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
+        
+        if (selectedItem != null && selectedItem.getCount() > 0) {
+            // Create a copy of the item with count 1
+            BaseItem itemToDrop = selectedItem.withCount(1);
+            
+            // Remove one item from the inventory
+            player.getInventory().removeItem(selectedItem.getItemId(), 1);
+            
+            // Calculate drop position and throw direction
+            Vector4D playerPos = player.getPosition();
+            Vector4D dropPos = new Vector4D(
+                playerPos.getX(),
+                playerPos.getY() + 0.5, // Drop at player's chest level
+                playerPos.getZ(),
+                playerPos.getW()
+            );
+            
+            // Calculate throw direction toward hovered block
+            Vector4D throwVelocity;
+            Vector4DInt hoveredBlock = screenToWorldCoordinates(mouseX, mouseY);
+            
+            if (hoveredBlock != null) {
+                // Throw toward the hovered block
+                Vector4D targetPos = new Vector4D(
+                    hoveredBlock.getX() + 0.5,
+                    hoveredBlock.getY() + 0.5,
+                    hoveredBlock.getZ() + 0.5,
+                    hoveredBlock.getW() + 0.5
+                );
+                Vector4D direction = targetPos.subtract(playerPos).normalize();
+                double throwSpeed = 0.3; // Very gentle drop with direction
+                throwVelocity = direction.scale(throwSpeed);
+            } else {
+                // Fallback: gentle drop with small random offset
+                throwVelocity = new Vector4D(
+                    (Math.random() - 0.5) * 0.2,
+                    0.1, // Very slight upward velocity
+                    (Math.random() - 0.5) * 0.2,
+                    (Math.random() - 0.5) * 0.2
+                );
+            }
+            
+            // Create dropped item entity with custom velocity
+            DroppedItem droppedItem = new DroppedItem(world.getNextEntityId(), dropPos, itemToDrop);
+            droppedItem.setVelocity(throwVelocity);
+            
+            // Add to world
+            world.addEntity(droppedItem);
+            
+            // Update last drop time for rate limiting
+            lastDropTime = currentTime;
+            
+            System.out.println("Dropped item: " + itemToDrop.getItemId() + " at " + dropPos + " toward " + hoveredBlock);
+        }
     }
     
     /**

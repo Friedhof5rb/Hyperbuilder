@@ -23,6 +23,8 @@ public class Player extends Entity {
     private int health;
     private int maxHealth;
     
+
+    
     // Movement input state
     private boolean movingLeft;
     private boolean movingRight;
@@ -167,8 +169,6 @@ public class Player extends Entity {
         // Process movement input and apply forces
         processMovementInput(deltaTime);
 
-
-
         // Apply gravity if enabled
         if (hasGravity()) {
             Vector4D velocity = getVelocity();
@@ -183,7 +183,42 @@ public class Player extends Entity {
         
         // Handle movement with collision detection for all directions
         handleMovementWithCollision(deltaTime, world);
+        
+        // Check for nearby dropped items to pick up
+        checkForItemPickup(world);
     }
+    
+    /**
+     * Checks for nearby dropped items and picks them up if possible.
+     * Uses the DroppedItem's built-in pickup delay system.
+     * 
+     * @param world The world to check for dropped items
+     */
+    private void checkForItemPickup(World world) {
+        // Get all entities in the world
+        java.util.List<Entity> entities = world.getEntitiesList();
+        
+        for (Entity entity : entities) {
+            if (entity instanceof DroppedItem) {
+                DroppedItem droppedItem = (DroppedItem) entity;
+                
+
+                // Check if item can be picked up (includes distance and delay checks)
+                if (droppedItem.canBePickedUpBy(getPosition(), getId())) {
+                    // Try to add to inventory
+                    boolean added = inventory.addItem(droppedItem.getItem().getItemId(), droppedItem.getItem().getCount());
+            
+                    if (added) {
+                        // Successfully picked up - mark for removal
+                        droppedItem.markForDespawn();
+                        System.out.println("Picked up: " + droppedItem.getItem().getItemId() + " x" + droppedItem.getItem().getCount());
+                    }
+                }
+            }
+        }
+    }
+    
+
     
     /**
      * Processes movement input and applies movement forces.

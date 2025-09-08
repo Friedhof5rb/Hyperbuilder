@@ -310,6 +310,7 @@ public class HUD {
             "Left Click - Destroy Block",
             "Right Click - Place Block",
             "F - Inventory",
+            "C - Drop Item",
             "ESC - Exit Game"
         };
         

@@ -130,7 +130,7 @@ public class TextureManager {
       
            
             for(Material s : ItemRegistry.itemFactories.keySet()){
-                if(ItemRegistry.itemFactories.get(s) instanceof IsPlaceable){
+                if(ItemRegistry.itemFactories.get(s) instanceof IsPlaceable && ItemRegistry.itemFactories.get(s).HasTexture()){
                     try {
                         loadTexture4D(s + ".png");
                         System.out.println("Loaded: " + s);

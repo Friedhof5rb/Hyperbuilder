@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.sql.rowset.spi.SyncResolver;
+
 import me.friedhof.hyperbuilder.computation.modules.items.Block;
 import java.util.Random;
 /**
@@ -792,6 +795,7 @@ public class World {
      */
     public void addEntity(Entity entity) {
         entities.put(entity.getId(), entity);
+        nextEntityId++;
     }
     
     /**
@@ -824,6 +828,24 @@ public class World {
     }
     
     /**
+     * Gets all entities in the world as a list.
+     * 
+     * @return A list of all entities
+     */
+    public java.util.List<Entity> getEntitiesList() {
+        return new java.util.ArrayList<>(entities.values());
+    }
+    
+    /**
+     * Gets the next available entity ID.
+     * 
+     * @return The next entity ID
+     */
+    public int getNextEntityId() {
+        return nextEntityId++;
+    }
+    
+    /**
      * Creates a new player in the world.
      * 
      * @param username The player's username
@@ -831,7 +853,7 @@ public class World {
      * @return The created player
      */
     public Player createPlayer(String username, Vector4D position) {
-        int id = nextEntityId++;
+        int id = nextEntityId;
         Player player = new Player(id, position, username);
         addEntity(player);
         return player;
@@ -880,12 +902,54 @@ public class World {
     public void update(double deltaTime) {
         // Update all entities
         for (Entity entity : entities.values()) {
-            if(!(entity instanceof Player)){
-                entity.update(deltaTime, this);
+            entity.update(deltaTime, this);
+        }
+        
+        // Clean up despawned dropped items
+        cleanupDespawnedItems();
+    }
+    
+    /**
+     * Removes all dropped items that are marked for despawn.
+     */
+    private void cleanupDespawnedItems() {
+        java.util.Iterator<java.util.Map.Entry<Integer, Entity>> iterator = entities.entrySet().iterator();
+        
+        while (iterator.hasNext()) {
+            java.util.Map.Entry<Integer, Entity> entry = iterator.next();
+            Entity entity = entry.getValue();
+            
+            if (entity instanceof DroppedItem) {
+                DroppedItem droppedItem = (DroppedItem) entity;
+                if (droppedItem.shouldDespawn()) {
+                    iterator.remove();
+                    
+                    // Also remove from chunk
+                    Vector4DInt chunkPos = getChunkPosition(entity.getPosition());
+                    Chunk4D chunk = getChunk(chunkPos);
+                    if (chunk != null) {
+                        chunk.removeEntity(entity.getId());
+                    }
+                }
             }
         }
     }
     
+    /**
+     * Calculates the chunk position for a given world position.
+     * 
+     * @param worldPos The world position
+     * @return The chunk position
+     */
+    public Vector4DInt getChunkPosition(Vector4D worldPos) {
+        return new Vector4DInt(
+            Math.floorDiv((int)worldPos.getX(), Chunk4D.CHUNK_SIZE),
+            Math.floorDiv((int)worldPos.getY(), Chunk4D.CHUNK_SIZE),
+            Math.floorDiv((int)worldPos.getZ(), Chunk4D.CHUNK_SIZE),
+            Math.floorDiv((int)worldPos.getW(), Chunk4D.CHUNK_SIZE)
+        );
+    }
+
     /**
      * Gets all loaded chunks in the world.
      * 

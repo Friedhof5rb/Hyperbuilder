@@ -1,6 +1,7 @@
 package me.friedhof.hyperbuilder.save;
 
 import me.friedhof.hyperbuilder.computation.modules.*;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -121,6 +122,11 @@ class EntitySaveData implements Serializable {
     private final boolean gravity;
     private final String entityType;
     
+    // DroppedItem specific data
+    private final Material itemType;
+    private final int itemCount;
+    private final double despawnTimer;
+    
     public EntitySaveData(Entity entity) {
         this.id = entity.getId();
         
@@ -143,13 +149,39 @@ class EntitySaveData implements Serializable {
         
         this.gravity = entity.hasGravity();
         this.entityType = entity.getClass().getSimpleName();
+        
+        // Handle DroppedItem specific data
+        if (entity instanceof DroppedItem) {
+            DroppedItem droppedItem = (DroppedItem) entity;
+            this.itemType = droppedItem.getItem().getItemId();
+            this.itemCount = droppedItem.getCount();
+            this.despawnTimer = droppedItem.getDespawnTimer();
+        } else {
+            this.itemType = null;
+            this.itemCount = 0;
+            this.despawnTimer = 0.0;
+        }
     }
     
     public Entity toEntity() {
-        // For now, we only support basic entities
-        // This can be extended to support specific entity types as needed
+        if ("DroppedItem".equals(entityType)) {
+            // Reconstruct DroppedItem
+            try {
+                BaseItem item = ItemRegistry.createItem(itemType, itemCount);
+                if (item != null) {
+                    DroppedItem droppedItem = new DroppedItem(id, new Vector4D(posX, posY, posZ, posW), item, itemCount);
+                    droppedItem.setVelocity(new Vector4D(velX, velY, velZ, velW));
+                    droppedItem.setDespawnTimer(despawnTimer);
+                    return droppedItem;
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to reconstruct DroppedItem: " + e.getMessage());
+            }
+        }
+        
+        // For unsupported entity types
         System.out.println("Warning: Loading generic entity of type " + entityType + ". Specific entity data may be lost.");
-        return null; // Return null for now - specific entity types would need their own implementations
+        return null;
     }
     
     // Getters for debugging/inspection
