@@ -12,23 +12,25 @@ import me.friedhof.hyperbuilder.computation.modules.Material;
  * Hotbar UI component for displaying and selecting items.
  */
 public class Hotbar {
-    // Hotbar configuration
+    // Constants
     private static final int HOTBAR_SLOTS = 9;
-    private static final int SLOT_SIZE = 50;
-    private static final int SLOT_PADDING = 2;
-    private static final int HOTBAR_PADDING = 10;
+    
+    // Dynamic sizing based on screen dimensions
+    private int slotSize;
+    private int slotPadding;
+    private int hotbarPadding;
     
     // Colors
     private static final Color SLOT_BACKGROUND = new Color(192, 192, 192, 200);
-    private static final Color SLOT_BORDER = new Color(128, 128, 128);
-    private static final Color SELECTED_BORDER = new Color(255, 255, 255);
+    private static final Color SLOT_BORDER = new Color(192, 192, 192, 200);
+    private static final Color SELECTED_BORDER = new Color(255, 255, 255, 200);
     private static final Color TEXT_COLOR = Color.WHITE;
     private static final Color COUNT_COLOR = new Color(255, 255, 0);
     
     // State
     private int selectedSlot = 0;
-    private final int width;
-    private final int height;
+    private int width;
+    private int height;
     
     // Item name display
     private static final long DISPLAY_DURATION_MS = 1000; // 3 seconds
@@ -46,6 +48,29 @@ public class Hotbar {
     public Hotbar(int width, int height) {
         this.width = width;
         this.height = height;
+        calculateDynamicSizes();
+    }
+    
+    /**
+     * Updates the hotbar dimensions and recalculates sizing.
+     */
+    public void updateDimensions(int width, int height) {
+        this.width = width;
+        this.height = height;
+        calculateDynamicSizes();
+    }
+    
+    /**
+     * Calculates dynamic sizes based on screen dimensions.
+     */
+    private void calculateDynamicSizes() {
+        // Scale hotbar based on screen width, but keep it reasonable
+        int baseSize = Math.min(width, height) / 20;
+        slotSize = Math.max(35, Math.min(70, baseSize));
+        
+        // Padding scales with slot size
+        slotPadding = Math.max(2, slotSize / 20);
+        hotbarPadding = Math.max(8, slotSize / 5);
     }
     
     /**
@@ -61,10 +86,25 @@ public class Hotbar {
         Stroke originalStroke = g.getStroke();
         
         // Calculate hotbar position (centered at bottom)
-        int hotbarWidth = HOTBAR_SLOTS * SLOT_SIZE + (HOTBAR_SLOTS - 1) * SLOT_PADDING + 2 * HOTBAR_PADDING;
-        int hotbarHeight = SLOT_SIZE + 2 * HOTBAR_PADDING;
-        int hotbarX = (width - hotbarWidth) / 2;
-        int hotbarY = height - hotbarHeight - 20;
+        int hotbarWidth = HOTBAR_SLOTS * slotSize + (HOTBAR_SLOTS - 1) * slotPadding + 2 * hotbarPadding;
+        int hotbarHeight = slotSize + 2 * hotbarPadding;
+        
+        // Ensure hotbar fits on screen - if too wide, scale it down
+        if (hotbarWidth > width - 20) { // Leave 10px margin on each side
+            int availableWidth = width - 20;
+            int totalSlotWidth = availableWidth - 2 * hotbarPadding;
+            int newSlotSize = Math.max(20, totalSlotWidth / (HOTBAR_SLOTS + (HOTBAR_SLOTS - 1) * slotPadding / slotSize));
+            slotSize = newSlotSize;
+            slotPadding = Math.max(1, slotSize / 20);
+            hotbarPadding = Math.max(4, slotSize / 8);
+            
+            // Recalculate dimensions
+            hotbarWidth = HOTBAR_SLOTS * slotSize + (HOTBAR_SLOTS - 1) * slotPadding + 2 * hotbarPadding;
+            hotbarHeight = slotSize + 2 * hotbarPadding;
+        }
+        
+        int hotbarX = Math.max(10, Math.min(width - hotbarWidth - 10, (width - hotbarWidth) / 2)); // Center with margins
+        int hotbarY = Math.max(hotbarHeight + 10, height - hotbarHeight - 30); // Prevent disappearing with margin
         
         // Draw hotbar background
         g.setColor(new Color(0, 0, 0, 150));
@@ -77,12 +117,12 @@ public class Hotbar {
         
         // Draw slots
         for (int i = 0; i < HOTBAR_SLOTS; i++) {
-            int slotX = hotbarX + HOTBAR_PADDING + i * (SLOT_SIZE + SLOT_PADDING);
-            int slotY = hotbarY + HOTBAR_PADDING;
+            int slotX = hotbarX + hotbarPadding + i * (slotSize + slotPadding);
+            int slotY = hotbarY + hotbarPadding;
             
             // Draw slot background
             g.setColor(SLOT_BACKGROUND);
-            g.fillRect(slotX, slotY, SLOT_SIZE, SLOT_SIZE);
+            g.fillRect(slotX, slotY, slotSize, slotSize);
             
             // Draw slot border (highlighted if selected)
             if (i == selectedSlot) {
@@ -92,13 +132,13 @@ public class Hotbar {
                 g.setColor(SLOT_BORDER);
                 g.setStroke(new BasicStroke(1));
             }
-            g.drawRect(slotX, slotY, SLOT_SIZE, SLOT_SIZE);
+            g.drawRect(slotX, slotY, slotSize, slotSize);
             
             // Get item from inventory
             BaseItem item = inventory.getItem(i);
             if (item != null && item.getCount() > 0) {
                 // Draw item representation
-                drawItem(g, item, slotX, slotY, SLOT_SIZE);
+                drawItem(g, item, slotX, slotY, slotSize);
                 
                 // Draw item count if > 1
                 if (item.getCount() > 1) {
@@ -106,8 +146,8 @@ public class Hotbar {
                     g.setFont(new Font("Arial", Font.BOLD, 12));
                     String countText = String.valueOf(item.getCount());
                     FontMetrics fm = g.getFontMetrics();
-                    int textX = slotX + SLOT_SIZE - fm.stringWidth(countText) - 2;
-                    int textY = slotY + SLOT_SIZE - 2;
+                    int textX = slotX + slotSize - fm.stringWidth(countText) - 2;
+                    int textY = slotY + slotSize - 2;
                     g.drawString(countText, textX, textY);
                 }
             }
@@ -139,8 +179,8 @@ public class Hotbar {
                 
                 // Draw item name below the selected slot
                 if (!displayedItemName.isEmpty()) {
-                    int selectedSlotX = hotbarX + HOTBAR_PADDING + selectedSlot * (SLOT_SIZE + SLOT_PADDING);
-                    int selectedSlotY = hotbarY + HOTBAR_PADDING;
+                    int selectedSlotX = hotbarX + hotbarPadding + selectedSlot * (slotSize + slotPadding);
+                    int selectedSlotY = hotbarY + hotbarPadding;
                     
                     // Set font and get metrics
                     Font nameFont = new Font("Arial", Font.BOLD, 16);
@@ -149,8 +189,8 @@ public class Hotbar {
                     
                     // Calculate text position (centered below the slot)
                     int textWidth = fm.stringWidth(displayedItemName);
-                    int textX = selectedSlotX + (SLOT_SIZE - textWidth) / 2;
-                    int textY = selectedSlotY + SLOT_SIZE + 25;
+                    int textX = selectedSlotX + (slotSize - textWidth) / 2;
+            int textY = selectedSlotY + slotSize + 25;
                     
                     // Draw text background with fade
                     int bgAlpha = (int) (150 * alpha);
@@ -201,7 +241,7 @@ public class Hotbar {
             g.drawImage(textureImage, itemX, itemY, itemSize, itemSize, null);
             
             // Draw a subtle border around the textured item
-            g.setColor(new Color(0, 0, 0, 100));
+            g.setColor(new Color(192, 192, 192, 200));
             g.setStroke(new BasicStroke(1));
             g.drawRect(itemX, itemY, itemSize, itemSize);
         } else {

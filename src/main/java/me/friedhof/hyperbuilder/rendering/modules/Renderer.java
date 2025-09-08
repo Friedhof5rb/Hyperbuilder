@@ -126,16 +126,7 @@ public class Renderer {
         buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         graphics = buffer.createGraphics();
         
-        // Update HUD dimensions
-        hud = new HUD(width, height);
-        
-        // Update dynamic block sizing
-        SliceRenderer.setDynamicBlockSize(width, height);
-        
-        // Update grid renderer to recreate slices with new block size
-        gridRenderer.updateBlockSize();
-        
-        // Update the panel size and force repaint
+        // Update the panel size first to ensure coordinate system is correct
         Component panel = frame.getContentPane().getComponent(0);
         if (panel instanceof JPanel) {
             ((JPanel) panel).setPreferredSize(new Dimension(width, height));
@@ -143,6 +134,15 @@ public class Renderer {
             panel.revalidate();
             panel.repaint();
         }
+        
+        // Update dynamic block sizing
+        SliceRenderer.setDynamicBlockSize(width, height);
+        
+        // Update grid renderer to recreate slices with new block size
+        gridRenderer.updateBlockSize();
+        
+        // Update HUD dimensions after panel is resized
+        hud.updateDimensions(width, height);
     }
     
     /**

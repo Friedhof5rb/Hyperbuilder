@@ -366,7 +366,11 @@ public class Game {
                 
                 // Only update if dimensions are valid
                 if (newWidth > 0 && newHeight > 0 && renderer != null) {
-                    renderer.updateDimensions(newWidth, newHeight);
+                    // Use SwingUtilities.invokeLater to ensure the resize is fully processed
+                    // before updating HUD dimensions, preventing coordinate system mismatches
+                    SwingUtilities.invokeLater(() -> {
+                        renderer.updateDimensions(newWidth, newHeight);
+                    });
                 }
             }
         });

@@ -76,8 +76,10 @@ public class HUD {
         // Draw controls information
         drawControls(g);
         
-        // Draw hotbar
-        hotbar.render(g, player.getInventory());
+        // Render hotbar only if inventory is not visible
+        if (!inventoryUI.isVisible()) {
+            hotbar.render(g, player.getInventory());
+        }
         
         // Update inventory UI mouse position and render
         inventoryUI.updateMousePosition(mouseX, mouseY);
@@ -121,6 +123,17 @@ public class HUD {
         this.currentFPS = fps;
     }
     
+    /**
+     * Updates the HUD dimensions and recalculates component bounds.
+     * 
+     * @param width The new width
+     * @param height The new height
+     */
+    public void updateDimensions(int width, int height) {
+        inventoryUI.updateDimensions(width, height);
+        hotbar.updateDimensions(width, height);
+    }
+
     /**
      * Draws the camera coordinates (world position).
      * 

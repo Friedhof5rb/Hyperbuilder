@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import me.friedhof.hyperbuilder.computation.modules.items.Block;
+import java.util.Random;
 /**
  * Represents the 4D world containing chunks and entities.
  * Manages chunk loading/unloading and entity tracking.
@@ -132,11 +133,14 @@ public class World {
         // Generate caves in this chunk
         generateCaves(chunk, position);
         
-        // Generate trees for this chunk
+        // Generate trees for this chunk (highest priority)
         generateTrees(chunk, position);
         
-        // Generate flint on grass blocks
+        // Generate flint on grass blocks (medium priority)
         generateFlint(chunk, position);
+        
+        // Generate grass vegetation on grass blocks (common, but lower priority than trees and flint)
+        generateGrassVegetation(chunk, position);
         
         // Process any pending leaves for this chunk
         processPendingLeaves(chunk, position);
@@ -259,7 +263,57 @@ public class World {
     }
     
     /**
-     * Finds the surface level (highest non-air block) at the given local coordinates.
+     * Generates grass vegetation on top of grass blocks in the given chunk.
+     * Grass vegetation is quite common but has lower priority than trees and flint.
+     * 
+     * @param chunk The chunk to generate grass vegetation in
+     * @param chunkPosition The position of the chunk in the world
+     */
+    private void generateGrassVegetation(Chunk4D chunk, Vector4DInt chunkPosition) {
+        // Grass vegetation generation parameters - quite common
+        int maxGrassPerChunk = 350; // Maximum grass pieces per chunk
+        double grassSpawnChance = 0.6; // % chance per potential location
+        
+        
+        
+        // Generate grass at pseudo-random locations using proper random distribution
+        Random random = new java.util.Random(seed + chunkPosition.getX() * 7919L + chunkPosition.getZ() * 4801L + chunkPosition.getW() * 2909L);
+        
+        for (int attempt = 0; attempt < maxGrassPerChunk * 2; attempt++) {
+            // Check spawn chance first to avoid unnecessary calculations
+            if (random.nextDouble() >= grassSpawnChance) {
+                continue;
+            }
+            
+            // Generate grass position within chunk using proper random distribution
+            int x = random.nextInt(Chunk4D.CHUNK_SIZE);
+            int z = random.nextInt(Chunk4D.CHUNK_SIZE);
+            int w = random.nextInt(Chunk4D.CHUNK_SIZE);
+            
+            // Find surface level
+            int surfaceY = findSurfaceLevel(chunk, x, z, w);
+            if (surfaceY == -1 || surfaceY >= Chunk4D.CHUNK_SIZE - 1) continue;
+            
+            // Check if surface block is grass block (suitable for grass vegetation growth)
+            Block surfaceBlock = chunk.getBlock(x, surfaceY, z, w);
+            if (surfaceBlock == null || !Material.GRASS_BLOCK.equals(surfaceBlock.getBlockId())) continue;
+            
+            
+            // Check if the block above the grass block is air (where grass vegetation will be placed)
+            // This also ensures trees and flint have priority over grass vegetation
+            Block aboveBlock = chunk.getBlock(x, surfaceY + 1, z, w);
+            if (aboveBlock == null || !Material.AIR.equals(aboveBlock.getBlockId())) continue;
+            
+            
+            // Place grass vegetation on top of the grass block
+            chunk.setBlock(x, surfaceY + 1, z, w, ItemRegistry.createBlock(Material.GRASS));
+            
+        }
+        
+    }
+    
+    /**
+     * Finds the surface level (highest non-air block) at the given coordinates.
      * 
      * @param chunk The chunk to search in
      * @param x Local x coordinate

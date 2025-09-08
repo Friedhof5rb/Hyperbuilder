@@ -18,14 +18,16 @@ public class InventoryUI {
     // UI Configuration
     private static final int INVENTORY_ROWS = 4;
     private static final int INVENTORY_COLS = 9;
-    private static final int SLOT_SIZE = 40;
-    private static final int SLOT_PADDING = 2;
-    private static final int UI_PADDING = 20;
-    private static final int HOTBAR_INVENTORY_GAP = 30;
+    
+    // Dynamic sizing based on screen dimensions
+    private int slotSize;
+    private int slotPadding;
+    private int uiPadding;
+    private int hotbarInventoryGap;
     
     // Colors
     private static final Color BACKGROUND_COLOR = new Color(192, 192, 192, 220);
-    private static final Color SLOT_BACKGROUND = new Color(192, 192, 192, 200);
+    private static final Color SLOT_BACKGROUND = new Color(192, 192, 192, 220);
     private static final Color SLOT_BORDER = new Color(128, 128, 128);
     private static final Color HOVER_BORDER = new Color(255, 255, 255);
     private static final Color TEXT_COLOR = Color.WHITE;
@@ -35,8 +37,8 @@ public class InventoryUI {
     private static final Color TOOLTIP_TEXT = Color.WHITE;
     
     // State
-    private final int screenWidth;
-    private final int screenHeight;
+    private int screenWidth;
+    private int screenHeight;
     private boolean visible = false;
     
     // Drag and drop state
@@ -65,7 +67,33 @@ public class InventoryUI {
     public InventoryUI(int screenWidth, int screenHeight) {
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
+        calculateDynamicSizes();
         calculateUIBounds();
+    }
+    
+    /**
+     * Updates the screen dimensions and recalculates UI bounds.
+     */
+    public void updateDimensions(int screenWidth, int screenHeight) {
+        this.screenWidth = screenWidth;
+        this.screenHeight = screenHeight;
+        calculateDynamicSizes();
+        calculateUIBounds();
+    }
+    
+    /**
+     * Calculates dynamic sizes based on screen dimensions.
+     */
+    private void calculateDynamicSizes() {
+        // Base slot size scales more aggressively with screen size
+        // Use both width and height for better scaling
+        int baseSize = Math.min(screenWidth, screenHeight) / 20;
+        slotSize = Math.max(25, Math.min(80, baseSize));
+        
+        // Padding scales proportionally
+        slotPadding = Math.max(1, slotSize / 15);
+        uiPadding = Math.max(8, slotSize / 3);
+        hotbarInventoryGap = Math.max(10, slotSize / 2);
     }
     
     /**
@@ -73,17 +101,17 @@ public class InventoryUI {
      */
     private void calculateUIBounds() {
         // Calculate inventory panel size (3 rows since hotbar is separate)
-        inventoryWidth = INVENTORY_COLS * SLOT_SIZE + (INVENTORY_COLS - 1) * SLOT_PADDING + 2 * UI_PADDING;
-        inventoryHeight = (INVENTORY_ROWS - 1) * SLOT_SIZE + (INVENTORY_ROWS - 2) * SLOT_PADDING + 2 * UI_PADDING + 30; // +30 for title
+        inventoryWidth = INVENTORY_COLS * slotSize + (INVENTORY_COLS - 1) * slotPadding + 2 * uiPadding;
+        inventoryHeight = (INVENTORY_ROWS - 1) * slotSize + (INVENTORY_ROWS - 2) * slotPadding + 2 * uiPadding + 30; // +30 for title
         
         // Center inventory on screen
         inventoryX = (screenWidth - inventoryWidth) / 2;
         inventoryY = (screenHeight - inventoryHeight) / 2 - 50;
         
         // Position hotbar UI below inventory
-        int hotbarWidth = 9 * SLOT_SIZE + 8 * SLOT_PADDING + 2 * UI_PADDING;
+        int hotbarWidth = 9 * slotSize + 8 * slotPadding + 2 * uiPadding;
         hotbarUIX = (screenWidth - hotbarWidth) / 2;
-        hotbarUIY = inventoryY + inventoryHeight + HOTBAR_INVENTORY_GAP;
+        hotbarUIY = inventoryY + inventoryHeight + hotbarInventoryGap;
     }
     
     /**
@@ -120,12 +148,12 @@ public class InventoryUI {
         g.drawString(title, titleX, titleY);
         
         // Draw inventory slots (skip first row since it's the hotbar)
-        int startY = inventoryY + UI_PADDING + 25; // Account for title
+        int startY = inventoryY + uiPadding + 25; // Account for title
         for (int row = 1; row < INVENTORY_ROWS; row++) { // Start from row 1 to skip hotbar
             for (int col = 0; col < INVENTORY_COLS; col++) {
                 int slotIndex = row * INVENTORY_COLS + col;
-                int slotX = inventoryX + UI_PADDING + col * (SLOT_SIZE + SLOT_PADDING);
-                int slotY = startY + (row - 1) * (SLOT_SIZE + SLOT_PADDING); // Adjust Y position
+                int slotX = inventoryX + uiPadding + col * (slotSize + slotPadding);
+                int slotY = startY + (row - 1) * (slotSize + slotPadding); // Adjust Y position
                 
                 drawInventorySlot(g, inventory, slotIndex, slotX, slotY, false);
             }
@@ -155,8 +183,8 @@ public class InventoryUI {
      */
     private void drawHotbarUI(Graphics2D g, Inventory inventory, Hotbar hotbar) {
         // Draw hotbar background
-        int hotbarHeight = SLOT_SIZE + 2 * UI_PADDING;
-        int hotbarWidth = 9 * SLOT_SIZE + 8 * SLOT_PADDING + 2 * UI_PADDING;
+        int hotbarHeight = slotSize + 2 * uiPadding;
+        int hotbarWidth = 9 * slotSize + 8 * slotPadding + 2 * uiPadding;
         
         g.setColor(BACKGROUND_COLOR);
         g.fillRoundRect(hotbarUIX, hotbarUIY, hotbarWidth, hotbarHeight, 10, 10);
@@ -176,17 +204,11 @@ public class InventoryUI {
         
         // Draw hotbar slots
         for (int i = 0; i < 9; i++) {
-            int slotX = hotbarUIX + UI_PADDING + i * (SLOT_SIZE + SLOT_PADDING);
-            int slotY = hotbarUIY + UI_PADDING;
+            int slotX = hotbarUIX + uiPadding + i * (slotSize + slotPadding);
+            int slotY = hotbarUIY + uiPadding;
             
             drawInventorySlot(g, inventory, i, slotX, slotY, true);
             
-            // Highlight selected slot
-            if (i == hotbar.getSelectedSlot()) {
-                g.setColor(new Color(255, 255, 255, 100));
-                g.setStroke(new BasicStroke(3));
-                g.drawRect(slotX, slotY, SLOT_SIZE, SLOT_SIZE);
-            }
         }
     }
     
@@ -196,7 +218,7 @@ public class InventoryUI {
     private void drawInventorySlot(Graphics2D g, Inventory inventory, int slotIndex, int x, int y, boolean isHotbar) {
         // Draw slot background
         g.setColor(SLOT_BACKGROUND);
-        g.fillRect(x, y, SLOT_SIZE, SLOT_SIZE);
+        g.fillRect(x, y, slotSize, slotSize);
         
         // Draw slot border (highlight if hovered)
         boolean isHovered = (hoveredSlot == slotIndex && hoveredSlotIsHotbar == isHotbar);
@@ -207,13 +229,13 @@ public class InventoryUI {
             g.setColor(SLOT_BORDER);
             g.setStroke(new BasicStroke(1));
         }
-        g.drawRect(x, y, SLOT_SIZE, SLOT_SIZE);
+        g.drawRect(x, y, slotSize, slotSize);
         
         // Get item from inventory
         me.friedhof.hyperbuilder.computation.modules.items.BaseItem item = inventory.getItem(slotIndex);
         if (item != null && item.getCount() > 0 && !(draggedFromSlot == slotIndex && draggedFromHotbar == isHotbar && draggedItem != null)) {
             // Draw item representation
-            drawItemInSlot(g, item, x, y, SLOT_SIZE);
+            drawItemInSlot(g, item, x, y, slotSize);
         }
     }
     
@@ -236,7 +258,7 @@ public class InventoryUI {
             g.drawImage(textureImage, itemX, itemY, itemSize, itemSize, null);
             
             // Draw a subtle border around the textured item
-            g.setColor(new Color(0, 0, 0, 100));
+            g.setColor(new Color(192, 192, 192, 220));
             g.setStroke(new BasicStroke(1));
             g.drawRect(itemX, itemY, itemSize, itemSize);
         } else {
@@ -274,12 +296,12 @@ public class InventoryUI {
      * Draws the currently dragged item.
      */
     private void drawDraggedItem(Graphics2D g, me.friedhof.hyperbuilder.computation.modules.items.BaseItem item, int x, int y) {
-        int size = SLOT_SIZE;
+        int size = slotSize;
         int drawX = x - size / 2;
         int drawY = y - size / 2;
         
         // Draw semi-transparent background
-        g.setColor(new Color(0, 0, 0, 100));
+        g.setColor(new Color(0,0,0,0));
         g.fillRect(drawX, drawY, size, size);
         
         drawItemInSlot(g, item, drawX, drawY, size);
@@ -372,15 +394,15 @@ public class InventoryUI {
         hoveredSlotIsHotbar = false;
         
         // Check inventory slots (skip first row since it's the hotbar)
-        int startY = inventoryY + UI_PADDING + 25;
+        int startY = inventoryY + uiPadding + 25;
         for (int row = 1; row < INVENTORY_ROWS; row++) { // Start from row 1 to skip hotbar
             for (int col = 0; col < INVENTORY_COLS; col++) {
                 int slotIndex = row * INVENTORY_COLS + col;
-                int slotX = inventoryX + UI_PADDING + col * (SLOT_SIZE + SLOT_PADDING);
-                int slotY = startY + (row - 1) * (SLOT_SIZE + SLOT_PADDING); // Adjust Y position
+                int slotX = inventoryX + uiPadding + col * (slotSize + slotPadding);
+                int slotY = startY + (row - 1) * (slotSize + slotPadding); // Adjust Y position
                 
-                if (mouseX >= slotX && mouseX < slotX + SLOT_SIZE &&
-                    mouseY >= slotY && mouseY < slotY + SLOT_SIZE) {
+                if (mouseX >= slotX && mouseX < slotX + slotSize &&
+                    mouseY >= slotY && mouseY < slotY + slotSize) {
                     hoveredSlot = slotIndex;
                     hoveredSlotIsHotbar = false;
                     return;
@@ -390,11 +412,11 @@ public class InventoryUI {
         
         // Check hotbar slots
         for (int i = 0; i < 9; i++) {
-            int slotX = hotbarUIX + UI_PADDING + i * (SLOT_SIZE + SLOT_PADDING);
-            int slotY = hotbarUIY + UI_PADDING;
+            int slotX = hotbarUIX + uiPadding + i * (slotSize + slotPadding);
+            int slotY = hotbarUIY + uiPadding;
             
-            if (mouseX >= slotX && mouseX < slotX + SLOT_SIZE &&
-                mouseY >= slotY && mouseY < slotY + SLOT_SIZE) {
+            if (mouseX >= slotX && mouseX < slotX + slotSize &&
+                mouseY >= slotY && mouseY < slotY + slotSize) {
                 hoveredSlot = i;
                 hoveredSlotIsHotbar = true;
                 return;

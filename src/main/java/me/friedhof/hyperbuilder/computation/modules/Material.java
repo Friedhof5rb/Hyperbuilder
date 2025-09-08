@@ -6,7 +6,6 @@ package me.friedhof.hyperbuilder.computation.modules;
  * making it easier to manage and reference them throughout the codebase.
  */
 public enum Material {
-    // Block materials
     AIR("air"),
     DIRT("dirt"),
     GRASS("grass"),
@@ -16,11 +15,12 @@ public enum Material {
     LEAVES("leaves"),
     SAPLING("sapling"),
     FLINT("flint"),
-    
-    // Crafting materials
     PLANT_FIBER("plant_fiber"),
     STICKS("sticks");
     
+
+
+
     private final String id;
     
     /**
