@@ -927,12 +927,21 @@ public class Game {
         // Get the block at this position
         Block block = world.getBlock(position);
         
-        // Check if the position is empty (null or air) and is in line of sight
+        // Check if the position is empty and is in line of sight
         if ((block == null || block.canPlaceAt(x,y,z,w, world)) && !checkCollisionWithBlockPosition(x, y, z, w) && isInSightOfPlayer(x, y, z, w)) {
             // Get the selected item from the hotbar
             BaseItem selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
             
             if (selectedItem != null && selectedItem.getCount() > 0) {
+                // Check placement restrictions for grass and saplings
+                if (selectedItem.getItemId() == Material.GRASS || selectedItem.getItemId() == Material.SAPLING) {
+                    // Check if the block below is a grass block
+                    Block blockBelow = world.getBlock(new Vector4DInt(x, y - 1, z, w));
+                    if (blockBelow == null || !Material.GRASS_BLOCK.equals(blockBelow.getBlockId())) {
+                        return; // Cannot place grass or saplings on non-grass blocks
+                    }
+                }
+                
                 // Check if there's an adjacent block (adjacency validation)
                 if (hasAdjacentBlock(x, y, z, w)) {
                     // Create block from the placeable item using its properties
@@ -1238,6 +1247,28 @@ public class Game {
         return currentState;
     }
     
+    /**
+     * Gets the player.
+     */
+    public Player getPlayer() {
+        return player;
+    }
+    
+    /**
+     * Gets the world.
+     */
+    public World getWorld() {
+        return world;
+    }
+    
+    /**
+     * Gets the renderer.
+     */
+    public Renderer getRenderer() {
+        return renderer;
+    }
+
+
     /**
      * Gets the save manager.
      */

@@ -386,8 +386,37 @@ public class SliceRenderer {
         int outlineThickness;
 
         if (canDestroy && (!block.getBlockId().equals(Material.AIR) || game.hasAdjacentBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW()))) {
-            // Green for blocks that can be destroyed
-            outlineColor = new Color(0, 255, 0, 200) ;
+            // For air blocks, check if the selected item can be placed
+            if (block.getBlockId().equals(Material.AIR)) {
+                me.friedhof.hyperbuilder.computation.modules.Player player = game.getPlayer();
+                if (player != null) {
+                    me.friedhof.hyperbuilder.computation.modules.items.BaseItem selectedItem = 
+                        game.getRenderer().getHUD().getHotbar().getSelectedItem(player.getInventory());
+                    
+                    if (selectedItem != null) {
+                        // Check if it's grass or sapling and if it can be placed
+                        if (selectedItem.getItemId().equals(Material.GRASS) ||
+                            selectedItem.getItemId().equals(Material.SAPLING)) {
+                            // Check if the block below is grass
+                            Block blockBelow = 
+                                game.getWorld().getBlock(new Vector4DInt(blockPos.getX(), blockPos.getY() - 1, blockPos.getZ(), blockPos.getW()));
+                            if (blockBelow != null && blockBelow.getBlockId().equals(Material.GRASS_BLOCK)) {
+                                outlineColor = new Color(0, 255, 0, 200); // Green outline - can place
+                            } else {
+                                outlineColor = new Color(255, 0, 0, 200); // Red outline - cannot place
+                            }
+                        } else {
+                            outlineColor = new Color(0, 255, 0, 200); // Green outline - other items can be placed
+                        }
+                    } else {
+                        outlineColor = new Color(0, 255, 0, 200); // Green outline - no item selected
+                    }
+                } else {
+                    outlineColor = new Color(0, 255, 0, 200); // Green outline - no player
+                }
+            } else {
+                outlineColor = new Color(0, 255, 0, 200); // Green outline - can destroy
+            }
         } else {
             // Red for blocks that cannot be destroyed
             outlineColor =  new Color(255, 0, 0, 200);
