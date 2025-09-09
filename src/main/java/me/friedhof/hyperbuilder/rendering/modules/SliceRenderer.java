@@ -408,6 +408,12 @@ public class SliceRenderer {
                         } else {
                             outlineColor = new Color(0, 255, 0, 200); // Green outline - other items can be placed
                         }
+                        Block blockToPlace = ItemRegistry.createBlock(selectedItem.getItemId());
+                        if(game.checkEntityInWayAtPosition(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW(), blockToPlace)){
+                                    // Red for blocks that cannot be destroyed
+                                    outlineColor =  new Color(255, 0, 0, 200);
+                        }
+
                     } else {
                         outlineColor = new Color(0, 255, 0, 200); // Green outline - no item selected
                     }
@@ -421,10 +427,7 @@ public class SliceRenderer {
             // Red for blocks that cannot be destroyed
             outlineColor =  new Color(255, 0, 0, 200);
         }
-        if(game.checkCollisionWithBlockPosition(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getW())){
-            // Red for blocks that cannot be destroyed
-            outlineColor =  new Color(255, 0, 0, 200);
-        }
+       
 
         outlineThickness = 3;
         

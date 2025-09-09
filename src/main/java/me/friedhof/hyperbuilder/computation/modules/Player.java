@@ -1,10 +1,11 @@
 package me.friedhof.hyperbuilder.computation.modules;
 import me.friedhof.hyperbuilder.computation.modules.items.Block;
+import me.friedhof.hyperbuilder.computation.modules.interfaces.EntityInWay;
 /**
  * Represents a player in the 4D world.
  * Players can move, interact with blocks, and have an inventory.
  */
-public class Player extends Entity {
+public class Player extends Entity implements EntityInWay {
     // Player constants - adjusted for better visual/collision alignment
     private static final double PLAYER_SIZE = 0.5;
   
@@ -415,4 +416,50 @@ public class Player extends Entity {
                (maxW > blockW && minW < blockW + 1);
     }
     
+    // EntityInWay interface implementation
+    
+    /**
+     * Checks if this player is occupying or intersecting with the specified block position.
+     * 
+     * @param blockX The X coordinate of the block position
+     * @param blockY The Y coordinate of the block position
+     * @param blockZ The Z coordinate of the block position
+     * @param blockW The W coordinate of the block position
+     * @return true if this player is in the way of block placement at the specified position
+     */
+    @Override
+    public boolean isInWayOfBlock(int blockX, int blockY, int blockZ, int blockW) {
+        // Calculate player's bounding box
+        double minX = getPosition().getX() - (getSizeX() / 2.0);
+        double maxX = getPosition().getX() + (getSizeX() / 2.0);
+        double minY = getPosition().getY() - (getSizeY() / 2.0);
+        double maxY = getPosition().getY() + (getSizeY() / 2.0);
+        double minZ = getPosition().getZ() - (getSizeZ() / 2.0);
+        double maxZ = getPosition().getZ() + (getSizeZ() / 2.0);
+        double minW = getPosition().getW() - (getSizeW() / 2.0);
+        double maxW = getPosition().getW() + (getSizeW() / 2.0);
+        
+        // Check if player's bounding box intersects with the block position
+        return intersectsBlock(minX, maxX, minY, maxY, minZ, maxZ, minW, maxW, blockX, blockY, blockZ, blockW);
+    }
+    
+    /**
+     * Gets the position of this player for collision calculations.
+     * 
+     * @return The current position of this player
+     */
+    @Override
+    public Vector4D getEntityPosition() {
+        return getPosition();
+    }
+    
+    /**
+     * Gets the size dimensions of this player for collision calculations.
+     * 
+     * @return An array containing [sizeX, sizeY, sizeZ, sizeW]
+     */
+    @Override
+    public double[] getEntitySize() {
+        return new double[]{getSizeX(), getSizeY(), getSizeZ(), getSizeW()};
+    }
 }

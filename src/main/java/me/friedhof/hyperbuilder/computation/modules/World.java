@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.sql.rowset.spi.SyncResolver;
-
 import me.friedhof.hyperbuilder.computation.modules.items.Block;
 import me.friedhof.hyperbuilder.save.LazyChunkLoader;
 import java.util.Random;

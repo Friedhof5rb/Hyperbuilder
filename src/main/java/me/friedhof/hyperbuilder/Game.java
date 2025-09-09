@@ -35,6 +35,8 @@ import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.Inventory;
 import me.friedhof.hyperbuilder.computation.modules.Material;
 import me.friedhof.hyperbuilder.computation.modules.DroppedItem;
+import me.friedhof.hyperbuilder.computation.modules.Entity;
+import me.friedhof.hyperbuilder.computation.modules.interfaces.EntityInWay;
 
 
 import java.util.Set;
@@ -658,6 +660,34 @@ public class Game {
                 // Remove the block from the world by setting it to air
                 world.setBlock(breakingBlockPos, new AirItem());
                 
+                // If a grass block was broken, also break any grass on top of it
+                if (Material.GRASS_BLOCK.equals(blockId)) {
+                    Vector4DInt abovePos = new Vector4DInt(
+                        breakingBlockPos.getX(),
+                        breakingBlockPos.getY() + 1,
+                        breakingBlockPos.getZ(),
+                        breakingBlockPos.getW()
+                    );
+                    Block blockAbove = world.getBlock(abovePos);
+                    if (blockAbove != null && Material.GRASS.equals(blockAbove.getBlockId())) {
+                        // Remove the grass block above
+                        world.setBlock(abovePos, new AirItem());
+                        
+                        // Drop the grass as an item
+                        Vector4D grassDropPos = new Vector4D(
+                            abovePos.getX() + 0.5,
+                            abovePos.getY() + 0.5,
+                            abovePos.getZ() + 0.5,
+                            abovePos.getW() + 0.5
+                        );
+                        BaseItem grassItem = ItemRegistry.createItem(Material.GRASS, 1);
+                        if (grassItem != null) {
+                            DroppedItem droppedGrass = new DroppedItem(world.getNextEntityId(), grassDropPos, grassItem);
+                            world.addEntity(droppedGrass);
+                        }
+                    }
+                }
+                
                 // Calculate drop position (center of the broken block)
                 Vector4D dropPos = new Vector4D(
                     breakingBlockPos.getX() + 0.5,
@@ -927,12 +957,18 @@ public class Game {
         // Get the block at this position
         Block block = world.getBlock(position);
         
-        // Check if the position is empty and is in line of sight
-        if ((block == null || block.canPlaceAt(x,y,z,w, world)) && !checkCollisionWithBlockPosition(x, y, z, w) && isInSightOfPlayer(x, y, z, w)) {
-            // Get the selected item from the hotbar
-            BaseItem selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
+        // Get the selected item from the hotbar first to determine what block will be placed
+        BaseItem selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
+        
+        if (selectedItem != null && selectedItem.getCount() > 0) {
+            // Create block from the placeable item to check its properties
+            Block blockToPlace = ItemRegistry.createBlock(selectedItem.getItemId());
+            if (blockToPlace == null) {
+                return;
+            }
             
-            if (selectedItem != null && selectedItem.getCount() > 0) {
+            // Check if the position is empty, no entities are in the way (for solid blocks), and is in line of sight
+            if ((block == null || block.canPlaceAt(x,y,z,w, world)) && !checkEntityInWayAtPosition(x, y, z, w, blockToPlace) && isInSightOfPlayer(x, y, z, w)) {
                 // Check placement restrictions for grass and saplings
                 if (selectedItem.getItemId() == Material.GRASS || selectedItem.getItemId() == Material.SAPLING) {
                     // Check if the block below is a grass block
@@ -944,39 +980,48 @@ public class Game {
                 
                 // Check if there's an adjacent block (adjacency validation)
                 if (hasAdjacentBlock(x, y, z, w)) {
-                    // Create block from the placeable item using its properties
-                    Block blockToPlace = ItemRegistry.createBlock(selectedItem.getItemId());
-                    if (blockToPlace != null) {
-                        world.setBlock(new Vector4DInt(x, y, z, w), blockToPlace);
-                    } else {
-                        return;
-                    }
+                    world.setBlock(new Vector4DInt(x, y, z, w), blockToPlace);
                     
                     // Remove one item from inventory
                     player.getInventory().removeItem(selectedItem.getItemId(), 1);
-                    
                 }
-            } 
+            }
         }
     }
-
-
-    public boolean checkCollisionWithBlockPosition(int x, int y, int z, int w){
-         // Calculate player's bounding box at the given position
-        double minX = player.getPosition().getX() - (player.getSizeX() / 2.0);
-        double maxX = player.getPosition().getX() + (player.getSizeX() / 2.0);
-        double minY = player.getPosition().getY() - (player.getSizeY() / 2.0);
-        double maxY = player.getPosition().getY() + (player.getSizeY() / 2.0);
-        double minZ = player.getPosition().getZ() - (player.getSizeZ() / 2.0);
-        double maxZ = player.getPosition().getZ() + (player.getSizeZ() / 2.0);
-        double minW = player.getPosition().getW() - (player.getSizeW() / 2.0);
-        double maxW = player.getPosition().getW() + (player.getSizeW() / 2.0);
-        // Check if player's bounding box intersects with this block
-        if (player.intersectsBlock(minX, maxX, minY, maxY, minZ, maxZ, minW, maxW, x, y, z, w)) {
-            return true; // Collision detected
-        }
-        return false;
     
+    /**
+     * Checks if any entities implementing EntityInWay interface are blocking the specified block position.
+     * Only checks for entity collision if the block being placed is solid.
+     * 
+     * @param x World X coordinate
+     * @param y World Y coordinate
+     * @param z World Z coordinate
+     * @param w World W coordinate
+     * @param blockToPlace The block that is being placed
+     * @return true if any EntityInWay entity is blocking this position and the block is solid
+     */
+    public boolean checkEntityInWayAtPosition(int x, int y, int z, int w, Block blockToPlace) {
+        // Only check entity collision if the block being placed is solid
+        if (blockToPlace == null || !blockToPlace.isSolid()) {
+            return false; // Non-solid blocks can be placed inside entities
+        }
+        
+        // Get all entities in the world
+        java.util.List<Entity> entities = world.getEntitiesList();
+        
+        for (Entity entity : entities) {
+            // Check if entity implements EntityInWay interface
+            if (entity instanceof EntityInWay) {
+                EntityInWay entityInWay = (EntityInWay) entity;
+                
+                // Check if this entity is in the way of the block position
+                if (entityInWay.isInWayOfBlock(x, y, z, w)) {
+                    return true; // Entity is blocking placement
+                }
+            }
+        }
+        
+        return false; // No entities are blocking placement
     }
 
     public boolean isInSightOfPlayer(int x, int y, int z, int w){
