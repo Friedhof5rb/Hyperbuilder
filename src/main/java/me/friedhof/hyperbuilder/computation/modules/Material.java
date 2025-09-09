@@ -16,9 +16,15 @@ public enum Material {
     SAPLING("sapling"),
     FLINT("flint"),
     PLANT_FIBER("plant_fiber"),
-    STICKS("stick");
-    
-
+    STICKS("stick"),
+    FLINT_PICKAXE("flint_pickaxe"),
+    STONE_PICKAXE("stone_pickaxe"),
+    FLINT_AXE("flint_axe"),
+    STONE_AXE("stone_axe"),
+    FLINT_SHOVEL("flint_shovel"),
+    STONE_SHOVEL("stone_shovel"),
+    FLINT_SWORD("flint_sword"),
+    STONE_SWORD("stone_sword");
 
 
     private final String id;

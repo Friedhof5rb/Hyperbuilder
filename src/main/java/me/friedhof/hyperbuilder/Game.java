@@ -584,6 +584,18 @@ public class Game {
      * @param button The mouse button (1=left, 3=right)
      */
     private void handleMouseReleased(int x, int y, int button) {
+        // Check if the inventory UI handles the mouse release (for crafting UI slider)
+        if (renderer.getHUD().getInventoryUI().isVisible()) {
+            if (renderer.getHUD().getInventoryUI().getCraftingUI() != null) {
+                renderer.getHUD().getInventoryUI().getCraftingUI().handleMouseRelease(new MouseEvent(
+                    new java.awt.Component() {}, 
+                    MouseEvent.MOUSE_RELEASED, 
+                    System.currentTimeMillis(), 
+                    0, x, y, 1, false, button
+                ));
+            }
+        }
+        
         if (button == 1) { // Left click released - stop breaking block
             leftMousePressed = false;
             stopBlockBreaking();

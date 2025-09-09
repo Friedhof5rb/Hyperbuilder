@@ -8,6 +8,7 @@ import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import java.awt.event.MouseEvent;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.Material;
+import me.friedhof.hyperbuilder.computation.modules.RecipeManager;
 
 
 /**
@@ -49,6 +50,9 @@ public class InventoryUI {
     private int mouseY = 0;
     private int hoveredSlot = -1;
     private boolean hoveredSlotIsHotbar = false;
+    
+    // Crafting UI
+    private CraftingUI craftingUI;
     
     /**
      * Checks if the given coordinates are within the inventory UI bounds.
@@ -120,6 +124,12 @@ public class InventoryUI {
         this.screenHeight = screenHeight;
         calculateDynamicSizes();
         calculateUIBounds();
+        
+        // Initialize crafting UI
+        this.craftingUI = new CraftingUI(screenWidth, screenHeight);
+        
+        // Initialize recipe manager with default recipes
+        RecipeManager.initializeDefaultRecipes();
     }
     
     /**
@@ -130,6 +140,11 @@ public class InventoryUI {
         this.screenHeight = screenHeight;
         calculateDynamicSizes();
         calculateUIBounds();
+        
+        // Update crafting UI dimensions
+        if (craftingUI != null) {
+            craftingUI.updateScreenSize(screenWidth, screenHeight);
+        }
     }
     
     /**
@@ -216,6 +231,11 @@ public class InventoryUI {
         // Draw dragged item
         if (draggedItem != null) {
             drawDraggedItem(g, draggedItem, mouseX, mouseY);
+        }
+        
+        // Draw crafting UI
+        if (craftingUI != null) {
+            craftingUI.render(g, inventory);
         }
         
         // Draw item tooltip if hovering over a slot
@@ -324,11 +344,6 @@ public class InventoryUI {
             g.setColor(itemColor.darker());
             g.setStroke(new BasicStroke(1));
             g.drawRect(itemX, itemY, itemSize, itemSize);
-            
-            // Draw item abbreviation
-            g.setColor(TEXT_COLOR);
-            g.setFont(new Font("Arial", Font.BOLD, 8));
-
         }
         
         // Draw item count if > 1
@@ -428,13 +443,36 @@ public class InventoryUI {
     
     // Getters and setters
     public boolean isVisible() { return visible; }
-    public void setVisible(boolean visible) { this.visible = visible; }
-    public void toggleVisibility() { this.visible = !this.visible; }
+    public CraftingUI getCraftingUI() { return craftingUI; }
+    public void setVisible(boolean visible) { 
+        this.visible = visible; 
+        // Reset crafting UI state when inventory is closed
+        if (!visible && craftingUI != null) {
+            craftingUI.resetState();
+        }
+    }
+    public void toggleVisibility() { 
+        this.visible = !this.visible; 
+        // Reset crafting UI state when inventory is closed
+        if (!visible && craftingUI != null) {
+            craftingUI.resetState();
+        }
+    }
     
     public void updateMousePosition(int x, int y) {
         this.mouseX = x;
         this.mouseY = y;
         updateHoveredSlot(x, y);
+        
+        // Update crafting UI mouse position
+        if (craftingUI != null && visible) {
+            craftingUI.handleMouseMove(new MouseEvent(
+                new java.awt.Component() {}, 
+                MouseEvent.MOUSE_MOVED, 
+                System.currentTimeMillis(), 
+                0, x, y, 0, false
+            ), null);
+        }
     }
     
     /**
@@ -482,6 +520,20 @@ public class InventoryUI {
         if (!visible) return false;
         
         updateHoveredSlot(x, y);
+        
+        // Check if crafting UI handles the click first
+        if (craftingUI != null) {
+            boolean craftingHandled = craftingUI.handleMouseClick(new MouseEvent(
+                new java.awt.Component() {}, 
+                MouseEvent.MOUSE_CLICKED, 
+                System.currentTimeMillis(), 
+                0, x, y, 1, false, button
+            ), inventory);
+            
+            if (craftingHandled) {
+                return true;
+            }
+        }
         
         if (hoveredSlot == -1) return false;
         

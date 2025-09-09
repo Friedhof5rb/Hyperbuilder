@@ -198,6 +198,86 @@ public class Inventory {
     }
     
     /**
+     * Checks if the inventory has at least the specified amount of an item.
+     * 
+     * @param itemId The item ID to check for
+     * @param count The minimum count required
+     * @return true if the inventory has enough of the item, false otherwise
+     */
+    public boolean hasItem(Material itemId, int count) {
+        if (count <= 0) {
+            return true;
+        }
+        
+        int totalCount = 0;
+        
+        // Count matching items
+        for (BaseItem slotItem : slots) {
+            if (slotItem != null && slotItem.getItemId().equals(itemId)) {
+                totalCount += slotItem.getCount();
+                
+                if (totalCount >= count) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Checks if the inventory has space for the specified item and count.
+     * 
+     * @param itemId The item ID to check space for
+     * @param count The count to check space for
+     * @return true if there is space, false otherwise
+     */
+    public boolean hasSpaceFor(Material itemId, int count) {
+        if (count <= 0) {
+            return true;
+        }
+        
+        BaseItem testItem = ItemRegistry.createItem(itemId, count);
+        if (testItem == null) {
+            return false;
+        }
+        
+        int remainingCount = count;
+        
+        // First, try to stack with existing items
+        for (BaseItem slotItem : slots) {
+            if (slotItem != null && slotItem.getItemId().equals(itemId)) {
+                int currentCount = slotItem.getCount();
+                int maxStackSize = slotItem.getMaxStackSize();
+                
+                if (currentCount < maxStackSize) {
+                    int spaceAvailable = maxStackSize - currentCount;
+                    int amountThatFits = Math.min(spaceAvailable, remainingCount);
+                    remainingCount -= amountThatFits;
+                    
+                    if (remainingCount <= 0) {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        // Then, check for empty slots
+        int emptySlots = 0;
+        for (BaseItem slotItem : slots) {
+            if (slotItem == null) {
+                emptySlots++;
+            }
+        }
+        
+        // Calculate how many empty slots we need
+        int maxStackSize = testItem.getMaxStackSize();
+        int slotsNeeded = (remainingCount + maxStackSize - 1) / maxStackSize; // Ceiling division
+        
+        return emptySlots >= slotsNeeded;
+    }
+    
+    /**
      * Checks if a slot index is valid for this inventory.
      * 
      * @param slot The slot index to check
