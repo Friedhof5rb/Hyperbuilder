@@ -5,7 +5,7 @@ import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
 
 public class FlintAxeItem extends BaseItem implements IsTool {
 
-    int durability;
+    private int durability;
     private final int maxDurability = 50;
 
     public FlintAxeItem(int count) {
@@ -39,6 +39,9 @@ public class FlintAxeItem extends BaseItem implements IsTool {
     }
     @Override
     public float getMiningSpeed(Block block) {
+        if(block.getBlockId() == Material.WOOD_LOG) {
+            return 1.2f;
+        }
         return 1.0f;
     }
     @Override
@@ -47,5 +50,9 @@ public class FlintAxeItem extends BaseItem implements IsTool {
             return true;
         }
         return false;
+    }
+    @Override
+    public String getToolType() {
+        return "axe";
     }
 }

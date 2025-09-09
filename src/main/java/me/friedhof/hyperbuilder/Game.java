@@ -37,6 +37,7 @@ import me.friedhof.hyperbuilder.computation.modules.Material;
 import me.friedhof.hyperbuilder.computation.modules.DroppedItem;
 import me.friedhof.hyperbuilder.computation.modules.Entity;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.EntityInWay;
+import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
 
 
 import java.util.Set;
@@ -78,7 +79,8 @@ public class Game {
     private boolean isBreakingBlock = false;
     private Vector4DInt breakingBlockPos = null;
     private long breakingStartTime = 0;
-    private static final long BLOCK_BREAK_TIME = 1000; // 1 second to break a block
+    private static final long BASE_BLOCK_BREAK_TIME = 3000; // Base time to break a block (1 second)
+    private long currentBlockBreakTime = BASE_BLOCK_BREAK_TIME; // Current break time for the block being broken
     private float breakingProgress = 0.0f;
     private boolean leftMousePressed = false; // Track if left mouse button is held down
     
@@ -228,11 +230,6 @@ public class Game {
             }
         }
         
-        // Give the player some starting blocks
-       Inventory inventory = player.getInventory();
-        inventory.addItem(Material.DIRT, 64);
-        inventory.addItem(Material.STONE, 32);
-        inventory.addItem(Material.WOOD_LOG, 16);
         
         // Create a camera starting at the player's initial world position
         camera = new Camera(new Vector4D(0, 1, 0, 0));
@@ -621,13 +618,15 @@ public class Game {
                 stopBlockBreaking();
             }
             
+            // Calculate break time based on selected tool and block type
+            currentBlockBreakTime = calculateBlockBreakTime(block);
+            
             // Start breaking this block
             isBreakingBlock = true;
             breakingBlockPos = position;
             breakingStartTime = System.currentTimeMillis();
             breakingProgress = 0.0f;
-            
-    
+        
         }
     }
     
@@ -666,7 +665,7 @@ public class Game {
             long elapsedTime = currentTime - breakingStartTime;
             
             // Calculate progress (0.0 to 1.0)
-            breakingProgress = Math.min(1.0f, (float) elapsedTime / BLOCK_BREAK_TIME);
+            breakingProgress = Math.min(1.0f, (float) elapsedTime / currentBlockBreakTime);
             
             // Check if breaking is complete
             if (breakingProgress >= 1.0f) {
@@ -747,11 +746,29 @@ public class Game {
                     dropPlantFiber(dropPos);
                     // Note: No grass items are dropped
                 } else {
-                    // Drop the block as an item for all other blocks
-                    BaseItem blockItem = ItemRegistry.createItem(blockId, 1);
-                    if (blockItem != null) {
-                        DroppedItem droppedBlock = new DroppedItem(world.getNextEntityId(), dropPos, blockItem);
-                        world.addEntity(droppedBlock);
+                    // Check if this block requires a specific tool to drop
+                    boolean shouldDrop = true;
+                    
+                    // Stone, Wood Logs, Grass Block, and Dirt only drop when broken with correct tool
+                    if (Material.STONE.equals(blockId) || 
+                        Material.WOOD_LOG.equals(blockId) || 
+                        Material.GRASS_BLOCK.equals(blockId) || 
+                        Material.DIRT.equals(blockId)) {
+                        
+                        shouldDrop = canSelectedToolMineBlock(block);
+                        
+                        if (!shouldDrop) {
+                            System.out.println("Block " + blockId + " requires correct tool to drop items!");
+                        }
+                    }
+                    
+                    // Drop the block as an item only if tool requirement is met
+                    if (shouldDrop) {
+                        BaseItem blockItem = ItemRegistry.createItem(blockId, 1);
+                        if (blockItem != null) {
+                            DroppedItem droppedBlock = new DroppedItem(world.getNextEntityId(), dropPos, blockItem);
+                            world.addEntity(droppedBlock);
+                        }
                     }
                 }
                 
@@ -1520,5 +1537,63 @@ public class Game {
         }
     }
     
+    /**
+     * Gets the currently selected tool from the player's inventory.
+     * 
+     * @return The selected tool, or null if no tool is selected
+     */
+    private IsTool getSelectedTool() {
+        if (player == null || renderer == null) {
+            return null;
+        }
+        
+        BaseItem selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
+        if (selectedItem instanceof IsTool) {
+            return (IsTool) selectedItem;
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Gets the effective mining speed for the current tool against a block.
+     * 
+     * @param block The block being mined
+     * @return The mining speed multiplier
+     */
+    private float getEffectiveMiningSpeed(Block block) {
+        IsTool tool = getSelectedTool();
+        if (tool != null) {
+            return tool.getMiningSpeed(block);
+        }
+        
+        return 1.0f; // Default speed when no tool is selected
+    }
+    
+    /**
+     * Checks if the currently selected tool can effectively mine the specified block.
+     * 
+     * @param block The block to check
+     * @return true if the tool can mine the block, false otherwise
+     */
+    private boolean canSelectedToolMineBlock(Block block) {
+        IsTool tool = getSelectedTool();
+        if (tool != null) {
+            return tool.canMine(block);
+        }
+        
+        return false; // No tool selected, cannot mine effectively
+    }
+    
+    /**
+     * Calculates the break time for a block based on the selected tool.
+     * 
+     * @param block The block being broken
+     * @return The time in milliseconds to break the block
+     */
+    private long calculateBlockBreakTime(Block block) {
+        float miningSpeed = getEffectiveMiningSpeed(block);
+        return (long) (BASE_BLOCK_BREAK_TIME / miningSpeed);
+    }
 
 }

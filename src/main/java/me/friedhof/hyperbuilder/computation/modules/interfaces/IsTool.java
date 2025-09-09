@@ -45,4 +45,7 @@ public interface IsTool {
      */
     boolean canMine(Block block);
     
+    String getToolType();
+
+
 }

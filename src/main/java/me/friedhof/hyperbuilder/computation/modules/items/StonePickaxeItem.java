@@ -42,7 +42,13 @@ public class StonePickaxeItem extends BaseItem implements IsTool {
     }
     @Override
     public float getMiningSpeed(Block block) {
-        return 2.0f;
+        if(block.getBlockId() == Material.STONE) {
+            return 2.0f;
+        }
+        return 1.0f;
     }
-
+    @Override
+    public String getToolType() {
+        return "pickaxe";
+    }
 }
