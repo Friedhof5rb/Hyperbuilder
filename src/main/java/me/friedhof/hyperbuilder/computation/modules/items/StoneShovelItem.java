@@ -36,6 +36,10 @@ public class StoneShovelItem extends BaseItem implements IsTool {
         return this.durability > 0;
     }
     @Override
+    public void setDurability(int durability) {
+        this.durability = Math.max(0, Math.min(durability, maxDurability));
+    }
+    @Override
     public boolean canMine(Block block) {
        if(block.getBlockId() == Material.STONE) {
             return true;

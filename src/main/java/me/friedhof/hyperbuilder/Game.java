@@ -83,6 +83,7 @@ public class Game {
     private long currentBlockBreakTime = BASE_BLOCK_BREAK_TIME; // Current break time for the block being broken
     private float breakingProgress = 0.0f;
     private boolean leftMousePressed = false; // Track if left mouse button is held down
+    private BaseItem lastSelectedItem = null; // Track the last selected item to detect switches
     
     /**
      * Gets whether a block is currently being broken.
@@ -230,6 +231,10 @@ public class Game {
             }
         }
         
+        // Give the player some starting blocks
+        Inventory inventory = player.getInventory();
+        inventory.addItem(Material.FLINT_PICKAXE, 1);
+        inventory.addItem(Material.STONE_SHOVEL, 1);
         
         // Create a camera starting at the player's initial world position
         camera = new Camera(new Vector4D(0, 1, 0, 0));
@@ -343,12 +348,16 @@ public class Game {
             public void mouseDragged(MouseEvent e) {
                 mouseX = e.getX();
                 mouseY = e.getY();
+                // Update hotbar hover detection
+                renderer.getHUD().getHotbar().updateMousePosition(mouseX, mouseY);
             }
             
             @Override
             public void mouseMoved(MouseEvent e) {
                 mouseX = e.getX();
                 mouseY = e.getY();
+                // Update hotbar hover detection
+                renderer.getHUD().getHotbar().updateMousePosition(mouseX, mouseY);
             }
         });
         
@@ -422,6 +431,7 @@ public class Game {
             case KeyEvent.VK_9:
                 int slot = keyCode - KeyEvent.VK_1; // Convert to 0-8 range
                 renderer.getHUD().getHotbar().setSelectedSlot(slot, player.getInventory());
+                resetBreakingProgressOnItemSwitch();
                 break;
             case KeyEvent.VK_F:
                 // Toggle inventory visibility
@@ -498,6 +508,9 @@ public class Game {
         
         // Set the new selected slot
         hotbar.setSelectedSlot(newSlot, player.getInventory());
+        
+        // Reset block breaking progress when switching items
+        resetBreakingProgressOnItemSwitch();
     }
     
     /**
@@ -688,6 +701,20 @@ public class Game {
                 // Remove the block from the world by setting it to air
                 world.setBlock(breakingBlockPos, new AirItem());
                 
+                // Apply durability damage to the selected tool if it's a tool
+                BaseItem selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
+                if (selectedItem instanceof IsTool) {
+                    IsTool tool = (IsTool) selectedItem;
+                    tool.damage(1); // Take 1 durability damage per block broken
+                    
+                    // Check if tool is broken (durability <= 0)
+                    if (tool.getCurrentDurability() <= 0) {
+                        // Remove the broken tool from inventory
+                        int selectedSlot = renderer.getHUD().getHotbar().getSelectedSlot();
+                        player.getInventory().setItem(selectedSlot,null );
+                    }
+                }
+                
                 // If a grass block was broken, also break any grass on top of it
                 if (Material.GRASS_BLOCK.equals(blockId)) {
                     Vector4DInt abovePos = new Vector4DInt(
@@ -744,7 +771,14 @@ public class Game {
                     // Handle custom drops for grass - drop plant fiber with probability
                     // 70% chance to drop plant fiber when grass is directly broken
                     dropPlantFiber(dropPos);
-                    // Note: No grass items are dropped
+                    
+                }else if (Material.COAL_ORE.equals(blockId)) {
+                            BaseItem coalItem = ItemRegistry.createItem(Material.COAL, 1);
+                        if (coalItem != null && canSelectedToolMineBlock(block)) {
+                            DroppedItem droppedCoal = new DroppedItem(world.getNextEntityId(), dropPos, coalItem);
+                            world.addEntity(droppedCoal);
+                        }
+
                 } else {
                     // Check if this block requires a specific tool to drop
                     boolean shouldDrop = true;
@@ -753,7 +787,8 @@ public class Game {
                     if (Material.STONE.equals(blockId) || 
                         Material.WOOD_LOG.equals(blockId) || 
                         Material.GRASS_BLOCK.equals(blockId) || 
-                        Material.DIRT.equals(blockId)) {
+                        Material.DIRT.equals(blockId)
+                        || Material.COAL_ORE.equals(blockId)) {
                         
                         shouldDrop = canSelectedToolMineBlock(block);
                         
@@ -1594,6 +1629,22 @@ public class Game {
     private long calculateBlockBreakTime(Block block) {
         float miningSpeed = getEffectiveMiningSpeed(block);
         return (long) (BASE_BLOCK_BREAK_TIME / miningSpeed);
+    }
+    
+    /**
+     * Resets block breaking progress if the player has switched to a different item.
+     */
+    private void resetBreakingProgressOnItemSwitch() {
+        BaseItem currentSelectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
+        
+        // Check if the selected item has changed
+        if (lastSelectedItem != currentSelectedItem) {
+            // Items are different, reset breaking progress
+            if (isBreakingBlock) {
+                stopBlockBreaking();
+            }
+            lastSelectedItem = currentSelectedItem;
+        }
     }
 
 }

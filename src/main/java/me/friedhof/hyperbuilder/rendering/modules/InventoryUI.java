@@ -9,6 +9,7 @@ import java.awt.event.MouseEvent;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.Material;
 import me.friedhof.hyperbuilder.computation.modules.RecipeManager;
+import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
 
 
 /**
@@ -389,17 +390,41 @@ public class InventoryUI {
             itemName += " x" + item.getCount();
         }
         
-        // Set font for tooltip
-        Font tooltipFont = new Font("Arial", Font.PLAIN, 12);
-        g.setFont(tooltipFont);
-        FontMetrics fm = g.getFontMetrics();
+        // Check if item is a tool and get durability info
+        String durabilityText = null;
+        if (item instanceof IsTool) {
+            IsTool tool = (IsTool) item;
+            int currentDurability = tool.getCurrentDurability();
+            int maxDurability = tool.getMaxDurability();
+            durabilityText = "Durability: " + currentDurability + "/" + maxDurability;
+        }
+        
+        // Set fonts for tooltip
+        Font nameFont = new Font("Arial", Font.BOLD, 12);
+        Font durabilityFont = new Font("Arial", Font.PLAIN, 10);
+        
+        // Calculate text dimensions
+        g.setFont(nameFont);
+        FontMetrics nameFm = g.getFontMetrics();
+        int nameWidth = nameFm.stringWidth(itemName);
+        int nameHeight = nameFm.getHeight();
+        
+        int durabilityWidth = 0;
+        int durabilityHeight = 0;
+        FontMetrics durabilityFm = null;
+        if (durabilityText != null) {
+            g.setFont(durabilityFont);
+            durabilityFm = g.getFontMetrics();
+            durabilityWidth = durabilityFm.stringWidth(durabilityText);
+            durabilityHeight = durabilityFm.getHeight();
+        }
         
         // Calculate tooltip dimensions
-        int textWidth = fm.stringWidth(itemName);
-        int textHeight = fm.getHeight();
         int tooltipPadding = 6;
+        int textWidth = Math.max(nameWidth, durabilityWidth);
+        int totalTextHeight = nameHeight + (durabilityText != null ? durabilityHeight + 2 : 0); // +2 for spacing
         int tooltipWidth = textWidth + 2 * tooltipPadding;
-        int tooltipHeight = textHeight + 2 * tooltipPadding;
+        int tooltipHeight = totalTextHeight + 2 * tooltipPadding;
         
         // Position tooltip near mouse cursor, but keep it on screen
         int tooltipX = mouseX + 10; // Offset from cursor
@@ -425,11 +450,21 @@ public class InventoryUI {
         g.setStroke(new BasicStroke(1));
         g.drawRoundRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 4, 4);
         
-        // Draw tooltip text
+        // Draw item name
         g.setColor(TOOLTIP_TEXT);
-        int textX = tooltipX + tooltipPadding;
-        int textY = tooltipY + tooltipPadding + fm.getAscent();
-        g.drawString(itemName, textX, textY);
+        g.setFont(nameFont);
+        int nameX = tooltipX + tooltipPadding;
+        int nameY = tooltipY + tooltipPadding + nameFm.getAscent();
+        g.drawString(itemName, nameX, nameY);
+        
+        // Draw durability text if available
+        if (durabilityText != null && durabilityFm != null) {
+            g.setFont(durabilityFont);
+            g.setColor(new Color(200, 200, 200)); // Slightly dimmed color for subtext
+            int durabilityX = tooltipX + tooltipPadding;
+            int durabilityY = nameY + durabilityFm.getAscent() + 2; // +2 for spacing
+            g.drawString(durabilityText, durabilityX, durabilityY);
+        }
     }
     
     /**

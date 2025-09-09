@@ -113,8 +113,8 @@ public class ItemRegistry {
         registerItem(new StonePickaxeItem());
         registerItem(new StoneAxeItem());
         registerItem(new StoneShovelItem());
-
-    
+        registerItem(new CoalOreItem());
+        registerItem(new CoalItem());
     }
     
     

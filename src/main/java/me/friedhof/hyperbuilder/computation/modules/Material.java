@@ -24,9 +24,10 @@ public enum Material {
     FLINT_SHOVEL("flint_shovel"),
     STONE_SHOVEL("stone_shovel"),
     FLINT_SWORD("flint_sword"),
-    STONE_SWORD("stone_sword");
+    STONE_SWORD("stone_sword"),
+    COAL_ORE("coal_ore"),
+    COAL("coal");
 
-    
     private final String id;
     
     /**

@@ -116,20 +116,40 @@ public class PlayerSaveData implements Serializable {
  * Serializable data class for Item objects.
  */
 class ItemSaveData implements Serializable {
-    private static final long serialVersionUID = 2L; // Updated version
+    private static final long serialVersionUID = 3L; // Updated version for durability support
     
     private final Material itemId;
     private final int count;
+    private final int durability; // -1 for non-tools, actual durability for tools
     
     public ItemSaveData(BaseItem item) {
         this.itemId = item.getItemId();
         this.count = item.getCount();
+        
+        // Save durability if item is a tool
+        if (item instanceof me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool) {
+            me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool tool = 
+                (me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool) item;
+            this.durability = tool.getCurrentDurability();
+        } else {
+            this.durability = -1; // Not a tool
+        }
     }
     
     public BaseItem toItem() {
-        return ItemRegistry.createItem(itemId, count);
+        BaseItem item = ItemRegistry.createItem(itemId, count);
+        
+        // Restore durability if item is a tool and we have durability data
+        if (item instanceof me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool && durability >= 0) {
+            me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool tool = 
+                (me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool) item;
+            tool.setDurability(durability);
+        }
+        
+        return item;
     }
     
     public Material getItemId() { return itemId; }
     public int getCount() { return count; }
+    public int getDurability() { return durability; }
 }

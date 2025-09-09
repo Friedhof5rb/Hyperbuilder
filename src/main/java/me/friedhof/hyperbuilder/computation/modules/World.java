@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.sound.midi.SysexMessage;
+
 import me.friedhof.hyperbuilder.computation.modules.items.Block;
 import me.friedhof.hyperbuilder.save.LazyChunkLoader;
 import java.util.Random;
@@ -166,6 +168,9 @@ public class World {
         
         // Generate caves in this chunk
         generateCaves(chunk, position);
+        
+        // Generate coal ore below the surface
+        generateCoalOre(chunk, position);
         
         // Generate trees for this chunk (highest priority)
         generateTrees(chunk, position);
@@ -347,7 +352,63 @@ public class World {
     }
     
     /**
-     * Finds the surface level (highest non-air block) at the given coordinates.
+     * Generates coal ore below the surface in the given chunk.
+     * Coal ore spawns in stone blocks at depths between 5 and 40 blocks below the surface.
+     * 
+     * @param chunk The chunk to generate coal ore in
+     * @param chunkPosition The position of the chunk in the world
+     */
+    private void generateCoalOre(Chunk4D chunk, Vector4DInt chunkPosition) {
+        // Coal ore generation parameters
+        double coalOreChance = 0.005; 
+        int minDepthBelowSurface = 3;  // Minimum depth below surface for coal ore (reduced for easier access)
+        int maxDepthBelowSurface = 50; // Maximum depth below surface for coal ore (increased range)
+        
+        // Generate coal ore at valid underground locations
+        for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
+            for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
+                for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
+                    for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
+                        // Convert to world coordinates
+                        int worldX = x + chunkPosition.getX() * Chunk4D.CHUNK_SIZE;
+                        int worldY = y + chunkPosition.getY() * Chunk4D.CHUNK_SIZE;
+                        int worldZ = z + chunkPosition.getZ() * Chunk4D.CHUNK_SIZE;
+                        int worldW = w + chunkPosition.getW() * Chunk4D.CHUNK_SIZE;
+                        
+                        // Calculate terrain height at this position
+                        double terrainHeight = generateTerrainHeight(worldX, worldZ, worldW);
+                        
+                        // Check if this position is at the right depth for coal ore
+                        double depthBelowSurface = terrainHeight - worldY;
+                        if (depthBelowSurface < minDepthBelowSurface || depthBelowSurface > maxDepthBelowSurface) {
+                            continue;
+                        }
+                        
+                        // Only replace stone blocks with coal ore
+                        Block currentBlock = chunk.getBlock(x, y, z, w);
+                        if (currentBlock == null || !Material.STONE.equals(currentBlock.getBlockId())) {
+                            continue;
+                        }
+                        
+                        // Use deterministic pseudo-random generation based on world coordinates
+                        long coalSeed = seed + worldX * 73L + worldY * 37L + worldZ * 19L + worldW * 11L;
+                        // Use a better pseudo-random algorithm for more even distribution
+                        coalSeed = coalSeed * 1103515245L + 12345L; // Linear congruential generator
+                        double randomValue = Math.abs(coalSeed % 1000000) / 1000000.0;
+                        
+                        // Check if coal ore should spawn at this location
+                        if (randomValue < coalOreChance) {
+                            chunk.setBlock(x, y, z, w, ItemRegistry.createBlock(Material.COAL_ORE));
+                            System.out.println("Generated coal ore at: " + worldX + ", " + worldY + ", " + worldZ + ", " + worldW);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Finds the surface level (highest non-air block) at the given local coordinates.
      * 
      * @param chunk The chunk to search in
      * @param x Local x coordinate

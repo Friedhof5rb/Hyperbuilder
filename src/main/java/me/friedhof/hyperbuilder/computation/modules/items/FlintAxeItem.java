@@ -38,6 +38,10 @@ public class FlintAxeItem extends BaseItem implements IsTool {
         return this.durability > 0;
     }
     @Override
+    public void setDurability(int durability) {
+        this.durability = Math.max(0, Math.min(durability, maxDurability));
+    }
+    @Override
     public float getMiningSpeed(Block block) {
         if(block.getBlockId() == Material.WOOD_LOG) {
             return 1.2f;

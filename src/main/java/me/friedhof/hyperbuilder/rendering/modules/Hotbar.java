@@ -7,6 +7,7 @@ import me.friedhof.hyperbuilder.computation.modules.Inventory;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import me.friedhof.hyperbuilder.computation.modules.Material;
+import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
 
 /**
  * Hotbar UI component for displaying and selecting items.
@@ -31,6 +32,11 @@ public class Hotbar {
     private int selectedSlot = 0;
     private int width;
     private int height;
+    
+    // Hover state for tooltips
+    private int hoveredSlot = -1;
+    private int mouseX = -1;
+    private int mouseY = -1;
     
     // Item name display
     private static final long DISPLAY_DURATION_MS = 1000; // 3 seconds
@@ -210,6 +216,15 @@ public class Hotbar {
             }
         }
         
+        // Draw tooltip for hovered item
+        if (hoveredSlot >= 0 && hoveredSlot < HOTBAR_SLOTS) {
+            BaseItem hoveredItem = inventory.getItem(hoveredSlot);
+            if (hoveredItem != null && hoveredItem instanceof IsTool) {
+                IsTool tool = (IsTool) hoveredItem;
+                drawDurabilityTooltip(g, tool, mouseX, mouseY);
+            }
+        }
+        
         // Restore original settings
         g.setFont(originalFont);
         g.setColor(originalColor);
@@ -256,6 +271,50 @@ public class Hotbar {
             g.setColor(itemColor.darker());
             g.setStroke(new BasicStroke(1));
             g.drawRect(itemX, itemY, itemSize, itemSize);
+        }
+        
+        // Draw durability health bar for tools
+        if (item instanceof IsTool) {
+            IsTool tool = (IsTool) item;
+            int currentDurability = tool.getCurrentDurability();
+            int maxDurability = tool.getMaxDurability();
+            
+            if (maxDurability > 0) {
+                // Calculate durability percentage
+                float durabilityPercent = (float) currentDurability / maxDurability;
+                
+                // Determine health bar color based on durability percentage
+                Color healthBarColor;
+                if (durabilityPercent > 0.6f) {
+                    // Green (high durability)
+                    healthBarColor = new Color(0, 255, 0, 200);
+                } else if (durabilityPercent > 0.3f) {
+                    // Yellow (medium durability)
+                    healthBarColor = new Color(255, 255, 0, 200);
+                } else {
+                    // Red (low durability)
+                    healthBarColor = new Color(255, 0, 0, 200);
+                }
+                
+                // Draw health bar background
+                int barWidth = itemSize;
+                int barHeight = 3;
+                int barX = itemX;
+                int barY = itemY + itemSize + 2;
+                
+                g.setColor(new Color(64, 64, 64, 200)); // Dark background
+                g.fillRect(barX, barY, barWidth, barHeight);
+                
+                // Draw health bar foreground
+                int fillWidth = (int) (barWidth * durabilityPercent);
+                g.setColor(healthBarColor);
+                g.fillRect(barX, barY, fillWidth, barHeight);
+                
+                // Draw health bar border
+                g.setColor(new Color(128, 128, 128, 200));
+                g.setStroke(new BasicStroke(1));
+                g.drawRect(barX, barY, barWidth, barHeight);
+            }
         }
         
         // Draw item name (abbreviated)
@@ -338,7 +397,115 @@ public class Hotbar {
      * @return The corresponding Texture2D, or null if no texture is available
      */
     private Texture2D getTexture2DForItemType(Material itemId) {
-
         return ItemRegistry.getItemTexture(itemId);
+    }
+    
+    /**
+     * Updates the mouse position and determines which slot is being hovered over.
+     * 
+     * @param mouseX The current mouse X position
+     * @param mouseY The current mouse Y position
+     */
+    public void updateMousePosition(int mouseX, int mouseY) {
+        this.mouseX = mouseX;
+        this.mouseY = mouseY;
+        
+        // Calculate hotbar position (same logic as in render method)
+        int hotbarWidth = HOTBAR_SLOTS * slotSize + (HOTBAR_SLOTS - 1) * slotPadding + 2 * hotbarPadding;
+        int hotbarHeight = slotSize + 2 * hotbarPadding;
+        
+        // Ensure hotbar fits on screen - if too wide, scale it down
+        if (hotbarWidth > width - 20) {
+            int availableWidth = width - 20;
+            int totalSlotWidth = availableWidth - 2 * hotbarPadding;
+            int newSlotSize = Math.max(20, totalSlotWidth / (HOTBAR_SLOTS + (HOTBAR_SLOTS - 1) * slotPadding / slotSize));
+            int tempSlotSize = newSlotSize;
+            int tempSlotPadding = Math.max(1, tempSlotSize / 20);
+            int tempHotbarPadding = Math.max(4, tempSlotSize / 8);
+            
+            // Recalculate dimensions with temp values
+            hotbarWidth = HOTBAR_SLOTS * tempSlotSize + (HOTBAR_SLOTS - 1) * tempSlotPadding + 2 * tempHotbarPadding;
+            hotbarHeight = tempSlotSize + 2 * tempHotbarPadding;
+        }
+        
+        int hotbarX = Math.max(10, Math.min(width - hotbarWidth - 10, (width - hotbarWidth) / 2));
+        int hotbarY = Math.max(hotbarHeight + 10, height - hotbarHeight - 30);
+        
+        // Check if mouse is over any slot
+        hoveredSlot = -1;
+        for (int i = 0; i < HOTBAR_SLOTS; i++) {
+            int slotX = hotbarX + hotbarPadding + i * (slotSize + slotPadding);
+            int slotY = hotbarY + hotbarPadding;
+            
+            if (mouseX >= slotX && mouseX <= slotX + slotSize &&
+                mouseY >= slotY && mouseY <= slotY + slotSize) {
+                hoveredSlot = i;
+                break;
+            }
+        }
+    }
+    
+    /**
+     * Gets the currently hovered slot index.
+     * 
+     * @return The hovered slot index, or -1 if no slot is hovered
+     */
+    public int getHoveredSlot() {
+        return hoveredSlot;
+    }
+    
+    /**
+     * Draws a durability tooltip for a tool at the specified mouse position.
+     * 
+     * @param g The graphics context
+     * @param tool The tool to show durability for
+     * @param mouseX The mouse X position
+     * @param mouseY The mouse Y position
+     */
+    private void drawDurabilityTooltip(Graphics2D g, IsTool tool, int mouseX, int mouseY) {
+        int currentDurability = tool.getCurrentDurability();
+        int maxDurability = tool.getMaxDurability();
+        
+        // Create tooltip text
+        String tooltipText = "Durability: " + currentDurability + "/" + maxDurability;
+        
+        // Set font for tooltip
+        Font tooltipFont = new Font("Arial", Font.PLAIN, 12);
+        g.setFont(tooltipFont);
+        FontMetrics fm = g.getFontMetrics();
+        
+        // Calculate tooltip dimensions
+        int textWidth = fm.stringWidth(tooltipText);
+        int textHeight = fm.getHeight();
+        int padding = 6;
+        int tooltipWidth = textWidth + 2 * padding;
+        int tooltipHeight = textHeight + 2 * padding;
+        
+        // Position tooltip near mouse, but keep it on screen
+        int tooltipX = mouseX + 10;
+        int tooltipY = mouseY - tooltipHeight - 10;
+        
+        // Adjust position if tooltip would go off screen
+        if (tooltipX + tooltipWidth > width) {
+            tooltipX = mouseX - tooltipWidth - 10;
+        }
+        if (tooltipY < 0) {
+            tooltipY = mouseY + 20;
+        }
+        
+        // Draw tooltip background
+        g.setColor(new Color(0, 0, 0, 200));
+        g.fillRoundRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 6, 6);
+        
+        // Draw tooltip border
+        g.setColor(new Color(255, 255, 255, 150));
+        g.setStroke(new BasicStroke(1));
+        g.drawRoundRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 6, 6);
+        
+        // Draw tooltip text
+        g.setColor(Color.WHITE);
+        int textX = tooltipX + padding;
+        int textY = tooltipY + padding + fm.getAscent();
+        g.drawString(tooltipText, textX, textY);
     }
 }

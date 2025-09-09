@@ -30,6 +30,13 @@ public interface IsTool {
     boolean damage(int damage);
     
     /**
+     * Sets the current durability of this tool.
+     * 
+     * @param durability The new durability value
+     */
+    void setDurability(int durability);
+    
+    /**
      * Gets the mining speed multiplier for this tool against the specified block.
      * 
      * @param block The block being mined

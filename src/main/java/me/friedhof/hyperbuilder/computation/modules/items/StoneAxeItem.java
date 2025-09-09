@@ -36,6 +36,10 @@ public class StoneAxeItem extends BaseItem implements IsTool {
         this.durability -= damage;
         return this.durability <= 0;
     }
+    @Override
+    public void setDurability(int durability) {
+        this.durability = Math.max(0, Math.min(durability, maxDurability));
+    }
     
     @Override
     public boolean canMine(Block block) {

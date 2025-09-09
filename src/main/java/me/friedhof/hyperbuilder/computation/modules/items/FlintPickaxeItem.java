@@ -9,10 +9,12 @@ public class FlintPickaxeItem extends BaseItem implements IsTool{
 
     public FlintPickaxeItem(int count) {
         super(Material.FLINT_PICKAXE, "Flint Pickaxe", 1, count);
+        this.durability = maxDurability;
     }
 
     public FlintPickaxeItem() {
         super(Material.FLINT_PICKAXE, "Flint Pickaxe", 1, 0);
+        this.durability = maxDurability;
     }
     
 
@@ -35,6 +37,10 @@ public class FlintPickaxeItem extends BaseItem implements IsTool{
         this.durability -= damage;
         return this.durability > 0;
     }
+    @Override
+    public void setDurability(int durability) {
+        this.durability = Math.max(0, Math.min(durability, maxDurability));
+    }
  
     @Override
     public boolean canMine(Block block) {
@@ -48,7 +54,7 @@ public class FlintPickaxeItem extends BaseItem implements IsTool{
          if(block.getBlockId() == Material.STONE) {
             return 1.2f;
         }
-        return 1.2f;
+        return 1.0f;
     }
     @Override
     public String getToolType() {

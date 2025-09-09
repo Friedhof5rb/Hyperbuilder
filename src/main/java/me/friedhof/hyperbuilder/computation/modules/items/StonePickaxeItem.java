@@ -34,6 +34,10 @@ public class StonePickaxeItem extends BaseItem implements IsTool {
         return this.durability > 0;
     }
     @Override
+    public void setDurability(int durability) {
+        this.durability = Math.max(0, Math.min(durability, maxDurability));
+    }
+    @Override
     public boolean canMine(Block block) {
       if(block.getBlockId() == Material.STONE) {
             return true;
@@ -42,7 +46,7 @@ public class StonePickaxeItem extends BaseItem implements IsTool {
     }
     @Override
     public float getMiningSpeed(Block block) {
-        if(block.getBlockId() == Material.STONE) {
+        if(block.getBlockId() == Material.STONE || block.getBlockId() == Material.COAL_ORE) {
             return 2.0f;
         }
         return 1.0f;
