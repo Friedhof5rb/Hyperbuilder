@@ -558,7 +558,7 @@ public class SliceRenderer {
         double pixelX = (getSliceCenter() + 0.5 + relativeX) * BLOCK_SIZE;
         double pixelY = (getSliceCenter() + 0.5 - relativeY) * BLOCK_SIZE; // Subtract because Y is flipped
         
-        // Dropped items are smaller than blocks (0.25 vs 1.0)
+        // Dropped items are smaller than blocks 
         int itemSizePixels = (int)(droppedItem.getSizeX() * BLOCK_SIZE);
         
         // Try to get the texture for the item's material
@@ -571,12 +571,38 @@ public class SliceRenderer {
             Texture4D texture = texturelist.get(itemMaterial);
             BufferedImage textureSlice = texture.getSlice2D(0, 0); // Use base texture slice
             
+            // Store original rendering hints
+            Object originalInterpolation = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            Object originalRendering = g.getRenderingHint(RenderingHints.KEY_RENDERING);
+            
+            // Set pixel-perfect rendering hints to preserve all pixels
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+            
             g.drawImage(textureSlice, 
                 (int)(pixelX - itemSizePixels / 2), 
                 (int)(pixelY - itemSizePixels / 2), 
                 itemSizePixels, 
                 itemSizePixels, 
                 null);
+            
+            // Restore original rendering hints
+            if (originalInterpolation != null) {
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, originalInterpolation);
+            }
+            if (originalRendering != null) {
+                g.setRenderingHint(RenderingHints.KEY_RENDERING, originalRendering);
+            }
+            
+            // Draw a very thin edge around the dropped item
+            g.setColor(new Color(255, 255, 255, 80)); 
+            g.setStroke(new BasicStroke(10.0f)); // 1 pixel thin stroke
+            g.drawRect(
+                (int)(pixelX - itemSizePixels / 2), 
+                (int)(pixelY - itemSizePixels / 2), 
+                itemSizePixels - 1, 
+                itemSizePixels - 1
+            );
         } else {
             // Fallback: draw as a small colored square
             g.setColor(Color.YELLOW);
