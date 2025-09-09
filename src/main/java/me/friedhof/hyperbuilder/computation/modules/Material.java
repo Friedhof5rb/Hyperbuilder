@@ -16,7 +16,7 @@ public enum Material {
     SAPLING("sapling"),
     FLINT("flint"),
     PLANT_FIBER("plant_fiber"),
-    STICKS("sticks");
+    STICKS("stick");
     
 
 

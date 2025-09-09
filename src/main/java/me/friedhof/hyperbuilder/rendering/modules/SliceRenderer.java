@@ -16,6 +16,7 @@ import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 import me.friedhof.hyperbuilder.computation.modules.Material;
 import me.friedhof.hyperbuilder.computation.modules.Entity;
 import me.friedhof.hyperbuilder.computation.modules.DroppedItem;
+import me.friedhof.hyperbuilder.rendering.modules.Texture2D;
 
 
 /**
@@ -597,11 +598,17 @@ public class SliceRenderer {
         BaseItem item = droppedItem.getItem();
         Material itemMaterial = item.getItemId();
         
-        // Check if we have a texture for this material
-        if (texturelist.containsKey(itemMaterial) && texturelist.get(itemMaterial) != null) {
+        // Try to get 2D texture for the item first (preferred for dropped items)
+        Texture2D texture2D = ItemRegistry.getItemTexture(itemMaterial);
+        BufferedImage textureImage = null;
+        
+        if (texture2D != null) {
+            // Use the 2D texture directly as it is
+            textureImage = texture2D.getImage();
+        } 
+        
+        if (textureImage != null) {
             // Draw the item using its texture (smaller than a block)
-            Texture4D texture = texturelist.get(itemMaterial);
-            BufferedImage textureSlice = texture.getSlice2D(0, 0); // Use base texture slice
             
             // Store original rendering hints
             Object originalInterpolation = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
@@ -611,7 +618,7 @@ public class SliceRenderer {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
             g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
             
-            g.drawImage(textureSlice, 
+            g.drawImage(textureImage, 
                 (int)(pixelX - itemSizePixels / 2), 
                 (int)(pixelY - itemSizePixels / 2), 
                 itemSizePixels, 

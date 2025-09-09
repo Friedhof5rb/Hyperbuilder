@@ -690,18 +690,15 @@ public class Game {
                         // Remove the grass block above
                         world.setBlock(abovePos, new AirItem());
                         
-                        // Drop the grass as an item
+                        // Drop plant fiber instead of grass with probability
                         Vector4D grassDropPos = new Vector4D(
                             abovePos.getX() + 0.5,
                             abovePos.getY() + 0.5,
                             abovePos.getZ() + 0.5,
                             abovePos.getW() + 0.5
                         );
-                        BaseItem grassItem = ItemRegistry.createItem(Material.GRASS, 1);
-                        if (grassItem != null) {
-                            DroppedItem droppedGrass = new DroppedItem(world.getNextEntityId(), grassDropPos, grassItem);
-                            world.addEntity(droppedGrass);
-                        }
+                        // 70% chance to drop plant fiber when grass is broken
+                        dropPlantFiber(grassDropPos);
                     }
                 }
                 
@@ -732,6 +729,11 @@ public class Game {
                         }
                     }
                     // Note: No leaves are dropped
+                } else if (Material.GRASS.equals(blockId)) {
+                    // Handle custom drops for grass - drop plant fiber with probability
+                    // 70% chance to drop plant fiber when grass is directly broken
+                    dropPlantFiber(dropPos);
+                    // Note: No grass items are dropped
                 } else {
                     // Drop the block as an item for all other blocks
                     BaseItem blockItem = ItemRegistry.createItem(blockId, 1);
@@ -761,6 +763,20 @@ public class Game {
         }
     }
     
+
+
+    private void dropPlantFiber(Vector4D dropPos){
+        if (Math.random() < 0.7) {
+            BaseItem plantFiberItem = ItemRegistry.createItem(Material.PLANT_FIBER, 1);
+            if (plantFiberItem != null) {
+                DroppedItem droppedPlantFiber = new DroppedItem(world.getNextEntityId(), dropPos, plantFiberItem);
+                world.addEntity(droppedPlantFiber);
+            }
+        }
+    }
+
+
+
     /**
      * Converts screen coordinates to world coordinates.
      * 
