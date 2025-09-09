@@ -539,6 +539,23 @@ public class Game {
      * @param button The mouse button (1=left, 3=right)
      */
     private void handleMousePressed(int x, int y, int button) {
+        // Check if there's a dragged item and click is outside inventory bounds
+        BaseItem draggedItem = renderer.getHUD().getInventoryUI().getDraggedItem();
+        if (draggedItem != null && !renderer.getHUD().getInventoryUI().isWithinInventoryBounds(x, y)) {
+            // Drop the item into the world
+            if (button == 1) { // Left click - drop whole stack
+                dropItemIntoWorld(draggedItem);
+                renderer.getHUD().getInventoryUI().clearDraggedItem();
+            } else if (button == 3) { // Right click - drop single item
+                BaseItem singleItem = draggedItem.withCount(1);
+                dropItemIntoWorld(singleItem);
+                
+                // Update dragged item count (this will clear if count becomes 0)
+                renderer.getHUD().getInventoryUI().updateDraggedItemCount(draggedItem.getCount() - 1);
+            }
+            return;
+        }
+        
         // First, check if the inventory UI handles the click
         if (renderer.getHUD().getInventoryUI().handleMouseClick(x, y, button, player.getInventory())) {
             return; // Inventory UI handled the click, don't process block interaction
@@ -1322,6 +1339,38 @@ public class Game {
     }
     
     /**
+     * Drops an item into the world from inventory UI drag and drop.
+     * Items are dropped near the player with a small random velocity.
+     */
+    private void dropItemIntoWorld(BaseItem itemToDrop) {
+        if (player == null || world == null || itemToDrop == null) return;
+        
+        // Calculate drop position near the player
+        Vector4D playerPos = player.getPosition();
+        Vector4D dropPos = new Vector4D(
+            playerPos.getX() + (Math.random() - 0.5) * 2.0, // Random offset within 1 block
+            playerPos.getY() + 1.0, // Drop above player
+            playerPos.getZ() + (Math.random() - 0.5) * 2.0, // Random offset within 1 block
+            playerPos.getW()
+        );
+        
+        // Give item a small random velocity
+        Vector4D throwVelocity = new Vector4D(
+            (Math.random() - 0.5) * 0.2, // Small horizontal velocity
+            0.1, // Small upward velocity
+            (Math.random() - 0.5) * 0.2, // Small horizontal velocity
+            0
+        );
+        
+        // Create and add the dropped item
+        DroppedItem droppedItem = new DroppedItem(world.getNextEntityId(), dropPos, itemToDrop);
+        droppedItem.setVelocity(throwVelocity);
+        world.addEntity(droppedItem);
+        
+        System.out.println("Dropped item from inventory: " + itemToDrop.getItemId() + " x" + itemToDrop.getCount() + " at " + dropPos);
+    }
+    
+    /**
      * Drops the currently selected item from the player's hotbar.
      * Items are thrown toward the block the player is hovering over.
      */
@@ -1334,15 +1383,22 @@ public class Game {
             return; // Too soon since last drop
         }
         
-        // Get the selected item from the hotbar
-        BaseItem selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
+        // Get the selected slot number from the hotbar
+        int selectedSlot = renderer.getHUD().getHotbar().getSelectedSlot();
+        BaseItem selectedItem = player.getInventory().getItem(selectedSlot);
         
         if (selectedItem != null && selectedItem.getCount() > 0) {
             // Create a copy of the item with count 1
             BaseItem itemToDrop = selectedItem.withCount(1);
             
-            // Remove one item from the inventory
-            player.getInventory().removeItem(selectedItem.getItemId(), 1);
+            // Remove one item from the selected slot specifically
+            if (selectedItem.getCount() > 1) {
+                // Reduce count by 1
+                player.getInventory().setItem(selectedSlot, selectedItem.withCount(selectedItem.getCount() - 1));
+            } else {
+                // Remove the item entirely (set to null)
+                player.getInventory().setItem(selectedSlot, null);
+            }
             
             // Calculate drop position and throw direction
             Vector4D playerPos = player.getPosition();

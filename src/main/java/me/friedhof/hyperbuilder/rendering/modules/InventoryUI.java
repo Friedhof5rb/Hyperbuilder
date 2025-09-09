@@ -50,6 +50,57 @@ public class InventoryUI {
     private int hoveredSlot = -1;
     private boolean hoveredSlotIsHotbar = false;
     
+    /**
+     * Checks if the given coordinates are within the inventory UI bounds.
+     */
+    public boolean isWithinInventoryBounds(int x, int y) {
+        // Check main inventory bounds
+        if (x >= inventoryX && x <= inventoryX + inventoryWidth &&
+            y >= inventoryY && y <= inventoryY + inventoryHeight) {
+            return true;
+        }
+        
+        // Check hotbar UI bounds
+        int hotbarWidth = 9 * slotSize + 8 * slotPadding + 2 * uiPadding;
+        int hotbarHeight = slotSize + 2 * uiPadding;
+        if (x >= hotbarUIX && x <= hotbarUIX + hotbarWidth &&
+            y >= hotbarUIY && y <= hotbarUIY + hotbarHeight) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Gets the currently dragged item (for external handling).
+     */
+    public BaseItem getDraggedItem() {
+        return draggedItem;
+    }
+    
+    /**
+     * Clears the dragged item (for external handling).
+     */
+    public void clearDraggedItem() {
+        draggedItem = null;
+        draggedFromSlot = -1;
+        draggedFromHotbar = false;
+    }
+    
+    /**
+     * Updates the dragged item count (for external handling).
+     * If count becomes 0 or less, clears the dragged item.
+     */
+    public void updateDraggedItemCount(int newCount) {
+        if (draggedItem != null) {
+            if (newCount <= 0) {
+                clearDraggedItem();
+            } else {
+                draggedItem = draggedItem.withCount(newCount);
+            }
+        }
+    }
+    
     // UI bounds
     private int inventoryX;
     private int inventoryY;
