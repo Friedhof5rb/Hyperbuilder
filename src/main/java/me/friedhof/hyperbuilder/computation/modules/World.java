@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.sql.rowset.spi.SyncResolver;
 
 import me.friedhof.hyperbuilder.computation.modules.items.Block;
+import me.friedhof.hyperbuilder.save.LazyChunkLoader;
 import java.util.Random;
 /**
  * Represents the 4D world containing chunks and entities.
@@ -35,6 +36,9 @@ public class World {
     
     // The next available entity ID
     private int nextEntityId;
+    
+    // Lazy chunk loader for loading chunks on-demand
+    private LazyChunkLoader chunkLoader;
     
     /**
      * Creates a new world with the specified name and seed.
@@ -70,8 +74,26 @@ public class World {
     }
     
     /**
+     * Sets the lazy chunk loader for this world.
+     * 
+     * @param chunkLoader The lazy chunk loader to use
+     */
+    public void setChunkLoader(LazyChunkLoader chunkLoader) {
+        this.chunkLoader = chunkLoader;
+    }
+    
+    /**
+     * Gets the lazy chunk loader for this world.
+     * 
+     * @return The lazy chunk loader, or null if not set
+     */
+    public LazyChunkLoader getChunkLoader() {
+        return chunkLoader;
+    }
+    
+    /**
      * Gets the chunk at the specified position.
-     * If the chunk is not loaded, it will be generated.
+     * If the chunk is not loaded, it will try to load from disk first, then generate if needed.
      * 
      * @param position The chunk position
      * @return The chunk at the specified position
@@ -80,7 +102,18 @@ public class World {
         // Check if the chunk is already loaded
         Chunk4D chunk = chunks.get(position);
         
-        // If not, generate it
+        // If not loaded, try to load from disk first
+        if (chunk == null && chunkLoader != null) {
+            chunk = chunkLoader.loadChunk(position);
+            if (chunk != null) {
+                chunks.put(position, chunk);
+                // Process any pending leaves for this chunk
+                processPendingLeaves(chunk, position);
+                return chunk;
+            }
+        }
+        
+        // If still not found, generate it
         if (chunk == null) {
             chunk = generateChunk(position);
             chunks.put(position, chunk);

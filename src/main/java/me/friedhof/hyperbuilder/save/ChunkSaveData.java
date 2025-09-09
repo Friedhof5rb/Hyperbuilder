@@ -5,6 +5,8 @@ import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import me.friedhof.hyperbuilder.computation.modules.items.Block;
 /**
  * Serializable data class for saving and loading Chunk4D data.
@@ -16,8 +18,8 @@ public class ChunkSaveData implements Serializable {
     // Chunk position
     private final int posX, posY, posZ, posW;
     
-    // Block data - stored as a flattened array for efficiency
-    private final Material[] blockIds;
+    // Block data - stored using run-length encoding for better compression
+    private final List<BlockRun> blockRuns;
     
     // Entity data
     private final Map<Integer, EntitySaveData> entities;
@@ -37,18 +39,37 @@ public class ChunkSaveData implements Serializable {
         this.posZ = pos.getZ();
         this.posW = pos.getW();
         
-        // Serialize blocks
-        this.blockIds = new Material[Chunk4D.CHUNK_VOLUME];
-        int index = 0;
+        // Serialize blocks using run-length encoding
+        this.blockRuns = new ArrayList<>();
+        Material currentMaterial = null;
+        int runLength = 0;
+        
         for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
             for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
                 for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
                     for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
                         Block block = chunk.getBlock(x, y, z, w);
-                        blockIds[index++] = (block != null) ? block.getBlockId() : Material.AIR;
+                        Material blockId = (block != null) ? block.getBlockId() : Material.AIR;
+                        
+                        if (currentMaterial == null || !currentMaterial.equals(blockId)) {
+                            // Start new run
+                            if (currentMaterial != null) {
+                                blockRuns.add(new BlockRun(currentMaterial, runLength));
+                            }
+                            currentMaterial = blockId;
+                            runLength = 1;
+                        } else {
+                            // Continue current run
+                            runLength++;
+                        }
                     }
                 }
             }
+        }
+        
+        // Add the final run
+        if (currentMaterial != null) {
+            blockRuns.add(new BlockRun(currentMaterial, runLength));
         }
         
         // Serialize entities (excluding players, they're saved separately)
@@ -72,15 +93,27 @@ public class ChunkSaveData implements Serializable {
         Vector4DInt position = new Vector4DInt(posX, posY, posZ, posW);
         Chunk4D chunk = new Chunk4D(position);
         
-        // Restore blocks
-        int index = 0;
+        // Restore blocks from run-length encoding
+        int blockIndex = 0;
+        int runIndex = 0;
+        int currentRunRemaining = blockRuns.isEmpty() ? 0 : blockRuns.get(0).getLength();
+        Material currentMaterial = blockRuns.isEmpty() ? Material.AIR : blockRuns.get(0).getMaterial();
+        
         for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
             for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
                 for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
                     for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
-                        Material blockId = blockIds[index++];
-                        Block block = ItemRegistry.createBlock(blockId);
+                        // Check if we need to move to the next run
+                        if (currentRunRemaining <= 0 && runIndex + 1 < blockRuns.size()) {
+                            runIndex++;
+                            BlockRun nextRun = blockRuns.get(runIndex);
+                            currentMaterial = nextRun.getMaterial();
+                            currentRunRemaining = nextRun.getLength();
+                        }
+                        
+                        Block block = ItemRegistry.createBlock(currentMaterial);
                         chunk.setBlock(x, y, z, w, block);
+                        currentRunRemaining--;
                     }
                 }
             }
@@ -106,6 +139,29 @@ public class ChunkSaveData implements Serializable {
     public Vector4DInt getPosition() { return new Vector4DInt(posX, posY, posZ, posW); }
     public Map<Integer, EntitySaveData> getEntities() { return new HashMap<>(entities); }
     public boolean isDirty() { return dirty; }
+    
+    /**
+     * Represents a run of consecutive identical blocks for compression.
+     */
+    private static class BlockRun implements Serializable {
+        private static final long serialVersionUID = 1L;
+        
+        private final Material material;
+        private final int length;
+        
+        public BlockRun(Material material, int length) {
+            this.material = material;
+            this.length = length;
+        }
+        
+        public Material getMaterial() {
+            return material;
+        }
+        
+        public int getLength() {
+            return length;
+        }
+    }
 }
 
 /**

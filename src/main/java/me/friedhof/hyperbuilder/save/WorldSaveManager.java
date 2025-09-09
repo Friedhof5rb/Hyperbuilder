@@ -10,9 +10,10 @@ import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
-
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 /**
  * Manages saving and loading of world data to/from disk.
  * Handles world metadata, chunk data, and player data persistence.
@@ -134,6 +135,11 @@ public class WorldSaveManager {
             // Save chunks
             saveChunks(world, worldDir.resolve(CHUNKS_DIRECTORY));
             
+            // Clear lazy loader cache after saving to ensure consistency
+            if (world.getChunkLoader() != null) {
+                world.getChunkLoader().clearCache();
+            }
+            
             System.out.println("World '" + worldName + "' saved successfully to " + worldDir);
             return true;
             
@@ -145,13 +151,37 @@ public class WorldSaveManager {
     }
     
     /**
-     * Loads a world from disk.
+     * Interface for receiving progress updates during world loading.
+     */
+    public interface LoadProgressCallback {
+        void onProgress(String message, int current, int total);
+    }
+    
+    /**
+     * Loads a world from disk with lazy chunk loading.
+     * Only loads essential data initially, chunks are loaded on-demand.
      * 
      * @param worldInfo The world info containing save location
      * @return A WorldSaveData object containing the loaded world and player, or null if loading failed
      */
     public WorldSaveData loadWorld(SavedWorldInfo worldInfo) {
+        return loadWorld(worldInfo, null);
+    }
+    
+    /**
+     * Loads a world from disk with lazy chunk loading and progress reporting.
+     * Only loads essential data initially, chunks are loaded on-demand.
+     * 
+     * @param worldInfo The world info containing save location
+     * @param progressCallback Callback for progress updates (can be null)
+     * @return A WorldSaveData object containing the loaded world and player, or null if loading failed
+     */
+    public WorldSaveData loadWorld(SavedWorldInfo worldInfo, LoadProgressCallback progressCallback) {
         try {
+            if (progressCallback != null) {
+                progressCallback.onProgress("Initializing world loading...", 0, 5);
+            }
+            
             Path worldDir = savesPath.resolve(worldInfo.getFileName());
             
             if (!Files.exists(worldDir)) {
@@ -159,23 +189,48 @@ public class WorldSaveManager {
                 return null;
             }
             
+            if (progressCallback != null) {
+                progressCallback.onProgress("Creating world instance...", 1, 5);
+            }
+            
             // Load world (create new world with same name and seed)
             World world = new World(worldInfo.getName(), worldInfo.getSeed());
+            
+            if (progressCallback != null) {
+                progressCallback.onProgress("Setting up chunk loader...", 2, 5);
+            }
+            
+            // Set up lazy chunk loading for this world
+            Path chunksDir = worldDir.resolve(CHUNKS_DIRECTORY);
+            if (Files.exists(chunksDir)) {
+                world.setChunkLoader(new LazyChunkLoader(chunksDir));
+            }
+            
+            if (progressCallback != null) {
+                progressCallback.onProgress("Loading player data...", 3, 5);
+            }
             
             // Load player data
             Path playerFile = worldDir.resolve(PLAYER_DATA_FILE);
             Player player = null;
             if (Files.exists(playerFile)) {
                 player = loadPlayerData(playerFile, world);
+                
+                if (progressCallback != null) {
+                    progressCallback.onProgress("Loading initial chunks...", 4, 5);
+                }
+                
+                // Load chunks around player spawn position for immediate gameplay
+                if (player != null) {
+                    loadChunksAroundPlayer(world, player, chunksDir, 2); // Load 2 chunk radius
+                }
             }
             
-            // Load chunks
-            Path chunksDir = worldDir.resolve(CHUNKS_DIRECTORY);
-            if (Files.exists(chunksDir)) {
-                loadChunks(world, chunksDir);
+            if (progressCallback != null) {
+                progressCallback.onProgress("World loading complete!", 5, 5);
             }
             
-            System.out.println("World '" + worldInfo.getName() + "' loaded successfully");
+            System.out.println("World '" + worldInfo.getName() + "' loaded successfully (lazy loading enabled)");
             return new WorldSaveData(world, player, worldInfo.withUpdatedLastPlayed());
             
         } catch (Exception e) {
@@ -266,7 +321,8 @@ public class WorldSaveManager {
                     chunkPos.getX(), chunkPos.getY(), chunkPos.getZ(), chunkPos.getW());
                 Path chunkFile = chunksDir.resolve(chunkFileName);
                 
-                try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(chunkFile))) {
+                try (ObjectOutputStream oos = new ObjectOutputStream(
+                        new GZIPOutputStream(Files.newOutputStream(chunkFile)))) {
                     oos.writeObject(new ChunkSaveData(chunk));
                     chunk.markClean(); // Mark as clean after saving
                 }
@@ -274,6 +330,10 @@ public class WorldSaveManager {
         }
     }
     
+    /**
+     * Loads all chunks from disk (legacy method for compatibility).
+     * Consider using lazy loading for better performance.
+     */
     private void loadChunks(World world, Path chunksDir) throws IOException {
         try {
             Files.list(chunksDir)
@@ -291,7 +351,8 @@ public class WorldSaveManager {
                             
                             Vector4DInt chunkPos = new Vector4DInt(x, y, z, w);
                             
-                            try (ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(chunkFile))) {
+                            try (ObjectInputStream ois = new ObjectInputStream(
+                                    new GZIPInputStream(Files.newInputStream(chunkFile)))) {
                                  ChunkSaveData saveData = (ChunkSaveData) ois.readObject();
                                  Chunk4D chunk = saveData.toChunk();
                                  world.setChunk(chunkPos, chunk);
@@ -303,6 +364,119 @@ public class WorldSaveManager {
                 });
         } catch (IOException e) {
             System.err.println("Failed to list chunk files: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Loads chunks around a player's position for immediate gameplay using parallel processing.
+     * 
+     * @param world The world to load chunks into
+     * @param player The player whose position to center the loading around
+     * @param chunksDir The directory containing chunk files
+     * @param radius The radius in chunks to load around the player
+     */
+    private void loadChunksAroundPlayer(World world, Player player, Path chunksDir, int radius) {
+        if (player == null || !Files.exists(chunksDir)) {
+            return;
+        }
+        
+        // Get player's chunk position
+        Vector4DInt playerPos = new Vector4DInt(
+            (int) Math.floor(player.getPosition().getX()),
+            (int) Math.floor(player.getPosition().getY()),
+            (int) Math.floor(player.getPosition().getZ()),
+            (int) Math.floor(player.getPosition().getW())
+        );
+        
+        Vector4DInt playerChunkPos = new Vector4DInt(
+            Math.floorDiv(playerPos.getX(), Chunk4D.CHUNK_SIZE),
+            Math.floorDiv(playerPos.getY(), Chunk4D.CHUNK_SIZE),
+            Math.floorDiv(playerPos.getZ(), Chunk4D.CHUNK_SIZE),
+            Math.floorDiv(playerPos.getW(), Chunk4D.CHUNK_SIZE)
+        );
+        
+        // Collect all chunk positions to load
+        List<Vector4DInt> chunksToLoad = new ArrayList<>();
+        for (int x = -radius; x <= radius; x++) {
+            for (int y = -radius; y <= radius; y++) {
+                for (int z = -radius; z <= radius; z++) {
+                    for (int w = -radius; w <= radius; w++) {
+                        chunksToLoad.add(new Vector4DInt(
+                            playerChunkPos.getX() + x,
+                            playerChunkPos.getY() + y,
+                            playerChunkPos.getZ() + z,
+                            playerChunkPos.getW() + w
+                        ));
+                    }
+                }
+            }
+        }
+        
+        // Load chunks in parallel using a thread pool
+        int numThreads = Math.min(Runtime.getRuntime().availableProcessors(), chunksToLoad.size());
+        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+        
+        try {
+            List<Future<Void>> futures = new ArrayList<>();
+            
+            for (Vector4DInt chunkPos : chunksToLoad) {
+                Future<Void> future = executor.submit(() -> {
+                    loadSingleChunk(world, chunkPos, chunksDir);
+                    return null;
+                });
+                futures.add(future);
+            }
+            
+            // Wait for all chunks to load
+            for (Future<Void> future : futures) {
+                try {
+                    future.get(5, TimeUnit.SECONDS); // 5 second timeout per chunk
+                } catch (TimeoutException e) {
+                    System.err.println("Chunk loading timed out");
+                    future.cancel(true);
+                } catch (ExecutionException e) {
+                    System.err.println("Error loading chunk: " + e.getCause().getMessage());
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("Chunk loading interrupted");
+        } finally {
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
+        
+        System.out.println("Loaded " + chunksToLoad.size() + " chunks around player using " + numThreads + " threads");
+    }
+    
+    /**
+     * Loads a single chunk from disk if it exists.
+     * 
+     * @param world The world to load the chunk into
+     * @param chunkPos The position of the chunk to load
+     * @param chunksDir The directory containing chunk files
+     */
+    private void loadSingleChunk(World world, Vector4DInt chunkPos, Path chunksDir) {
+        String chunkFileName = String.format("chunk_%d_%d_%d_%d.dat", 
+            chunkPos.getX(), chunkPos.getY(), chunkPos.getZ(), chunkPos.getW());
+        Path chunkFile = chunksDir.resolve(chunkFileName);
+        
+        if (Files.exists(chunkFile)) {
+            try (ObjectInputStream ois = new ObjectInputStream(
+                new GZIPInputStream(Files.newInputStream(chunkFile)))) {
+            ChunkSaveData saveData = (ChunkSaveData) ois.readObject();
+            Chunk4D chunk = saveData.toChunk();
+            world.setChunk(chunkPos, chunk);
+        } catch (Exception e) {
+                System.err.println("Failed to load chunk from " + chunkFile + ": " + e.getMessage());
+            }
         }
     }
     
