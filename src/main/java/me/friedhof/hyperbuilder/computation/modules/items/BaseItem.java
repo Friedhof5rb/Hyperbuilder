@@ -149,7 +149,7 @@ public abstract class BaseItem implements HasTexture, HasCollision{
 
 
     @Override
-    public boolean HasTexture() {
+    public boolean hasTexture() {
         return true;
     }
 

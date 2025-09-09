@@ -115,88 +115,47 @@ public class RecipeManager {
             return;
         }
         
-        // Basic crafting recipes using existing materials
-        
         // Sticks from Wood Log
         registerRecipe(new Recipe("sticks_from_wood", "Sticks", Material.STICKS, 4)
             .addIngredient(Material.WOOD_LOG, 1));
         
-        // Plant Fiber from Grass (alternative way to get plant fiber)
-        registerRecipe(new Recipe("plant_fiber_from_grass", "Plant Fiber", Material.PLANT_FIBER, 2)
-            .addIngredient(Material.GRASS, 3));
-        
-        // Flint tools/items (example advanced recipes)
-        registerRecipe(new Recipe("flint_from_stone", "Flint", Material.FLINT, 2)
-            .addIngredient(Material.STONE, 2)
-            .addIngredient(Material.STICKS, 1));
-        
-        // Sapling cultivation
-        registerRecipe(new Recipe("sapling_cultivation", "Sapling", Material.SAPLING, 1)
-            .addIngredient(Material.LEAVES, 4)
-            .addIngredient(Material.PLANT_FIBER, 2));
-        
-        // Grass Block creation
-        registerRecipe(new Recipe("grass_block_creation", "Grass Block", Material.GRASS_BLOCK, 1)
-            .addIngredient(Material.DIRT, 1)
-            .addIngredient(Material.GRASS, 2));
-        
-        // Advanced recipes requiring multiple materials
-        registerRecipe(new Recipe("reinforced_dirt", "Reinforced Dirt", Material.DIRT, 3)
-            .addIngredient(Material.DIRT, 2)
-            .addIngredient(Material.PLANT_FIBER, 1)
-            .addIngredient(Material.STICKS, 1));
-        
-          // Advanced recipes requiring multiple materials
-        registerRecipe(new Recipe("reinforced_dirt1", "Reinforced Dirt", Material.DIRT, 3)
-            .addIngredient(Material.DIRT, 2)
-            .addIngredient(Material.PLANT_FIBER, 1)
-            .addIngredient(Material.STICKS, 1));
-          // Advanced recipes requiring multiple materials
-        registerRecipe(new Recipe("reinforced_dirt2", "Reinforced Dirt", Material.DIRT, 3)
-            .addIngredient(Material.DIRT, 2)
-            .addIngredient(Material.PLANT_FIBER, 1)
-            .addIngredient(Material.STICKS, 1));
-          // Advanced recipes requiring multiple materials
-        registerRecipe(new Recipe("reinforced_dirt3", "Reinforced Dirt", Material.DIRT, 3)
-            .addIngredient(Material.DIRT, 2)
-            .addIngredient(Material.PLANT_FIBER, 1)
-            .addIngredient(Material.STICKS, 1));
-          // Advanced recipes requiring multiple materials
-        registerRecipe(new Recipe("reinforced_dirt4", "Reinforced Dirt", Material.DIRT, 3)
-            .addIngredient(Material.DIRT, 2)
-            .addIngredient(Material.PLANT_FIBER, 1)
-            .addIngredient(Material.STICKS, 1));
-          // Advanced recipes requiring multiple materials
-        registerRecipe(new Recipe("reinforced_dirt5", "Reinforced Dirt", Material.DIRT, 3)
-            .addIngredient(Material.DIRT, 2)
-            .addIngredient(Material.PLANT_FIBER, 1)
-            .addIngredient(Material.STICKS, 1));
-          // Advanced recipes requiring multiple materials
-        registerRecipe(new Recipe("reinforced_dirt6", "Reinforced Dirt", Material.DIRT, 3)
-            .addIngredient(Material.DIRT, 2)
-            .addIngredient(Material.PLANT_FIBER, 1)
-            .addIngredient(Material.STICKS, 1));
-          // Advanced recipes requiring multiple materials
-        registerRecipe(new Recipe("reinforced_dirt7", "Reinforced Dirt", Material.DIRT, 3)
-            .addIngredient(Material.DIRT, 2)
-            .addIngredient(Material.PLANT_FIBER, 1)
-            .addIngredient(Material.STICKS, 1));
-          // Advanced recipes requiring multiple materials
-        registerRecipe(new Recipe("reinforced_dirt8", "Reinforced Dirt", Material.DIRT, 3)
-            .addIngredient(Material.DIRT, 2)
-            .addIngredient(Material.PLANT_FIBER, 1)
-            .addIngredient(Material.STICKS, 1));
-          // Advanced recipes requiring multiple materials
-        registerRecipe(new Recipe("reinforced_dirt9", "Reinforced Dirt", Material.DIRT, 3)
-            .addIngredient(Material.DIRT, 2)
-            .addIngredient(Material.PLANT_FIBER, 1)
-            .addIngredient(Material.STICKS, 1));
-          // Advanced recipes requiring multiple materials
-        registerRecipe(new Recipe("reinforced_dirt10", "Reinforced Dirt", Material.DIRT, 3)
-            .addIngredient(Material.DIRT, 2)
-            .addIngredient(Material.PLANT_FIBER, 1)
-            .addIngredient(Material.STICKS, 1));
+        registerRecipe(new Recipe("flint_pickaxe", "Flint Pickaxe", Material.FLINT_PICKAXE, 1)
+            .addIngredient(Material.FLINT, 3)
+            .addIngredient(Material.STICKS, 1)
+            .addIngredient(Material.PLANT_FIBER, 1));
 
+        // Flint Shovel
+        registerRecipe(new Recipe("flint_shovel", "Flint Shovel", Material.FLINT_SHOVEL, 1)
+            .addIngredient(Material.FLINT, 1)
+            .addIngredient(Material.STICKS, 1)
+            .addIngredient(Material.PLANT_FIBER, 1));
+
+        // Flint Axe
+        registerRecipe(new Recipe("flint_axe", "Flint Axe", Material.FLINT_AXE, 1)
+            .addIngredient(Material.FLINT, 3)
+            .addIngredient(Material.STICKS, 1)
+            .addIngredient(Material.PLANT_FIBER, 1));
+
+
+        // Stone Pickaxe
+        registerRecipe(new Recipe("stone_pickaxe", "Stone Pickaxe", Material.STONE_PICKAXE, 1)
+            .addIngredient(Material.STONE, 3)
+            .addIngredient(Material.STICKS, 1)
+            .addIngredient(Material.PLANT_FIBER, 1));
+
+        // Stone Shovel
+        registerRecipe(new Recipe("stone_shovel", "Stone Shovel", Material.STONE_SHOVEL, 1)
+            .addIngredient(Material.STONE, 1)
+            .addIngredient(Material.STICKS, 1)
+            .addIngredient(Material.PLANT_FIBER, 1));
+
+        // Stone Axe
+        registerRecipe(new Recipe("stone_axe", "Stone Axe", Material.STONE_AXE, 1)
+            .addIngredient(Material.STONE, 3)
+            .addIngredient(Material.STICKS, 1)
+            .addIngredient(Material.PLANT_FIBER, 1));
+
+       
 
 
         initialized = true;

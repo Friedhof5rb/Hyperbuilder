@@ -27,7 +27,7 @@ public class Block extends BaseItem implements IsPlaceable{
     }
 
     @Override
-    public boolean HasTexture() {
+    public boolean hasTexture() {
         return true;
     }
 

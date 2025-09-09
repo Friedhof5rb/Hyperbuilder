@@ -4,18 +4,7 @@ import me.friedhof.hyperbuilder.rendering.modules.TextureManager;
 import me.friedhof.hyperbuilder.rendering.modules.TextureManager2D;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.HasTexture;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
-import me.friedhof.hyperbuilder.computation.modules.items.AirItem;
-import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
-import me.friedhof.hyperbuilder.computation.modules.items.DirtItem;
-import me.friedhof.hyperbuilder.computation.modules.items.FlintItem;
-import me.friedhof.hyperbuilder.computation.modules.items.GrassBlockItem;
-import me.friedhof.hyperbuilder.computation.modules.items.GrassItem;
-import me.friedhof.hyperbuilder.computation.modules.items.LeavesItem;
-import me.friedhof.hyperbuilder.computation.modules.items.PlantFiberItem;
-import me.friedhof.hyperbuilder.computation.modules.items.SaplingItem;
-import me.friedhof.hyperbuilder.computation.modules.items.SticksItem;
-import me.friedhof.hyperbuilder.computation.modules.items.StoneItem;
-import me.friedhof.hyperbuilder.computation.modules.items.WoodItem;
+import me.friedhof.hyperbuilder.computation.modules.items.*;
 import me.friedhof.hyperbuilder.rendering.modules.Texture4D;
 import me.friedhof.hyperbuilder.rendering.modules.Texture2D;
 import me.friedhof.hyperbuilder.computation.modules.items.Block;
@@ -107,17 +96,24 @@ public class ItemRegistry {
      */
     public static void registerDefaultItems() {
         
-        registerItem(new AirItem(0));
-        registerItem(new DirtItem(0));
-        registerItem(new FlintItem(0));
-        registerItem(new GrassBlockItem(0));
-        registerItem(new GrassItem(0));
-        registerItem(new LeavesItem(0));
-        registerItem(new PlantFiberItem(0));
-        registerItem(new SaplingItem(0));
-        registerItem(new SticksItem(0));
-        registerItem(new StoneItem(0));
-        registerItem(new WoodItem(0));
+        registerItem(new AirItem());
+        registerItem(new DirtItem());
+        registerItem(new FlintItem());
+        registerItem(new GrassBlockItem());
+        registerItem(new GrassItem());
+        registerItem(new LeavesItem());
+        registerItem(new PlantFiberItem());
+        registerItem(new SaplingItem());
+        registerItem(new SticksItem());
+        registerItem(new StoneItem());
+        registerItem(new WoodItem());
+        registerItem(new FlintPickaxeItem());
+        registerItem(new FlintAxeItem());
+        registerItem(new FlintShovelItem());
+        registerItem(new StonePickaxeItem());
+        registerItem(new StoneAxeItem());
+        registerItem(new StoneShovelItem());
+
     
     }
     

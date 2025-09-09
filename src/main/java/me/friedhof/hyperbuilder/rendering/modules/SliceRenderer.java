@@ -77,13 +77,16 @@ public class SliceRenderer {
         if (BLOCK_SIZE < 8) {
             BLOCK_SIZE = 8;
         }
-        
+        /* 
         System.out.println("Window size: " + windowWidth + "x" + windowHeight);
         System.out.println("Available space: " + availableWidth + "x" + availableHeight);
         System.out.println("Max block size from width: " + maxBlockSizeFromWidth);
         System.out.println("Max block size from height: " + maxBlockSizeFromHeight);
         System.out.println("Dynamic block size calculated: " + BLOCK_SIZE + " pixels");
         System.out.println("Total grid size will be: " + (SLICE_SIZE * SLICE_SIZE * BLOCK_SIZE) + " pixels");
+*/
+
+
     }
     
     // Graphics context for drawing

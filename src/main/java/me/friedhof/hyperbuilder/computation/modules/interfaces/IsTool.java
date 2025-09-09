@@ -35,9 +35,7 @@ public interface IsTool {
      * @param block The block being mined
      * @return The speed multiplier (1.0 = normal speed, 2.0 = twice as fast, etc.)
      */
-    default float getMiningSpeed(Block block) {
-        return 1.0f; // Default normal mining speed
-    }
+    float getMiningSpeed(Block block);
     
     /**
      * Checks if this tool can effectively mine the specified block type.
@@ -45,16 +43,6 @@ public interface IsTool {
      * @param block The block to check
      * @return true if this tool can mine the block, false otherwise
      */
-    default boolean canMine(Block block) {
-        return true; // Default allows mining any block
-    }
+    boolean canMine(Block block);
     
-    /**
-     * Gets the tool type for determining effectiveness against blocks.
-     * 
-     * @return The tool type identifier
-     */
-    default String getToolType() {
-        return "generic";
-    }
 }

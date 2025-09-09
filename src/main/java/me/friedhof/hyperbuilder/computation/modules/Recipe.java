@@ -117,6 +117,7 @@ public class Recipe {
         
         // Check if inventory has space for the result
         if (!inventory.hasSpaceFor(result, resultCount)) {
+            System.out.println("Inventory does not have space for the result");	
             return false;
         }
         

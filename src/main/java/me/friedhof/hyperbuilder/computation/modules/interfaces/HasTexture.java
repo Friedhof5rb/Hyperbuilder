@@ -8,7 +8,7 @@ public interface HasTexture {
 
 
 
-    public boolean HasTexture();
+    public boolean hasTexture();
 
     /**
      * Gets the texture filename for this item's 4D block texture.

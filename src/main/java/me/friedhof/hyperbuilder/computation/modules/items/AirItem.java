@@ -19,7 +19,7 @@ public class AirItem extends Block {
     }
 
     @Override
-    public boolean HasTexture() {
+    public boolean hasTexture() {
         return false;
     }
    

@@ -81,7 +81,7 @@ public class TextureManager2D {
       
 
             for(Material s : ItemRegistry.itemFactories.keySet()){
-                if(ItemRegistry.itemFactories.get(s).HasTexture()){
+                if(ItemRegistry.itemFactories.get(s).hasTexture()){
 
                     try {
                         loadTexture2D(s + ".png");

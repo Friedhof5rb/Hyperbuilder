@@ -26,7 +26,7 @@ public enum Material {
     FLINT_SWORD("flint_sword"),
     STONE_SWORD("stone_sword");
 
-
+    
     private final String id;
     
     /**
