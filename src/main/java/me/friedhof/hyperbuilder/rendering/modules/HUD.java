@@ -23,6 +23,9 @@ public class HUD {
     // Inventory UI component
     private final InventoryUI inventoryUI;
     
+    // Smelter GUI component
+    private final SmelterGUI smelterGUI;
+    
     // FPS tracking
     private int currentFPS = 0;
     
@@ -44,6 +47,9 @@ public class HUD {
         
         // Initialize inventory UI
         this.inventoryUI = new InventoryUI(width, height);
+        
+        // Initialize smelter GUI
+        this.smelterGUI = new SmelterGUI(width, height, inventoryUI);
     }
     
     /**
@@ -83,17 +89,35 @@ public class HUD {
         
         // Update inventory UI mouse position and render
         inventoryUI.updateMousePosition(mouseX, mouseY);
-        inventoryUI.render(g, player.getInventory(), hotbar);
+        inventoryUI.render(g, player.getInventory(), hotbar, smelterGUI.isVisible());
+        
+        // Update smelter GUI mouse position, update logic, and render
+        smelterGUI.updateMousePosition(mouseX, mouseY);
+        smelterGUI.update(System.currentTimeMillis());
+        smelterGUI.render(g);
         
         // Draw block breaking progress if breaking a block
         if (game.isBreakingBlock()) {
             drawBlockBreakingProgress(g, game.getBreakingProgress(), game);
         }
         
+        // Draw dragged item on top of everything (if any)
+        if (inventoryUI.getDraggedItem() != null) {
+            drawDraggedItem(g, inventoryUI.getDraggedItem(), mouseX, mouseY);
+        }
         
         // Restore the original font and color
         g.setFont(originalFont);
         g.setColor(originalColor);
+    }
+    
+    /**
+     * Draws the dragged item at the specified coordinates.
+     */
+    private void drawDraggedItem(Graphics2D g, me.friedhof.hyperbuilder.computation.modules.items.BaseItem item, int x, int y) {
+        if (item != null) {
+            inventoryUI.renderDraggedItem(g, x, y);
+        }
     }
     
     /**
@@ -115,6 +139,15 @@ public class HUD {
     }
     
     /**
+     * Gets the smelter GUI component.
+     * 
+     * @return The smelter GUI
+     */
+    public SmelterGUI getSmelterGUI() {
+        return smelterGUI;
+    }
+    
+    /**
      * Updates the FPS counter.
      * 
      * @param fps The current frames per second
@@ -132,6 +165,7 @@ public class HUD {
     public void updateDimensions(int width, int height) {
         inventoryUI.updateDimensions(width, height);
         hotbar.updateDimensions(width, height);
+        // Note: SmelterGUI doesn't need updateDimensions as it calculates bounds dynamically
     }
 
     /**

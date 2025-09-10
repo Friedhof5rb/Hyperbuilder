@@ -138,9 +138,9 @@ public class ItemRegistry {
         registerItem(new CoalOreItem());
         registerItem(new CoalItem());
         registerItem(new CopperOreItem());
-        //registerItem(new CopperIngotItem());
+        registerItem(new CopperIngotItem());
         registerItem(new IronOreItem());
-        //registerItem(new IronIngotItem());
+        registerItem(new IronIngotItem());
         registerItem(new SmelterItem());
         registerItem(new SmelterPoweredItem());
         registerItem(new StoneChiselItem());

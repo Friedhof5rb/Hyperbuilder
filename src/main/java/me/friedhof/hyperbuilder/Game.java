@@ -37,6 +37,10 @@ import me.friedhof.hyperbuilder.computation.modules.DroppedItem;
 import me.friedhof.hyperbuilder.computation.modules.Entity;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.EntityInWay;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
+import me.friedhof.hyperbuilder.computation.modules.SmelterInventory;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterPoweredItem;
+
 import java.util.ArrayList;
 
 import java.util.Set;
@@ -121,8 +125,6 @@ public class Game {
     
     // Rendering synchronization
     private volatile boolean renderPending = false;
-    
-
     
     /**
      * Constructor for creating a game from menu.
@@ -234,6 +236,10 @@ public class Game {
         Inventory inventory = player.getInventory();
         inventory.addItem(Material.STONE_PICKAXE, 1);
         inventory.addItem(Material.STONE_SHOVEL, 1);
+        inventory.addItem(Material.SMELTER, 5);
+        inventory.addItem(Material.IRON_ORE, 10);
+        inventory.addItem(Material.COAL, 10);
+
         
         // Create a camera starting at the player's initial world position
         camera = new Camera(new Vector4D(0, 1, 0, 0));
@@ -404,7 +410,12 @@ public class Game {
         switch (keyCode) {
             case KeyEvent.VK_ESCAPE:
                 if(renderer.getHUD().getInventoryUI().isVisible()){
+                  if (renderer.getHUD().getSmelterGUI().isVisible()) {
+                    renderer.getHUD().getSmelterGUI().setVisible(false);
                     renderer.getHUD().getInventoryUI().setVisible(false);
+                } else {
+                    renderer.getHUD().getInventoryUI().setVisible(false);
+                }
                 }else{
                     returnToMenu();
                 }
@@ -434,7 +445,13 @@ public class Game {
                 break;
             case KeyEvent.VK_I:
                 // Toggle inventory visibility
-                renderer.getHUD().getInventoryUI().toggleVisibility();
+                // If smelter GUI is open, close both smelter and inventory
+                if (renderer.getHUD().getSmelterGUI().isVisible()) {
+                    renderer.getHUD().getSmelterGUI().setVisible(false);
+                    renderer.getHUD().getInventoryUI().setVisible(false);
+                } else {
+                    renderer.getHUD().getInventoryUI().toggleVisibility();
+                }
                 break;
             case KeyEvent.VK_S:
                 // Manual save with Ctrl+S
@@ -550,7 +567,8 @@ public class Game {
     private void handleMousePressed(int x, int y, int button) {
         // Check if there's a dragged item and click is outside inventory bounds
         BaseItem draggedItem = renderer.getHUD().getInventoryUI().getDraggedItem();
-        if (draggedItem != null && !renderer.getHUD().getInventoryUI().isWithinInventoryBounds(x, y)) {
+        if (draggedItem != null && !renderer.getHUD().getInventoryUI().isWithinInventoryBounds(x, y) && 
+            !renderer.getHUD().getSmelterGUI().isWithinBounds(x, y)) {
             // Drop the item into the world
             if (button == 1) { // Left click - drop whole stack
                 dropItemIntoWorld(draggedItem);
@@ -565,7 +583,12 @@ public class Game {
             return;
         }
         
-        // First, check if the inventory UI handles the click
+        // Check if the smelter GUI handles the click
+        if (renderer.getHUD().getSmelterGUI().handleMouseClick(x, y, button, player.getInventory(), renderer.getHUD().getInventoryUI())) {
+            return; // Smelter GUI handled the click, don't process other interactions
+        }
+        
+        // Check if the inventory UI handles the click
         if (renderer.getHUD().getInventoryUI().handleMouseClick(x, y, button, player.getInventory())) {
             return; // Inventory UI handled the click, don't process block interaction
         }
@@ -993,6 +1016,12 @@ public class Game {
         // Get the block at this position
         Block block = world.getBlock(position);
         
+        // Check for smelter interactions first
+        if (block != null && (block.getBlockId() == Material.SMELTER || block.getBlockId() == Material.SMELTER_POWERED)) {
+            handleSmelterInteraction(x, y, z, w, block);
+            return;
+        }
+        
         // Get the selected item from the hotbar first to determine what block will be placed
         BaseItem selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
         
@@ -1058,6 +1087,56 @@ public class Game {
         }
         
         return false; // No entities are blocking placement
+    }
+    
+    /**
+     * Handles smelter-specific interactions when right-clicking on a smelter block.
+     * 
+     * @param x World X coordinate
+     * @param y World Y coordinate
+     * @param z World Z coordinate
+     * @param w World W coordinate
+     * @param block The smelter block being interacted with
+     */
+    private void handleSmelterInteraction(int x, int y, int z, int w, Block block) {
+        Vector4DInt position = new Vector4DInt(x, y, z, w);
+        BaseItem selectedItem = renderer.getHUD().getHotbar().getSelectedItem(player.getInventory());
+        
+        // Check if player is holding coal and smelter is not powered
+        if (selectedItem != null && selectedItem.getItemId() == Material.COAL && block.getBlockId() == Material.SMELTER) {
+            // Consume one coal and power the smelter
+            player.getInventory().removeItem(Material.COAL, 1);
+            
+            // Get the current smelter's inventory to preserve it
+            SmelterInventory currentInventory = null;
+            if (block instanceof SmelterItem) {
+                currentInventory = ((SmelterItem) block).getInventory();
+            }
+            
+            // Replace smelter with powered smelter, preserving inventory
+            Block poweredSmelter;
+            if (currentInventory != null) {
+                poweredSmelter = new SmelterPoweredItem(1, currentInventory);
+            } else {
+                poweredSmelter = ItemRegistry.createBlock(Material.SMELTER_POWERED);
+            }
+            world.setBlock(position, poweredSmelter);
+            
+            // Start processing if there are items in the input slot
+            if (poweredSmelter instanceof SmelterPoweredItem && currentInventory != null && currentInventory.getInputItem() != null) {
+                ((SmelterPoweredItem) poweredSmelter).startProcessing();
+            }
+            
+            System.out.println("Smelter powered with coal!");
+        } else {
+            // Set the smelter block reference in the GUI
+            renderer.getHUD().getSmelterGUI().setSmelterBlock(world, position);
+            
+            // Open smelter GUI and inventory
+            renderer.getHUD().getSmelterGUI().setVisible(true);
+            renderer.getHUD().getInventoryUI().setVisible(true);
+            System.out.println("Opening smelter GUI and inventory...");
+        }
     }
 
     public boolean isInSightOfPlayer(int x, int y, int z, int w){
@@ -1541,7 +1620,7 @@ public class Game {
             return tool.getMiningSpeed(block)/block.getCollisionResistance();
         }
         
-        return 1.0f; // Default speed when no tool is selected
+        return 1.0f/block.getCollisionResistance(); // Default speed when no tool is selected
     }
     
   

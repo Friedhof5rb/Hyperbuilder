@@ -3,6 +3,13 @@ package me.friedhof.hyperbuilder.save;
 import me.friedhof.hyperbuilder.computation.modules.*;
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterPoweredItem;
+import me.friedhof.hyperbuilder.computation.modules.SmelterInventory;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
+import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
+import me.friedhof.hyperbuilder.computation.modules.Material;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -21,6 +28,9 @@ public class ChunkSaveData implements Serializable {
     
     // Block data - stored using run-length encoding for better compression
     private final List<BlockRun> blockRuns;
+    
+    // Extra block data for blocks with state (like smelters)
+    private final Map<String, BlockExtraData> blockExtraData;
     
     // Entity data
     private final Map<Integer, EntitySaveData> entities;
@@ -42,6 +52,7 @@ public class ChunkSaveData implements Serializable {
         
         // Serialize blocks using run-length encoding
         this.blockRuns = new ArrayList<>();
+        this.blockExtraData = new HashMap<>();
         Material currentMaterial = null;
         int runLength = 0;
         
@@ -51,6 +62,12 @@ public class ChunkSaveData implements Serializable {
                     for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
                         Block block = chunk.getBlock(x, y, z, w);
                         Material blockId = (block != null) ? block.getBlockId() : Material.AIR;
+                        
+                        // Save extra data for blocks with state
+                        if (block instanceof SmelterItem || block instanceof SmelterPoweredItem) {
+                            String key = x + "," + y + "," + z + "," + w;
+                            blockExtraData.put(key, new BlockExtraData(block));
+                        }
                         
                         if (currentMaterial == null || !currentMaterial.equals(blockId)) {
                             // Start new run
@@ -112,7 +129,16 @@ public class ChunkSaveData implements Serializable {
                             currentRunRemaining = nextRun.getLength();
                         }
                         
-                        Block block = ItemRegistry.createBlock(currentMaterial);
+                        Block block;
+                        String key = x + "," + y + "," + z + "," + w;
+                        
+                        // Check if this block has extra data
+                        if (blockExtraData.containsKey(key)) {
+                            block = blockExtraData.get(key).toBlock();
+                        } else {
+                            block = ItemRegistry.createBlock(currentMaterial);
+                        }
+                        
                         chunk.setBlock(x, y, z, w, block);
                         currentRunRemaining--;
                     }
@@ -246,4 +272,107 @@ class EntitySaveData implements Serializable {
     public Vector4D getPosition() { return new Vector4D(posX, posY, posZ, posW); }
     public Vector4D getVelocity() { return new Vector4D(velX, velY, velZ, velW); }
     public String getEntityType() { return entityType; }
+}
+
+/**
+ * Serializable data class for blocks with extra state (like smelters).
+ */
+class BlockExtraData implements Serializable {
+    private static final long serialVersionUID = 1L;
+    
+    private final Material blockType;
+    private final boolean isProcessing;
+    private final long processingStartTime;
+    private final long powerExpireTime; // For powered smelters
+    private final Material inputItemType;
+    private final int inputItemCount;
+    private final Material outputItemType;
+    private final int outputItemCount;
+    
+    public BlockExtraData(Block block) {
+        this.blockType = block.getBlockId();
+        
+        if (block instanceof SmelterItem) {
+            SmelterItem smelter = (SmelterItem) block;
+            this.isProcessing = smelter.isProcessing();
+            this.processingStartTime = smelter.getProcessingStartTime();
+            this.powerExpireTime = 0; // Regular smelters don't have power
+            
+            SmelterInventory inventory = smelter.getInventory();
+            BaseItem inputItem = inventory.getInputItem();
+            BaseItem outputItem = inventory.getOutputItem();
+            
+            this.inputItemType = (inputItem != null) ? inputItem.getItemId() : null;
+            this.inputItemCount = (inputItem != null) ? inputItem.getCount() : 0;
+            this.outputItemType = (outputItem != null) ? outputItem.getItemId() : null;
+            this.outputItemCount = (outputItem != null) ? outputItem.getCount() : 0;
+        } else if (block instanceof SmelterPoweredItem) {
+            SmelterPoweredItem poweredSmelter = (SmelterPoweredItem) block;
+            this.isProcessing = poweredSmelter.isProcessing();
+            this.processingStartTime = poweredSmelter.getProcessingStartTime();
+            this.powerExpireTime = poweredSmelter.getPowerExpireTime();
+            
+            SmelterInventory inventory = poweredSmelter.getInventory();
+            BaseItem inputItem = inventory.getInputItem();
+            BaseItem outputItem = inventory.getOutputItem();
+            
+            this.inputItemType = (inputItem != null) ? inputItem.getItemId() : null;
+            this.inputItemCount = (inputItem != null) ? inputItem.getCount() : 0;
+            this.outputItemType = (outputItem != null) ? outputItem.getItemId() : null;
+            this.outputItemCount = (outputItem != null) ? outputItem.getCount() : 0;
+        } else {
+            // Default values for non-smelter blocks
+            this.isProcessing = false;
+            this.processingStartTime = 0;
+            this.powerExpireTime = 0;
+            this.inputItemType = null;
+            this.inputItemCount = 0;
+            this.outputItemType = null;
+            this.outputItemCount = 0;
+        }
+    }
+    
+    public Block toBlock() {
+        if (blockType == Material.SMELTER) {
+            // Create regular smelter with saved state
+            SmelterInventory inventory = new SmelterInventory();
+            if (inputItemType != null && inputItemCount > 0) {
+                BaseItem inputItem = ItemRegistry.createItem(inputItemType, inputItemCount);
+                inventory.setInputItem(inputItem);
+            }
+            if (outputItemType != null && outputItemCount > 0) {
+                BaseItem outputItem = ItemRegistry.createItem(outputItemType, outputItemCount);
+                inventory.setOutputItem(outputItem);
+            }
+            
+            SmelterItem smelter = new SmelterItem(1, inventory);
+            if (isProcessing) {
+                smelter.setProcessing(true);
+                smelter.setProcessingStartTime(processingStartTime);
+            }
+            return smelter;
+        } else if (blockType == Material.SMELTER_POWERED) {
+            // Create powered smelter with saved state
+            SmelterInventory inventory = new SmelterInventory();
+            if (inputItemType != null && inputItemCount > 0) {
+                BaseItem inputItem = ItemRegistry.createItem(inputItemType, inputItemCount);
+                inventory.setInputItem(inputItem);
+            }
+            if (outputItemType != null && outputItemCount > 0) {
+                BaseItem outputItem = ItemRegistry.createItem(outputItemType, outputItemCount);
+                inventory.setOutputItem(outputItem);
+            }
+            
+            SmelterPoweredItem poweredSmelter = new SmelterPoweredItem(1, inventory);
+            if (isProcessing) {
+                poweredSmelter.setProcessing(true);
+                poweredSmelter.setProcessingStartTime(processingStartTime);
+            }
+            poweredSmelter.setPowerExpireTime(powerExpireTime);
+            return poweredSmelter;
+        } else {
+            // Fallback to regular block creation
+            return ItemRegistry.createBlock(blockType);
+        }
+    }
 }

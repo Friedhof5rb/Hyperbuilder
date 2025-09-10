@@ -84,6 +84,15 @@ public class InventoryUI {
     }
     
     /**
+     * Sets the dragged item (for external handling).
+     */
+    public void setDraggedItem(BaseItem item) {
+        this.draggedItem = item;
+        this.draggedFromSlot = -1;
+        this.draggedFromHotbar = false;
+    }
+    
+    /**
      * Clears the dragged item (for external handling).
      */
     public void clearDraggedItem() {
@@ -189,6 +198,18 @@ public class InventoryUI {
      * @param hotbar The hotbar component
      */
     public void render(Graphics2D g, Inventory inventory, Hotbar hotbar) {
+        render(g, inventory, hotbar, false);
+    }
+    
+    /**
+     * Renders the inventory UI.
+     * 
+     * @param g The graphics context
+     * @param inventory The player's inventory
+     * @param hotbar The hotbar component
+     * @param smelterGUIVisible Whether the smelter GUI is visible
+     */
+    public void render(Graphics2D g, Inventory inventory, Hotbar hotbar, boolean smelterGUIVisible) {
         if (!visible) return;
         
         // Save original settings
@@ -229,13 +250,10 @@ public class InventoryUI {
         // Draw hotbar UI
         drawHotbarUI(g, inventory, hotbar);
         
-        // Draw dragged item
-        if (draggedItem != null) {
-            drawDraggedItem(g, draggedItem, mouseX, mouseY);
-        }
+        // Note: Dragged item is now rendered in HUD after all other UI elements
         
-        // Draw crafting UI
-        if (craftingUI != null) {
+        // Draw crafting UI (only if smelter GUI is not visible)
+        if (craftingUI != null && !smelterGUIVisible) {
             craftingUI.render(g, inventory);
         }
         
@@ -372,6 +390,16 @@ public class InventoryUI {
         g.fillRect(drawX, drawY, size, size);
         
         drawItemInSlot(g, item, drawX, drawY, size);
+    }
+    
+    /**
+     * Renders the dragged item at the specified mouse coordinates.
+     * This method is called from HUD to ensure the dragged item appears on top of all UI elements.
+     */
+    public void renderDraggedItem(Graphics2D g, int mouseX, int mouseY) {
+        if (draggedItem != null) {
+            drawDraggedItem(g, draggedItem, mouseX, mouseY);
+        }
     }
     
     /**

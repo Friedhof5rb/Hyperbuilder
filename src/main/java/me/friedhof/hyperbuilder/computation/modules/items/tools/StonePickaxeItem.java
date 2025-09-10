@@ -44,7 +44,8 @@ public class StonePickaxeItem extends BaseItem implements IsTool {
       if(block.getBlockId() == Material.STONE 
       || block.getBlockId() == Material.COAL_ORE 
       || block.getBlockId() == Material.COPPER_ORE
-      || block.getBlockId() == Material.SMELTER) {
+      || block.getBlockId() == Material.SMELTER
+      ||block.getBlockId() == Material.SMELTER_POWERED) {
             return true;
         }
         return false;
@@ -54,7 +55,8 @@ public class StonePickaxeItem extends BaseItem implements IsTool {
         if(block.getBlockId() == Material.STONE 
         || block.getBlockId() == Material.COAL_ORE 
         || block.getBlockId() == Material.COPPER_ORE
-        || block.getBlockId() == Material.SMELTER) {
+        || block.getBlockId() == Material.SMELTER
+        ||block.getBlockId() == Material.SMELTER_POWERED) {
             return 5.0f;
         }
         return 1.0f;
