@@ -47,7 +47,7 @@ public class FlintShovelItem extends BaseItem implements IsTool {
     @Override
     public float getMiningSpeed(Block block) {
         if(block.getBlockId() == Material.GRASS_BLOCK || block.getBlockId() == Material.DIRT) {
-            return 1.2f;
+            return 2f;
         }
         return 1.0f;
     }

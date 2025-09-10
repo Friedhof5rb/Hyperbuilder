@@ -79,7 +79,7 @@ public class Game {
     private boolean isBreakingBlock = false;
     private Vector4DInt breakingBlockPos = null;
     private long breakingStartTime = 0;
-    private static final long BASE_BLOCK_BREAK_TIME = 3000; // Base time to break a block (1 second)
+    private static final long BASE_BLOCK_BREAK_TIME = 11000; // Base time to break a block (1 second)
     private long currentBlockBreakTime = BASE_BLOCK_BREAK_TIME; // Current break time for the block being broken
     private float breakingProgress = 0.0f;
     private boolean leftMousePressed = false; // Track if left mouse button is held down
@@ -714,7 +714,6 @@ public class Game {
                         player.getInventory().setItem(selectedSlot,null );
                     }
                 }
-                System.out.println("hand: " +selectedItem);
                 // If a grass block was broken, also break any grass on top of it
                 if (Material.GRASS_BLOCK.equals(blockId)) {
                     Vector4DInt abovePos = new Vector4DInt(

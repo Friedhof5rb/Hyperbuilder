@@ -26,7 +26,14 @@ public enum Material {
     FLINT_SWORD("flint_sword"),
     STONE_SWORD("stone_sword"),
     COAL_ORE("coal_ore"),
-    COAL("coal");
+    COAL("coal"),
+    COPPER_ORE("copper_ore"),
+    COPPER_INGOT("copper_ingot"),
+    IRON_ORE("iron_ore"),
+    IRON_INGOT("iron_ingot"),
+    SMELTER("smelter");
+
+
 
     private final String id;
     

@@ -52,7 +52,7 @@ public class FlintPickaxeItem extends BaseItem implements IsTool{
     @Override
     public float getMiningSpeed(Block block) {
          if(block.getBlockId() == Material.STONE) {
-            return 1.2f;
+            return 2f;
         }
         return 1.0f;
     }

@@ -115,6 +115,13 @@ public class ItemRegistry {
         registerItem(new StoneShovelItem());
         registerItem(new CoalOreItem());
         registerItem(new CoalItem());
+        registerItem(new CopperOreItem());
+        //registerItem(new CopperIngotItem());
+        registerItem(new IronOreItem());
+        //registerItem(new IronIngotItem());
+        registerItem(new SmelterItem());
+
+
     }
     
     

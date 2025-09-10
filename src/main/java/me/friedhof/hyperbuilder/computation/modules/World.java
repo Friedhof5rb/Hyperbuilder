@@ -170,8 +170,11 @@ public class World {
         generateCaves(chunk, position);
         
         // Generate coal ore below the surface
-        generateCoalOre(chunk, position);
-        
+        generateOre(chunk, position,Material.COAL_ORE,0.005,5,50);
+        generateOre(chunk, position,Material.COPPER_ORE,0.003,15,70);
+        generateOre(chunk, position,Material.IRON_ORE,0.001,30,150);
+
+
         // Generate trees for this chunk (highest priority)
         generateTrees(chunk, position);
         
@@ -358,13 +361,8 @@ public class World {
      * @param chunk The chunk to generate coal ore in
      * @param chunkPosition The position of the chunk in the world
      */
-    private void generateCoalOre(Chunk4D chunk, Vector4DInt chunkPosition) {
-        // Coal ore generation parameters
-        double coalOreChance = 0.005; 
-        int minDepthBelowSurface = 3;  // Minimum depth below surface for coal ore (reduced for easier access)
-        int maxDepthBelowSurface = 50; // Maximum depth below surface for coal ore (increased range)
-        
-        // Generate coal ore at valid underground locations
+    private void generateOre(Chunk4D chunk, Vector4DInt chunkPosition,Material ore,double oreChance,int minDepthBelowSurface, int maxDepthBelowSurface) {
+
         for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
             for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
                 for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
@@ -397,8 +395,8 @@ public class World {
                         double randomValue = Math.abs(coalSeed % 1000000) / 1000000.0;
                         
                         // Check if coal ore should spawn at this location
-                        if (randomValue < coalOreChance) {
-                            chunk.setBlock(x, y, z, w, ItemRegistry.createBlock(Material.COAL_ORE));
+                        if (randomValue < oreChance) {
+                            chunk.setBlock(x, y, z, w, ItemRegistry.createBlock(ore));
                         }
                     }
                 }

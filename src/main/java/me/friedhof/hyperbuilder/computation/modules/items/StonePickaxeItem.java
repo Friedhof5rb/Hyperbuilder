@@ -39,15 +39,15 @@ public class StonePickaxeItem extends BaseItem implements IsTool {
     }
     @Override
     public boolean canMine(Block block) {
-      if(block.getBlockId() == Material.STONE || block.getBlockId() == Material.COAL_ORE) {
+      if(block.getBlockId() == Material.STONE || block.getBlockId() == Material.COAL_ORE || block.getBlockId() == Material.COPPER_ORE) {
             return true;
         }
         return false;
     }
     @Override
     public float getMiningSpeed(Block block) {
-        if(block.getBlockId() == Material.STONE || block.getBlockId() == Material.COAL_ORE) {
-            return 2.0f;
+        if(block.getBlockId() == Material.STONE || block.getBlockId() == Material.COAL_ORE || block.getBlockId() == Material.COPPER_ORE) {
+            return 3.0f;
         }
         return 1.0f;
     }
