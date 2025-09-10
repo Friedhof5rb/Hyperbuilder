@@ -3,6 +3,8 @@ package me.friedhof.hyperbuilder.computation.modules.interfaces;
 import me.friedhof.hyperbuilder.computation.modules.Material;
 import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
 import me.friedhof.hyperbuilder.computation.modules.World;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+import java.util.ArrayList;
 
 /**
  * Interface for items that can be placed in the world as blocks.
@@ -19,5 +21,10 @@ public interface IsPlaceable {
      * @param w World W coordinate
      * @return true if the item can be placed at this position
      */
-     boolean canPlaceAt(int x, int y, int z, int w, World world);
+    boolean canPlaceAt(int x, int y, int z, int w, World world);
+
+    ArrayList<BaseItem> drops(BaseItem selectedItem);
+
+
+
 }

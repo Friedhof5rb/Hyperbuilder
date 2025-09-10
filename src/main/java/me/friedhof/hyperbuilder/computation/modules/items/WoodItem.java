@@ -1,6 +1,9 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
 import me.friedhof.hyperbuilder.computation.modules.Material;
+import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
+import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
+import java.util.ArrayList;
 /**
  * Represents wood blocks - placeable solid blocks.
  */
@@ -33,5 +36,17 @@ public class WoodItem extends Block {
     @Override
     public boolean isBreakable() {
         return true;
+    }
+
+    @Override
+    public ArrayList<BaseItem> drops(BaseItem selectedItem) {
+        ArrayList<BaseItem> drops = new ArrayList<BaseItem>();
+        if(selectedItem instanceof IsTool){
+            IsTool tool = (IsTool) selectedItem;
+            if(tool.canMine(this)) {
+                drops.add(this);
+            }
+        }
+        return drops;
     }
 }

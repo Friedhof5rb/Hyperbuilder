@@ -16,10 +16,6 @@ public interface HasCollision {
     
 
 
-
-
-
-
     /**
      * Gets the collision resistance of this item.
      * Higher values mean the item is harder to break through.

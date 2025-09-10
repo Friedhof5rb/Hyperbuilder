@@ -1,6 +1,10 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
 import me.friedhof.hyperbuilder.computation.modules.Material;
+import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
+import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
+import java.util.ArrayList;
+import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 /**
  * Represents grass blocks - placeable items with no collision.a
  * This is different from the existing grass item - these grass blocks can be placed but have no collision.
@@ -28,5 +32,16 @@ public class GrassBlockItem extends Block{
     @Override
     public boolean isBreakable() {
         return true;
+    }
+    @Override
+    public ArrayList<BaseItem> drops(BaseItem selectedItem) {
+        ArrayList<BaseItem> drops = new ArrayList<BaseItem>();
+        if(selectedItem instanceof IsTool){
+            IsTool tool = (IsTool) selectedItem;
+            if(tool.canMine(this)) {
+                drops.add(this);
+            }
+        }
+        return drops;
     }
 }

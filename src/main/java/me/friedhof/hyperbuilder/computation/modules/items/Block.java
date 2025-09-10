@@ -2,10 +2,12 @@ package me.friedhof.hyperbuilder.computation.modules.items;
 
 
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
+import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.Material;
 import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
 import me.friedhof.hyperbuilder.computation.modules.World;
+import java.util.ArrayList;
 
 public class Block extends BaseItem implements IsPlaceable{
 
@@ -79,4 +81,12 @@ public class Block extends BaseItem implements IsPlaceable{
     public boolean isSolid() {
         return ItemRegistry.itemFactories.get(itemId).isSolid();
     }
+
+    @Override
+    public ArrayList<BaseItem> drops(BaseItem selectedItem) {
+        ArrayList<BaseItem> drops = new ArrayList<BaseItem>();
+        drops.add(this);
+        return drops;
+    }
+
 }

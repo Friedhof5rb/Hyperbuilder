@@ -38,7 +38,7 @@ import me.friedhof.hyperbuilder.computation.modules.DroppedItem;
 import me.friedhof.hyperbuilder.computation.modules.Entity;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.EntityInWay;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
-
+import java.util.ArrayList;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -233,7 +233,7 @@ public class Game {
         
         // Give the player some starting blocks
         Inventory inventory = player.getInventory();
-        inventory.addItem(Material.FLINT_PICKAXE, 1);
+        inventory.addItem(Material.STONE_PICKAXE, 1);
         inventory.addItem(Material.STONE_SHOVEL, 1);
         
         // Create a camera starting at the player's initial world position
@@ -714,7 +714,7 @@ public class Game {
                         player.getInventory().setItem(selectedSlot,null );
                     }
                 }
-                
+                System.out.println("hand: " +selectedItem);
                 // If a grass block was broken, also break any grass on top of it
                 if (Material.GRASS_BLOCK.equals(blockId)) {
                     Vector4DInt abovePos = new Vector4DInt(
@@ -735,8 +735,14 @@ public class Game {
                             abovePos.getZ() + 0.5,
                             abovePos.getW() + 0.5
                         );
-                        // 70% chance to drop plant fiber when grass is broken
-                        dropPlantFiber(grassDropPos);
+                        block.drops(selectedItem);
+                        ArrayList<BaseItem> blockItems = blockAbove.drops(selectedItem);
+                        for(BaseItem item : blockItems){
+                            DroppedItem droppedBlock = new DroppedItem(world.getNextEntityId(), grassDropPos, item);
+                            world.addEntity(droppedBlock);
+                        }
+                       
+
                     }
                 }
                 
@@ -748,68 +754,15 @@ public class Game {
                     breakingBlockPos.getW() + 0.5
                 );
                 
-                // Handle custom drops for leaves
-                if (Material.LEAVES.equals(blockId)) {
-                    // Random chance for sapling drop (10% chance)
-                    if (Math.random() < 0.1) {
-                        BaseItem saplingItem = ItemRegistry.createItem(Material.SAPLING, 1);
-                        if (saplingItem != null) {
-                            DroppedItem droppedSapling = new DroppedItem(world.getNextEntityId(), dropPos, saplingItem);
-                            world.addEntity(droppedSapling);
-                        }
-                    }
-                    // Random chance for sticks drop (20% chance)
-                    if (Math.random() < 0.2) {
-                        BaseItem sticksItem = ItemRegistry.createItem(Material.STICKS, 1);
-                        if (sticksItem != null) {
-                            DroppedItem droppedSticks = new DroppedItem(world.getNextEntityId(), dropPos, sticksItem);
-                            world.addEntity(droppedSticks);
-                        }
-                    }
-                    // Note: No leaves are dropped
-                } else if (Material.GRASS.equals(blockId)) {
-                    // Handle custom drops for grass - drop plant fiber with probability
-                    // 70% chance to drop plant fiber when grass is directly broken
-                    dropPlantFiber(dropPos);
-                    
-                }else if (Material.COAL_ORE.equals(blockId)) {
-                            BaseItem coalItem = ItemRegistry.createItem(Material.COAL, 1);
-                        if (coalItem != null && canSelectedToolMineBlock(block)) {
-                            DroppedItem droppedCoal = new DroppedItem(world.getNextEntityId(), dropPos, coalItem);
-                            world.addEntity(droppedCoal);
-                        }
-
-                } else {
-                    // Check if this block requires a specific tool to drop
-                    boolean shouldDrop = true;
-                    
-                    // Stone, Wood Logs, Grass Block, and Dirt only drop when broken with correct tool
-                    if (Material.STONE.equals(blockId) || 
-                        Material.WOOD_LOG.equals(blockId) || 
-                        Material.GRASS_BLOCK.equals(blockId) || 
-                        Material.DIRT.equals(blockId)
-                        || Material.COAL_ORE.equals(blockId)) {
-                        
-                        shouldDrop = canSelectedToolMineBlock(block);
-                        
-                        if (!shouldDrop) {
-                            System.out.println("Block " + blockId + " requires correct tool to drop items!");
-                        }
-                    }
-                    
-                    // Drop the block as an item only if tool requirement is met
-                    if (shouldDrop) {
-                        BaseItem blockItem = ItemRegistry.createItem(blockId, 1);
-                        if (blockItem != null) {
-                            DroppedItem droppedBlock = new DroppedItem(world.getNextEntityId(), dropPos, blockItem);
-                            world.addEntity(droppedBlock);
-                        }
+                ArrayList<BaseItem> blockItems = block.drops(selectedItem);
+                if (blockItems != null) {
+                    for(BaseItem item : blockItems){
+                        DroppedItem droppedBlock = new DroppedItem(world.getNextEntityId(), dropPos, item);
+                        world.addEntity(droppedBlock);
                     }
                 }
-                
-            }
+            }   
         }
-        
         // Reset breaking state but continue if left mouse is still pressed
         isBreakingBlock = false;
         breakingBlockPos = null;
@@ -827,18 +780,6 @@ public class Game {
         }
     }
     
-
-
-    private void dropPlantFiber(Vector4D dropPos){
-        if (Math.random() < 0.7) {
-            BaseItem plantFiberItem = ItemRegistry.createItem(Material.PLANT_FIBER, 1);
-            if (plantFiberItem != null) {
-                DroppedItem droppedPlantFiber = new DroppedItem(world.getNextEntityId(), dropPos, plantFiberItem);
-                world.addEntity(droppedPlantFiber);
-            }
-        }
-    }
-
 
 
     /**
@@ -1605,20 +1546,7 @@ public class Game {
         return 1.0f; // Default speed when no tool is selected
     }
     
-    /**
-     * Checks if the currently selected tool can effectively mine the specified block.
-     * 
-     * @param block The block to check
-     * @return true if the tool can mine the block, false otherwise
-     */
-    private boolean canSelectedToolMineBlock(Block block) {
-        IsTool tool = getSelectedTool();
-        if (tool != null) {
-            return tool.canMine(block);
-        }
-        
-        return false; // No tool selected, cannot mine effectively
-    }
+  
     
     /**
      * Calculates the break time for a block based on the selected tool.

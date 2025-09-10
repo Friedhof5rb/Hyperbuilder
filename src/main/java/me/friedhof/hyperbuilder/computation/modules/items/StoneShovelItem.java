@@ -41,7 +41,7 @@ public class StoneShovelItem extends BaseItem implements IsTool {
     }
     @Override
     public boolean canMine(Block block) {
-       if(block.getBlockId() == Material.STONE) {
+       if(block.getBlockId() == Material.DIRT || block.getBlockId() == Material.GRASS_BLOCK) {
             return true;
         }
         return false;
