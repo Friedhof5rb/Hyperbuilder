@@ -24,6 +24,11 @@ import me.friedhof.hyperbuilder.computation.modules.items.tools.FlintShovelItem;
 import me.friedhof.hyperbuilder.computation.modules.items.tools.StoneAxeItem;
 import me.friedhof.hyperbuilder.computation.modules.items.tools.StonePickaxeItem;
 import me.friedhof.hyperbuilder.computation.modules.items.tools.StoneShovelItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterPoweredItem;
+import me.friedhof.hyperbuilder.computation.modules.items.tools.StoneChiselItem;
+import me.friedhof.hyperbuilder.computation.modules.items.StoneBricksItem;
+
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -137,8 +142,9 @@ public class ItemRegistry {
         registerItem(new IronOreItem());
         //registerItem(new IronIngotItem());
         registerItem(new SmelterItem());
-
-
+        registerItem(new SmelterPoweredItem());
+        registerItem(new StoneChiselItem());
+        registerItem(new StoneBricksItem());
     }
     
     

@@ -13,10 +13,10 @@ import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 public class GrassBlockItem extends Block{
     
     public GrassBlockItem(int count) {
-        super(Material.GRASS_BLOCK, "Grass Block", 64, count);
+        super(Material.GRASS_BLOCK, "Grass Block", 999, count);
     }
     public GrassBlockItem() {
-        super(Material.GRASS_BLOCK, "Grass Block", 64, 0);
+        super(Material.GRASS_BLOCK, "Grass Block", 999, 0);
     }
     
     

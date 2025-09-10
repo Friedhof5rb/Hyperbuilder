@@ -31,9 +31,10 @@ public enum Material {
     COPPER_INGOT("copper_ingot"),
     IRON_ORE("iron_ore"),
     IRON_INGOT("iron_ingot"),
-    SMELTER("smelter");
-
-
+    SMELTER("smelter"),
+    SMELTER_POWERED("smelter_powered"),
+    STONE_CHISEL("stone_chisel"),
+    STONE_BRICK("stone_brick");
 
     private final String id;
     

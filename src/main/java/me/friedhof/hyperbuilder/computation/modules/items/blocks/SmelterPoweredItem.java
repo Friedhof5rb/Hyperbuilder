@@ -1,38 +1,38 @@
 package me.friedhof.hyperbuilder.computation.modules.items.blocks;
 
-import me.friedhof.hyperbuilder.computation.modules.interfaces.HasCollision;
-import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
-import me.friedhof.hyperbuilder.computation.modules.Material;
-import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
-import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
-import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
-import java.util.ArrayList;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
-/**
- * Represents dirt blocks - placeable solid blocks.
- */
-public class DirtItem extends Block implements IsPlaceable, HasCollision {
-    
-    public DirtItem(int count) {
-        super(Material.DIRT, "Dirt", 999, count);
+import me.friedhof.hyperbuilder.computation.modules.Material;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
+import java.util.ArrayList;
+
+public class SmelterPoweredItem extends Block{
+
+
+    public SmelterPoweredItem() {
+        super(Material.SMELTER_POWERED, "Smelter", 999, 0);
     }
-    public DirtItem() {
-        super(Material.DIRT, "Dirt", 999, 0);
+   
+    public SmelterPoweredItem(int count) {
+        super(Material.SMELTER_POWERED, "Smelter", 999, count);
     }
-    
-    
+
     @Override
     public BaseItem withCount(int newCount) {
-       return new DirtItem(newCount);
+        return new SmelterPoweredItem(newCount);
     }
+
     @Override
     public boolean isSolid() {
         return true;
     }
-
     @Override
     public boolean isBreakable() {
         return true;
+    }
+    @Override
+    public float getCollisionResistance() {
+        return 5f;
     }
     @Override
     public ArrayList<BaseItem> drops(BaseItem selectedItem) {
@@ -40,7 +40,7 @@ public class DirtItem extends Block implements IsPlaceable, HasCollision {
         if(selectedItem instanceof IsTool){
             IsTool tool = (IsTool) selectedItem;
             if(tool.canMine(this)) {
-                drops.add(this);
+                drops.add(ItemRegistry.createItem(Material.SMELTER, 1));
             }
         }
         return drops;

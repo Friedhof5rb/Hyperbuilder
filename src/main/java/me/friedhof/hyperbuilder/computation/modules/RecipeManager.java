@@ -155,9 +155,21 @@ public class RecipeManager {
             .addIngredient(Material.STICKS, 1)
             .addIngredient(Material.PLANT_FIBER, 1));
 
-       
+        // Smelter
+        registerRecipe(new Recipe("smelter", "Smelter", Material.SMELTER, 1)
+            .addIngredient(Material.STONE_BRICK, 80));
 
+        // Stone Brick
+        registerRecipe(new Recipe("stone_brick", "Stone Brick", Material.STONE_BRICK, 6)
+            .addIngredient(Material.STONE, 1)
+            .addIngredient(Material.STONE_CHISEL,1));
 
+        // Stone Chisel
+        registerRecipe(new Recipe("stone_chisel", "Stone Chisel", Material.STONE_CHISEL, 1)
+            .addIngredient(Material.STONE, 1)
+            .addIngredient(Material.STICKS, 1)
+            .addIngredient(Material.PLANT_FIBER, 1));
+ 
         initialized = true;
         System.out.println("RecipeManager initialized with " + recipeList.size() + " recipes");
     }

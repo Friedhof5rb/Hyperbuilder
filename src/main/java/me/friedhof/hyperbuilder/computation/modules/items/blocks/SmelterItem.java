@@ -8,11 +8,11 @@ import java.util.ArrayList;
 
 public class SmelterItem extends Block{
     public SmelterItem() {
-        super(Material.SMELTER, "Smelter", 64, 0);
+        super(Material.SMELTER, "Smelter", 999, 0);
     }
    
     public SmelterItem(int count) {
-        super(Material.SMELTER, "Smelter", 64, count);
+        super(Material.SMELTER, "Smelter", 999, count);
     }
     @Override
     public BaseItem withCount(int newCount) {
@@ -29,7 +29,7 @@ public class SmelterItem extends Block{
     }
     @Override
     public float getCollisionResistance() {
-        return 3f;
+        return 5f;
     }
     @Override
     public ArrayList<BaseItem> drops(BaseItem selectedItem) {

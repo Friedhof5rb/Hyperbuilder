@@ -12,10 +12,10 @@ import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
 public class LeavesItem extends Block{
     
     public LeavesItem(int count) {
-        super(Material.LEAVES, "Leaves", 64, count);
+        super(Material.LEAVES, "Leaves", 999, count);
     }
     public LeavesItem() {
-        super(Material.LEAVES, "Leaves", 64, 0);
+        super(Material.LEAVES, "Leaves", 999, 0);
     }
   
     // HasCollision implementation with low resistance

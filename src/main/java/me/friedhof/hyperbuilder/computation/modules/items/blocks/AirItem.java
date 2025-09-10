@@ -7,10 +7,10 @@ import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 public class AirItem extends Block {
 
     public AirItem(int count) {
-        super(Material.AIR, "Air", 64, count);
+        super(Material.AIR, "Air", 999, count);
     }
      public AirItem() {
-        super(Material.AIR, "Air", 64, 0);
+        super(Material.AIR, "Air", 999, 0);
     }
   
     

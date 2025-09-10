@@ -11,10 +11,10 @@ import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 public class SaplingItem extends Block {
     
     public SaplingItem(int count) {
-        super(Material.SAPLING, "Sapling", 64, count);
+        super(Material.SAPLING, "Sapling", 999, count);
     }
     public SaplingItem() {
-        super(Material.SAPLING, "Sapling", 64, 0);
+        super(Material.SAPLING, "Sapling", 999, 0);
     }
     
     

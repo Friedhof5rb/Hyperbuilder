@@ -11,10 +11,10 @@ import java.util.ArrayList;
 public class StoneItem extends Block{
     
     public StoneItem(int count) {
-        super(Material.STONE, "Stone", 64, count);
+        super(Material.STONE, "Stone", 999, count);
     }
     public StoneItem() {
-        super(Material.STONE, "Stone", 64, 0);
+        super(Material.STONE, "Stone", 999, 0);
     }
   
     // HasCollision implementation with higher resistance

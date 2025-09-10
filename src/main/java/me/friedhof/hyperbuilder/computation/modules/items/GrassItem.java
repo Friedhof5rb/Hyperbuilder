@@ -11,10 +11,10 @@ import java.util.ArrayList;
 public class GrassItem extends Block {
     
     public GrassItem(int count) {
-        super(Material.GRASS, "Grass", 64, count);
+        super(Material.GRASS, "Grass", 999, count);
     }
     public GrassItem() {
-        super(Material.GRASS, "Grass", 64, 0);
+        super(Material.GRASS, "Grass", 999, 0);
     }
     
     

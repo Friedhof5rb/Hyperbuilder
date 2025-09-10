@@ -432,7 +432,7 @@ public class Game {
                 renderer.getHUD().getHotbar().setSelectedSlot(slot, player.getInventory());
                 resetBreakingProgressOnItemSwitch();
                 break;
-            case KeyEvent.VK_F:
+            case KeyEvent.VK_I:
                 // Toggle inventory visibility
                 renderer.getHUD().getInventoryUI().toggleVisibility();
                 break;

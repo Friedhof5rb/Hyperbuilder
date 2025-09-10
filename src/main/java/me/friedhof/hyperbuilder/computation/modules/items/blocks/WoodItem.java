@@ -11,10 +11,10 @@ import java.util.ArrayList;
 public class WoodItem extends Block {
     
     public WoodItem(int count) {
-        super(Material.WOOD_LOG, "Wood Log", 64, count);
+        super(Material.WOOD_LOG, "Wood Log", 999, count);
     }
     public WoodItem() {
-        super(Material.WOOD_LOG, "Wood Log", 64, 0);
+        super(Material.WOOD_LOG, "Wood Log", 999, 0);
     }
  
     

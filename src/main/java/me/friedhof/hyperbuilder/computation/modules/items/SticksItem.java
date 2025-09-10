@@ -8,10 +8,10 @@ import me.friedhof.hyperbuilder.computation.modules.Material;
 public class SticksItem extends BaseItem {
     
     public SticksItem(int count) {
-        super(Material.STICKS, "Stick", 64, count);
+        super(Material.STICKS, "Stick", 999, count);
     }
     public SticksItem() {
-        super(Material.STICKS, "Stick", 64, 0);
+        super(Material.STICKS, "Stick", 999, 0);
     }
  
     

@@ -10,10 +10,10 @@ import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 public class FlintItem extends Block {
     
     public FlintItem(int count) {
-        super(Material.FLINT, "Flint", 64, count);
+        super(Material.FLINT, "Flint", 999, count);
     }
     public FlintItem() {
-        super(Material.FLINT, "Flint", 64, 0);
+        super(Material.FLINT, "Flint", 999, 0);
     }
  
     
