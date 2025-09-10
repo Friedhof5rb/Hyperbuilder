@@ -29,7 +29,7 @@ public class SmelterItem extends Block{
     }
     @Override
     public float getCollisionResistance() {
-        return 5f;
+        return 2f;
     }
     @Override
     public ArrayList<BaseItem> drops(BaseItem selectedItem) {

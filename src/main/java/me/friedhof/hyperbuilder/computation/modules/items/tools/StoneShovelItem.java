@@ -51,7 +51,7 @@ public class StoneShovelItem extends BaseItem implements IsTool {
     @Override
     public float getMiningSpeed(Block block) {
         if(block.getBlockId() == Material.DIRT || block.getBlockId() == Material.GRASS_BLOCK) {
-            return 3.0f;
+            return 5.0f;
         }
         return 1.0f;
     }

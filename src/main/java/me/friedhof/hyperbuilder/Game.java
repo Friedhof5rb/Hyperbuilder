@@ -1538,7 +1538,7 @@ public class Game {
     private float getEffectiveMiningSpeed(Block block) {
         IsTool tool = getSelectedTool();
         if (tool != null) {
-            return tool.getMiningSpeed(block);
+            return tool.getMiningSpeed(block)/block.getCollisionResistance();
         }
         
         return 1.0f; // Default speed when no tool is selected

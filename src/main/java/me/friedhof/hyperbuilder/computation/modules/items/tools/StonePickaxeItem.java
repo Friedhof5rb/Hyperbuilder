@@ -55,7 +55,7 @@ public class StonePickaxeItem extends BaseItem implements IsTool {
         || block.getBlockId() == Material.COAL_ORE 
         || block.getBlockId() == Material.COPPER_ORE
         || block.getBlockId() == Material.SMELTER) {
-            return 3.0f;
+            return 5.0f;
         }
         return 1.0f;
     }

@@ -18,10 +18,9 @@ public class LeavesItem extends Block{
         super(Material.LEAVES, "Leaves", 999, 0);
     }
   
-    // HasCollision implementation with low resistance
     @Override
     public float getCollisionResistance() {
-        return 0.5f; // Leaves are easy to break through
+        return 0.1f; // Leaves are easy to break through
     }
 
     @Override

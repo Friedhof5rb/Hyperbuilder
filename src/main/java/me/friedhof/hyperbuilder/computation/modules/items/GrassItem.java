@@ -16,10 +16,14 @@ public class GrassItem extends Block {
     public GrassItem() {
         super(Material.GRASS, "Grass", 999, 0);
     }
-    
-    
+
+    @Override
+    public float getCollisionResistance() {
+        return 0.1f;
+    }
+
   
-      @Override
+    @Override
     public BaseItem withCount(int newCount) {
        return new GrassItem(newCount);
     }

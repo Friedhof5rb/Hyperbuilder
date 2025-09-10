@@ -89,5 +89,13 @@ public class Block extends BaseItem implements IsPlaceable{
         drops.add(this);
         return drops;
     }
-
+   /**
+     * Gets the collision resistance of this item.
+     * Higher values mean the item is harder to break through.
+     * 
+     * @return The collision resistance (0.0 = no resistance, 1.0 = maximum resistance)
+     */
+    public float getCollisionResistance() {
+        return 1.0f; // Default full resistance
+    }
 }

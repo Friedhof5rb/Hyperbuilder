@@ -159,10 +159,11 @@ public class RecipeManager {
         registerRecipe(new Recipe("smelter", "Smelter", Material.SMELTER, 1)
             .addIngredient(Material.STONE_BRICK, 80));
 
-        // Stone Brick
-        registerRecipe(new Recipe("stone_brick", "Stone Brick", Material.STONE_BRICK, 6)
-            .addIngredient(Material.STONE, 1)
-            .addIngredient(Material.STONE_CHISEL,1));
+        // Stone Brick - uses chisel durability instead of consuming it
+        registerRecipe(new DurabilityRecipe("stone_brick", "Stone Brick", Material.STONE_BRICK, 6)
+            .addToolIngredient(Material.STONE_CHISEL, 1, 1)// Chisel loses 1 durability
+            .addIngredient(Material.STONE, 1));
+    
 
         // Stone Chisel
         registerRecipe(new Recipe("stone_chisel", "Stone Chisel", Material.STONE_CHISEL, 1)

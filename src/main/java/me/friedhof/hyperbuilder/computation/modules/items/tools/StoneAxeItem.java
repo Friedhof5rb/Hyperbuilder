@@ -54,7 +54,7 @@ public class StoneAxeItem extends BaseItem implements IsTool {
     @Override
     public float getMiningSpeed(Block block) {
         if(block.getBlockId() == Material.WOOD_LOG) {
-            return 3.0f;
+            return 5.0f;
         }
         return 1.0f;
     }
