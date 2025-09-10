@@ -15,8 +15,8 @@ import java.awt.event.MouseWheelListener;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-
-import me.friedhof.hyperbuilder.computation.modules.items.Block;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.AirItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 import me.friedhof.hyperbuilder.computation.modules.Player;
 import me.friedhof.hyperbuilder.computation.modules.Vector4D;
 import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
@@ -29,7 +29,6 @@ import me.friedhof.hyperbuilder.rendering.modules.TextureManager2D;
 import me.friedhof.hyperbuilder.ui.MainMenu;
 import me.friedhof.hyperbuilder.save.SavedWorldInfo;
 import me.friedhof.hyperbuilder.save.WorldSaveManager;
-import me.friedhof.hyperbuilder.computation.modules.items.AirItem;
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.Inventory;

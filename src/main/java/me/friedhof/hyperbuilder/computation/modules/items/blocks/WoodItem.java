@@ -1,38 +1,44 @@
-package me.friedhof.hyperbuilder.computation.modules.items;
+package me.friedhof.hyperbuilder.computation.modules.items.blocks;
 
-import me.friedhof.hyperbuilder.computation.modules.interfaces.HasCollision;
-import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 import me.friedhof.hyperbuilder.computation.modules.Material;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
-import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
-import java.util.ArrayList;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
+import java.util.ArrayList;
 /**
- * Represents dirt blocks - placeable solid blocks.
+ * Represents wood blocks - placeable solid blocks.
  */
-public class DirtItem extends Block implements IsPlaceable, HasCollision {
+public class WoodItem extends Block {
     
-    public DirtItem(int count) {
-        super(Material.DIRT, "Dirt", 64, count);
+    public WoodItem(int count) {
+        super(Material.WOOD_LOG, "Wood Log", 64, count);
     }
-    public DirtItem() {
-        super(Material.DIRT, "Dirt", 64, 0);
+    public WoodItem() {
+        super(Material.WOOD_LOG, "Wood Log", 64, 0);
     }
+ 
     
+  
     
+    // HasCollision implementation with moderate resistance
+    @Override
+    public float getCollisionResistance() {
+        return 1.5f; // Wood is slightly harder than dirt/grass but softer than stone
+    }
+
     @Override
     public BaseItem withCount(int newCount) {
-       return new DirtItem(newCount);
+       return new WoodItem(newCount);
     }
     @Override
     public boolean isSolid() {
         return true;
     }
-
     @Override
     public boolean isBreakable() {
         return true;
     }
+
     @Override
     public ArrayList<BaseItem> drops(BaseItem selectedItem) {
         ArrayList<BaseItem> drops = new ArrayList<BaseItem>();

@@ -1,8 +1,9 @@
-package me.friedhof.hyperbuilder.computation.modules.items;
+package me.friedhof.hyperbuilder.computation.modules.items.blocks;
 
 
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.Material;
 import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;

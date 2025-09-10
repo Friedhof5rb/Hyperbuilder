@@ -1,23 +1,24 @@
-package me.friedhof.hyperbuilder.computation.modules.items;
+package me.friedhof.hyperbuilder.computation.modules.items.blocks.ores;
 
-import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.Material;
-import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
 import java.util.ArrayList;
+import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 
-public class CoalOreItem extends Block{
+public class IronOreItem extends Block {
 
-    public CoalOreItem() {
-        super(Material.COAL_ORE, "Coal Ore", 64, 0);
+    public IronOreItem() {
+        super(Material.IRON_ORE, "Iron Ore", 64, 0);
     }
 
-    public CoalOreItem(int count) {
-        super(Material.COAL_ORE, "Coal Ore", 64, count);
+    public IronOreItem(int count) {
+        super(Material.IRON_ORE, "Iron Ore", 64, count);
     }
 
     @Override
     public BaseItem withCount(int newCount) {
-        return new CoalOreItem(newCount);
+        return new IronOreItem(newCount);
     }
     @Override
     public boolean isSolid() {
@@ -27,7 +28,6 @@ public class CoalOreItem extends Block{
     public boolean isBreakable() {
         return true;
     }
-
     @Override
     public float getCollisionResistance() {
         return 3f;
@@ -38,7 +38,7 @@ public class CoalOreItem extends Block{
         if(selectedItem instanceof IsTool){
             IsTool tool = (IsTool) selectedItem;
             if(tool.canMine(this)) {
-                drops.add(ItemRegistry.createItem(Material.COAL, 1));
+                drops.add(this);
             }
         }
         return drops;

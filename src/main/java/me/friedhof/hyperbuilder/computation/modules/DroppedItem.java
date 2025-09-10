@@ -180,7 +180,7 @@ public class DroppedItem extends Entity {
                 for (int z = (int) Math.floor(minZ); z <= (int) Math.floor(maxZ); z++) {
                     for (int w = (int) Math.floor(minW); w <= (int) Math.floor(maxW); w++) {
                         Vector4DInt blockPos = new Vector4DInt(x, y, z, w);
-                        me.friedhof.hyperbuilder.computation.modules.items.Block block = world.getBlock(blockPos);
+                        me.friedhof.hyperbuilder.computation.modules.items.blocks.Block block = world.getBlock(blockPos);
                         
                         if (block != null && block instanceof HasCollision) {
                             HasCollision collisionBlock = (HasCollision) block;

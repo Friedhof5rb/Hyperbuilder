@@ -1,26 +1,26 @@
-package me.friedhof.hyperbuilder.computation.modules.items;
+package me.friedhof.hyperbuilder.computation.modules.items.tools;
 
-import me.friedhof.hyperbuilder.computation.modules.Material;
-
+import  me.friedhof.hyperbuilder.computation.modules.Material;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 
-public class StoneShovelItem extends BaseItem implements IsTool {
+public class StonePickaxeItem extends BaseItem implements IsTool {
     private int durability;
     private final int maxDurability = 100;
-
-    public StoneShovelItem() {
-        super(Material.STONE_SHOVEL, "Stone Shovel", 1, 0);
+    public StonePickaxeItem() {
+        super(Material.STONE_PICKAXE, "Stone Pickaxe", 1, 0);
         this.durability = maxDurability;
     }
 
-    public StoneShovelItem(int count) {
-        super(Material.STONE_SHOVEL, "Stone Shovel", 1, count);
+    public StonePickaxeItem(int count) {
+        super(Material.STONE_PICKAXE, "Stone Pickaxe", 1, count);
         this.durability = maxDurability;
     }
 
     @Override
     public BaseItem withCount(int newCount) {
-        return new StoneShovelItem(newCount);
+        return new StonePickaxeItem(newCount);
     }
     @Override
     public int getMaxDurability() {
@@ -41,20 +41,20 @@ public class StoneShovelItem extends BaseItem implements IsTool {
     }
     @Override
     public boolean canMine(Block block) {
-       if(block.getBlockId() == Material.DIRT || block.getBlockId() == Material.GRASS_BLOCK) {
+      if(block.getBlockId() == Material.STONE || block.getBlockId() == Material.COAL_ORE || block.getBlockId() == Material.COPPER_ORE) {
             return true;
         }
         return false;
     }
     @Override
     public float getMiningSpeed(Block block) {
-        if(block.getBlockId() == Material.DIRT || block.getBlockId() == Material.GRASS_BLOCK) {
+        if(block.getBlockId() == Material.STONE || block.getBlockId() == Material.COAL_ORE || block.getBlockId() == Material.COPPER_ORE) {
             return 3.0f;
         }
         return 1.0f;
     }
     @Override
     public String getToolType() {
-        return "shovel";
+        return "pickaxe";
     }
 }

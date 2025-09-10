@@ -1,5 +1,6 @@
-package me.friedhof.hyperbuilder.computation.modules.items;
+package me.friedhof.hyperbuilder.computation.modules.items.blocks;
 import me.friedhof.hyperbuilder.computation.modules.Material;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 /**
  * Represents air blocks - special case item that is not placeable or solid.
  */

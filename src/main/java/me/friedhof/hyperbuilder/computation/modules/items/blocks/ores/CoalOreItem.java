@@ -1,23 +1,26 @@
-package me.friedhof.hyperbuilder.computation.modules.items;
+package me.friedhof.hyperbuilder.computation.modules.items.blocks.ores;
 
+import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.Material;
-import java.util.ArrayList;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 
+import java.util.ArrayList;
 
-public class CopperOreItem extends Block {
+public class CoalOreItem extends Block{
 
-     public CopperOreItem() {
-        super(Material.COPPER_ORE, "Copper Ore", 64, 0);
+    public CoalOreItem() {
+        super(Material.COAL_ORE, "Coal Ore", 64, 0);
     }
 
-    public CopperOreItem(int count) {
-        super(Material.COPPER_ORE, "Copper Ore", 64, count);
+    public CoalOreItem(int count) {
+        super(Material.COAL_ORE, "Coal Ore", 64, count);
     }
 
     @Override
     public BaseItem withCount(int newCount) {
-        return new CopperOreItem(newCount);
+        return new CoalOreItem(newCount);
     }
     @Override
     public boolean isSolid() {
@@ -38,10 +41,9 @@ public class CopperOreItem extends Block {
         if(selectedItem instanceof IsTool){
             IsTool tool = (IsTool) selectedItem;
             if(tool.canMine(this)) {
-                drops.add(this);
+                drops.add(ItemRegistry.createItem(Material.COAL, 1));
             }
         }
         return drops;
     }
-
 }

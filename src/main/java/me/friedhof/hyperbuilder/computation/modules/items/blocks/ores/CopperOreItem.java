@@ -1,23 +1,25 @@
-package me.friedhof.hyperbuilder.computation.modules.items;
+package me.friedhof.hyperbuilder.computation.modules.items.blocks.ores;
 
 import me.friedhof.hyperbuilder.computation.modules.Material;
-import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
-
 import java.util.ArrayList;
+import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 
-public class SmelterItem extends Block{
-    public SmelterItem() {
-        super(Material.SMELTER, "Smelter", 64, 0);
+public class CopperOreItem extends Block {
+
+     public CopperOreItem() {
+        super(Material.COPPER_ORE, "Copper Ore", 64, 0);
     }
-   
-    public SmelterItem(int count) {
-        super(Material.SMELTER, "Smelter", 64, count);
+
+    public CopperOreItem(int count) {
+        super(Material.COPPER_ORE, "Copper Ore", 64, count);
     }
+
     @Override
     public BaseItem withCount(int newCount) {
-        return new SmelterItem(newCount);
+        return new CopperOreItem(newCount);
     }
-
     @Override
     public boolean isSolid() {
         return true;
@@ -26,6 +28,7 @@ public class SmelterItem extends Block{
     public boolean isBreakable() {
         return true;
     }
+
     @Override
     public float getCollisionResistance() {
         return 3f;
@@ -41,4 +44,5 @@ public class SmelterItem extends Block{
         }
         return drops;
     }
+
 }

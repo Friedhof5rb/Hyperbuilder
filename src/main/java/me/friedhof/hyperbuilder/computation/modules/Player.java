@@ -1,6 +1,6 @@
 package me.friedhof.hyperbuilder.computation.modules;
-import me.friedhof.hyperbuilder.computation.modules.items.Block;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.EntityInWay;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 /**
  * Represents a player in the 4D world.
  * Players can move, interact with blocks, and have an inventory.

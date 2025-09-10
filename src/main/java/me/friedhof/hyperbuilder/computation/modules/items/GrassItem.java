@@ -2,6 +2,7 @@ package me.friedhof.hyperbuilder.computation.modules.items;
 
 import me.friedhof.hyperbuilder.computation.modules.Material;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import java.util.ArrayList;
 /**

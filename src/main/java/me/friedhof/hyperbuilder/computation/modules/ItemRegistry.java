@@ -7,7 +7,24 @@ import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 import me.friedhof.hyperbuilder.computation.modules.items.*;
 import me.friedhof.hyperbuilder.rendering.modules.Texture4D;
 import me.friedhof.hyperbuilder.rendering.modules.Texture2D;
-import me.friedhof.hyperbuilder.computation.modules.items.Block;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.AirItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.DirtItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.GrassBlockItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.LeavesItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.StoneItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.WoodItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.ores.CoalOreItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.ores.CopperOreItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.ores.IronOreItem;
+import me.friedhof.hyperbuilder.computation.modules.items.tools.FlintAxeItem;
+import me.friedhof.hyperbuilder.computation.modules.items.tools.FlintPickaxeItem;
+import me.friedhof.hyperbuilder.computation.modules.items.tools.FlintShovelItem;
+import me.friedhof.hyperbuilder.computation.modules.items.tools.StoneAxeItem;
+import me.friedhof.hyperbuilder.computation.modules.items.tools.StonePickaxeItem;
+import me.friedhof.hyperbuilder.computation.modules.items.tools.StoneShovelItem;
+
 import java.util.HashMap;
 import java.util.Map;
 

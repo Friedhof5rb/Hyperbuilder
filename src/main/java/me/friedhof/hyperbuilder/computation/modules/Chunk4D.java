@@ -3,8 +3,8 @@ package me.friedhof.hyperbuilder.computation.modules;
 import java.util.HashMap;
 import java.util.Map;
 
-import me.friedhof.hyperbuilder.computation.modules.items.AirItem;
-import me.friedhof.hyperbuilder.computation.modules.items.Block;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.AirItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 
 /**
  * Represents a 4D chunk in the voxel world.

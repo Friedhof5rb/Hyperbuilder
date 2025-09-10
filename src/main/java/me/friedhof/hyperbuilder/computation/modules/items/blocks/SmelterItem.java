@@ -1,24 +1,24 @@
-package me.friedhof.hyperbuilder.computation.modules.items;
+package me.friedhof.hyperbuilder.computation.modules.items.blocks;
 
 import me.friedhof.hyperbuilder.computation.modules.Material;
-import java.util.ArrayList;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
+import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 
+import java.util.ArrayList;
 
-public class IronOreItem extends Block {
-
-    public IronOreItem() {
-        super(Material.IRON_ORE, "Iron Ore", 64, 0);
+public class SmelterItem extends Block{
+    public SmelterItem() {
+        super(Material.SMELTER, "Smelter", 64, 0);
     }
-
-    public IronOreItem(int count) {
-        super(Material.IRON_ORE, "Iron Ore", 64, count);
+   
+    public SmelterItem(int count) {
+        super(Material.SMELTER, "Smelter", 64, count);
     }
-
     @Override
     public BaseItem withCount(int newCount) {
-        return new IronOreItem(newCount);
+        return new SmelterItem(newCount);
     }
+
     @Override
     public boolean isSolid() {
         return true;

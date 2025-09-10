@@ -1,6 +1,7 @@
 package me.friedhof.hyperbuilder.computation.modules.items;
 
 import me.friedhof.hyperbuilder.computation.modules.Material;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 
 /**
  * Represents flint - placeable item with no collision.

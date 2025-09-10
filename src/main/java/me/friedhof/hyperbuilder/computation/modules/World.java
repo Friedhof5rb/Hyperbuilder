@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sound.midi.SysexMessage;
 
-import me.friedhof.hyperbuilder.computation.modules.items.Block;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 import me.friedhof.hyperbuilder.save.LazyChunkLoader;
 import java.util.Random;
 /**

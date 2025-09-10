@@ -5,8 +5,8 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.HashMap;
 
-import me.friedhof.hyperbuilder.computation.modules.items.Block;
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 import me.friedhof.hyperbuilder.computation.modules.Player;
 import me.friedhof.hyperbuilder.computation.modules.Vector4D;
 import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;

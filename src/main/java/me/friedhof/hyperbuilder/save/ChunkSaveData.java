@@ -2,12 +2,13 @@ package me.friedhof.hyperbuilder.save;
 
 import me.friedhof.hyperbuilder.computation.modules.*;
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
-import me.friedhof.hyperbuilder.computation.modules.items.Block;
 /**
  * Serializable data class for saving and loading Chunk4D data.
  * Contains all necessary information to reconstruct a Chunk4D object.
