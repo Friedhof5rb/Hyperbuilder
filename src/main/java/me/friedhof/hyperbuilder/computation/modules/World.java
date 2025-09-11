@@ -6,9 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.sound.midi.SysexMessage;
-
 import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterPoweredItem;
+import me.friedhof.hyperbuilder.computation.modules.SmelterInventory;
 import me.friedhof.hyperbuilder.save.LazyChunkLoader;
 import java.util.Random;
 /**
@@ -40,6 +41,10 @@ public class World {
     // Lazy chunk loader for loading chunks on-demand
     private LazyChunkLoader chunkLoader;
     
+    // Block update timing - update blocks only every 100ms (10th of a second)
+    private static final long BLOCK_UPDATE_INTERVAL_MS = 100;
+    private long lastBlockUpdateTime = 0;
+    
     /**
      * Creates a new world with the specified name and seed.
      * 
@@ -53,6 +58,7 @@ public class World {
         this.pendingLeaves = new ConcurrentHashMap<>();
         this.entities = new ConcurrentHashMap<>();
         this.nextEntityId = 1;
+        this.lastBlockUpdateTime = System.currentTimeMillis();
     }
     
     /**
@@ -402,6 +408,79 @@ public class World {
                 }
             }
         }
+    }
+    
+    /**
+     * Updates all blocks in loaded chunks.
+     * Currently handles powered smelter power expiration.
+     */
+    private void updateBlocks() {
+        // Iterate through all loaded chunks
+        for (Chunk4D chunk : chunks.values()) {
+            updateChunkBlocks(chunk);
+        }
+    }
+    
+    /**
+     * Updates all blocks in a specific chunk.
+     * 
+     * @param chunk The chunk to update blocks in
+     */
+    private void updateChunkBlocks(Chunk4D chunk) {
+        // Iterate through all blocks in the chunk
+        for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
+            for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
+                for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
+                    for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
+                        Block block = chunk.getBlock(x, y, z, w);
+                        
+                        // Check if this is a powered smelter that needs updating
+                        if (block instanceof SmelterPoweredItem) {
+                            SmelterPoweredItem poweredSmelter = (SmelterPoweredItem) block;
+                            boolean stillPowered = poweredSmelter.update();
+                            
+                            // If power expired, convert back to regular smelter
+                            if (!stillPowered) {
+                                // Calculate world position
+                                Vector4DInt chunkPos = chunk.getPosition();
+                                Vector4DInt worldPos = new Vector4DInt(
+                                    chunkPos.getX() * Chunk4D.CHUNK_SIZE + x,
+                                    chunkPos.getY() * Chunk4D.CHUNK_SIZE + y,
+                                    chunkPos.getZ() * Chunk4D.CHUNK_SIZE + z,
+                                    chunkPos.getW() * Chunk4D.CHUNK_SIZE + w
+                                );
+                                
+                                convertPoweredSmelterToRegular(worldPos, poweredSmelter);
+                            }
+                        }
+                        // Update regular smelters too for processing
+                        else if (block instanceof SmelterItem) {
+                            ((SmelterItem) block).update();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Converts a powered smelter back to a regular smelter when power expires,
+     * preserving the inventory contents.
+     * 
+     * @param position The world position of the smelter
+     * @param poweredSmelter The powered smelter to convert
+     */
+    private void convertPoweredSmelterToRegular(Vector4DInt position, SmelterPoweredItem poweredSmelter) {
+        // Get the current inventory to preserve it
+        SmelterInventory currentInventory = poweredSmelter.getInventory();
+        
+        // Create new regular smelter with preserved inventory
+        Block regularSmelter = new SmelterItem(1, currentInventory);
+        
+        // Replace the block in the world
+        setBlock(position, regularSmelter);
+        
+        System.out.println("Smelter power expired at " + position + ", converted back to regular smelter!");
     }
     
     /**
@@ -984,7 +1063,7 @@ public class World {
     }
     
     /**
-     * Updates all entities in the world.
+     * Updates all entities and blocks in the world.
      * 
      * @param deltaTime The time elapsed since the last update in seconds
      */
@@ -992,6 +1071,13 @@ public class World {
         // Update all entities
         for (Entity entity : entities.values()) {
             entity.update(deltaTime, this);
+        }
+        
+        // Update all blocks (specifically powered smelters) only every 100ms
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastBlockUpdateTime >= BLOCK_UPDATE_INTERVAL_MS) {
+            updateBlocks();
+            lastBlockUpdateTime = currentTime;
         }
         
         // Clean up despawned dropped items

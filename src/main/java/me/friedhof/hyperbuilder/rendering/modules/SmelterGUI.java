@@ -599,6 +599,7 @@ public class SmelterGUI {
                 ((SmelterItem) smelterBlock).setProcessing(false);
             } else if (smelterBlock instanceof SmelterPoweredItem) {
                 ((SmelterPoweredItem) smelterBlock).setProcessing(false);
+                
             }
         }
     }
