@@ -8,7 +8,6 @@ import java.util.ArrayList;
 /**
  * Represents leaves blocks - placeable blocks with low collision resistance.
  */
-import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
 public class LeavesItem extends Block{
     
     public LeavesItem(int count) {

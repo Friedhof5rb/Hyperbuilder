@@ -16,8 +16,8 @@ import me.friedhof.hyperbuilder.computation.modules.interfaces.IsPlaceable;
 import me.friedhof.hyperbuilder.computation.modules.Material;
 import me.friedhof.hyperbuilder.computation.modules.Entity;
 import me.friedhof.hyperbuilder.computation.modules.DroppedItem;
-import me.friedhof.hyperbuilder.rendering.modules.Texture2D;
-
+import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
+import me.friedhof.hyperbuilder.Game;
 
 /**
  * Renders a single 2D slice of the 4D world.
@@ -425,7 +425,12 @@ public class SliceRenderer {
                     outlineColor = new Color(0, 255, 0, 200); // Green outline - no player
                 }
             } else {
-                outlineColor = new Color(0, 255, 0, 200); // Green outline - can destroy
+                // Check if this block requires a tool but player doesn't have the right one
+                if (blockRequiresToolButPlayerLacksIt(block, game)) {
+                    outlineColor = new Color(255, 0, 0, 200); // Red outline - block needs tool but player lacks it
+                } else {
+                    outlineColor = new Color(0, 255, 0, 200); // Green outline - can destroy
+                }
             }
         } else {
             // Red for blocks that cannot be destroyed
@@ -443,6 +448,56 @@ public class SliceRenderer {
         }
         g.setStroke(new BasicStroke(1)); // Reset stroke
         
+    }
+    
+    /**
+     * Checks if a block requires a specific tool and if the player has the appropriate tool.
+     * 
+     * @param block The block to check
+     * @param game The game instance to get player information
+     * @return true if block requires a tool but player doesn't have the right tool, false otherwise
+     */
+    private boolean blockRequiresToolButPlayerLacksIt(Block block, Game game) {
+        if (block == null || block.getBlockId().equals(Material.AIR)) {
+            return false;
+        }
+        
+        // Get the player's selected item
+        Player player = game.getPlayer();
+        if (player == null) {
+            return false;
+        }
+        
+        BaseItem selectedItem = 
+            game.getRenderer().getHUD().getHotbar().getSelectedItem(player.getInventory());
+        
+        // Check if the block requires a specific tool by checking if any tool can mine it
+        boolean blockRequiresTool = false;
+        
+    
+        for(BaseItem item : ItemRegistry.itemFactories.values()){
+            if(item instanceof IsTool){
+               IsTool tool = (IsTool) item;
+                if(tool.canMine(block)){
+                    blockRequiresTool = true;
+                    break;
+                }
+            }
+        }
+
+        // If block doesn't require a tool, return false
+        if (!blockRequiresTool) {
+            return false;
+        }
+        
+        // If block requires a tool, check if player has the right tool
+        if (selectedItem instanceof IsTool) {
+            IsTool tool = (IsTool) selectedItem;
+            return !tool.canMine(block); // Return true if tool can't mine this block
+        }
+        
+        // Player doesn't have a tool selected, but block requires one
+        return true;
     }
     
     /**

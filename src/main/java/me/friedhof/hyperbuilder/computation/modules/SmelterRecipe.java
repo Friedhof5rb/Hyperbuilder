@@ -16,6 +16,7 @@ public class SmelterRecipe {
         // Initialize smelting recipes
         recipes.put(Material.IRON_ORE, Material.IRON_INGOT);
         recipes.put(Material.COPPER_ORE, Material.COPPER_INGOT);
+        recipes.put(Material.COAL_ORE, Material.COAL);
     }
     
     /**

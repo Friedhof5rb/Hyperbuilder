@@ -26,6 +26,8 @@ public class SmelterGUI {
     private static final int GUI_PADDING = 20;
     private static final int PROGRESS_BAR_WIDTH = 24;
     private static final int PROGRESS_BAR_HEIGHT = 16;
+    private static final int POWER_BURN_BAR_WIDTH = 12;
+    private static final int POWER_BURN_BAR_HEIGHT = 48;
     
     // Colors
     private static final Color BACKGROUND_COLOR = new Color(139, 69, 19, 220); // Brown background
@@ -34,6 +36,9 @@ public class SmelterGUI {
     private static final Color HOVER_BORDER = new Color(255, 255, 255);
     private static final Color PROGRESS_BAR_BACKGROUND = new Color(64, 64, 64);
     private static final Color PROGRESS_BAR_FILL = new Color(255, 165, 0); // Orange
+    private static final Color POWER_BURN_BAR_BACKGROUND = new Color(32, 32, 32);
+    private static final Color POWER_BURN_BAR_FILL = new Color(255, 69, 0); // Red-orange flame color
+    private static final Color POWER_BURN_BAR_BORDER = new Color(128, 128, 128);
     private static final Color TEXT_COLOR = Color.WHITE;
     private static final Color COUNT_COLOR = new Color(255, 255, 0);
     
@@ -60,6 +65,8 @@ public class SmelterGUI {
     private int outputSlotY;
     private int progressBarX;
     private int progressBarY;
+    private int powerBurnBarX;
+    private int powerBurnBarY;
     
     // Mouse interaction
     private int mouseX = 0;
@@ -93,8 +100,8 @@ public class SmelterGUI {
      * Calculates the GUI bounds and slot positions.
      */
     private void calculateGUIBounds() {
-        // Calculate GUI size (2 slots + progress bar + padding)
-        guiWidth = 3 * SLOT_SIZE + 2 * SLOT_PADDING + 2 * GUI_PADDING;
+        // Calculate GUI size (power burn bar + 2 slots + progress bar + padding)
+        guiWidth = POWER_BURN_BAR_WIDTH + SLOT_PADDING + 3 * SLOT_SIZE + 2 * SLOT_PADDING + 2 * GUI_PADDING;
         guiHeight = SLOT_SIZE + 2 * GUI_PADDING + 30; // +30 for title
         
         // Position on the right side of the screen, aligned with inventory (same as CraftingUI)
@@ -102,8 +109,12 @@ public class SmelterGUI {
         guiX = (screenWidth + inventoryWidth) / 2 + 20; // 20px gap from inventory
         guiY = (screenHeight - guiHeight) / 2 - 50;
         
-        // Calculate slot positions
-        inputSlotX = guiX + GUI_PADDING;
+        // Calculate power burn bar position (left side)
+        powerBurnBarX = guiX + GUI_PADDING;
+        powerBurnBarY = guiY + GUI_PADDING + 25 + (SLOT_SIZE - POWER_BURN_BAR_HEIGHT) / 2; // Centered vertically with slots
+        
+        // Calculate slot positions (shifted right to make room for power bar)
+        inputSlotX = guiX + GUI_PADDING + POWER_BURN_BAR_WIDTH + SLOT_PADDING;
         inputSlotY = guiY + GUI_PADDING + 25; // Account for title
         
         outputSlotX = inputSlotX + 2 * SLOT_SIZE + 2 * SLOT_PADDING;
@@ -153,6 +164,9 @@ public class SmelterGUI {
         
         // Draw output slot
         drawSlot(g, outputSlotX, outputSlotY, outputItem, hoveredSlot == 1);
+        
+        // Draw power burn bar (for powered smelters)
+        drawPowerBurnBar(g);
         
         // Draw progress bar
         drawProgressBar(g);
@@ -261,6 +275,37 @@ public class SmelterGUI {
         int[] arrowHeadX = {arrowEndX, arrowEndX - 6, arrowEndX - 6};
         int[] arrowHeadY = {arrowY, arrowY - 3, arrowY + 3};
         g.fillPolygon(arrowHeadX, arrowHeadY, 3);
+    }
+    
+    /**
+     * Draws the power burn bar that shows remaining power time for powered smelters.
+     */
+    private void drawPowerBurnBar(Graphics2D g) {
+        // Only show power bar for powered smelters
+        if (!(smelterBlock instanceof SmelterPoweredItem)) {
+            return;
+        }
+        
+        SmelterPoweredItem poweredSmelter = (SmelterPoweredItem) smelterBlock;
+        
+        // Draw power bar background
+        g.setColor(POWER_BURN_BAR_BACKGROUND);
+        g.fillRect(powerBurnBarX, powerBurnBarY, POWER_BURN_BAR_WIDTH, POWER_BURN_BAR_HEIGHT);
+        
+        // Draw power bar border
+        g.setColor(POWER_BURN_BAR_BORDER);
+        g.drawRect(powerBurnBarX, powerBurnBarY, POWER_BURN_BAR_WIDTH, POWER_BURN_BAR_HEIGHT);
+        
+        // Calculate remaining power percentage (1.0 = full power, 0.0 = no power)
+        float powerPercentage = getRemainingPowerPercentage();
+        
+        if (powerPercentage > 0) {
+            // Draw power fill from bottom to top (burn bar decreases from top)
+            g.setColor(POWER_BURN_BAR_FILL);
+            int fillHeight = (int) (POWER_BURN_BAR_HEIGHT * powerPercentage);
+            int fillY = powerBurnBarY + POWER_BURN_BAR_HEIGHT - fillHeight;
+            g.fillRect(powerBurnBarX + 1, fillY, POWER_BURN_BAR_WIDTH - 2, fillHeight - 1);
+        }
     }
     
     /**
@@ -625,6 +670,23 @@ public class SmelterGUI {
         return 0.0f;
     }
     
+    /**
+     * Gets the remaining power percentage for powered smelters.
+     * 
+     * @return Power percentage from 0.0 (no power) to 1.0 (full power)
+     */
+    private float getRemainingPowerPercentage() {
+        if (!(smelterBlock instanceof SmelterPoweredItem)) {
+            return 0.0f;
+        }
+        
+        SmelterPoweredItem poweredSmelter = (SmelterPoweredItem) smelterBlock;
+        long remainingTime = poweredSmelter.getRemainingPowerTime();
+        long totalPowerTime = SmelterPoweredItem.getPowerDuration();
+        
+        return Math.max(0.0f, Math.min(1.0f, (float) remainingTime / totalPowerTime));
+    }
+    
     // Getters and setters
     public boolean isVisible() {
         return visible;
@@ -638,7 +700,14 @@ public class SmelterGUI {
         setVisible(!visible);
     }
     
-
+    /**
+     * Updates the screen dimensions and recalculates GUI bounds for window resize.
+     */
+    public void updateScreenSize(int newScreenWidth, int newScreenHeight) {
+        this.screenWidth = newScreenWidth;
+        this.screenHeight = newScreenHeight;
+        calculateGUIBounds();
+    }
     
     public boolean isWithinBounds(int x, int y) {
         return x >= guiX && x < guiX + guiWidth && y >= guiY && y < guiY + guiHeight;

@@ -165,7 +165,7 @@ public class HUD {
     public void updateDimensions(int width, int height) {
         inventoryUI.updateDimensions(width, height);
         hotbar.updateDimensions(width, height);
-        // Note: SmelterGUI doesn't need updateDimensions as it calculates bounds dynamically
+        smelterGUI.updateScreenSize(width, height);
     }
 
     /**

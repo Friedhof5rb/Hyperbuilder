@@ -46,14 +46,18 @@ public class FlintPickaxeItem extends BaseItem implements IsTool{
  
     @Override
     public boolean canMine(Block block) {
-      if(block.getBlockId() == Material.STONE) {
+      if(block.getBlockId() == Material.STONE
+        || block.getBlockId() == Material.SMELTER
+        ||block.getBlockId() == Material.SMELTER_POWERED) {
             return true;
         }
         return false;
     }
     @Override
     public float getMiningSpeed(Block block) {
-         if(block.getBlockId() == Material.STONE) {
+         if(block.getBlockId() == Material.STONE
+           || block.getBlockId() == Material.SMELTER
+        ||block.getBlockId() == Material.SMELTER_POWERED) {
             return 2f;
         }
         return 1.0f;

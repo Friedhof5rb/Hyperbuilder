@@ -238,6 +238,7 @@ public class Game {
         inventory.addItem(Material.STONE_SHOVEL, 1);
         inventory.addItem(Material.SMELTER, 5);
         inventory.addItem(Material.IRON_ORE, 10);
+        inventory.addItem(Material.COPPER_ORE, 10);
         inventory.addItem(Material.COAL, 10);
 
         
@@ -1127,7 +1128,6 @@ public class Game {
                 ((SmelterPoweredItem) poweredSmelter).startProcessing();
             }
             
-            System.out.println("Smelter powered with coal!");
         } else {
             // Set the smelter block reference in the GUI
             renderer.getHUD().getSmelterGUI().setSmelterBlock(world, position);
@@ -1135,7 +1135,6 @@ public class Game {
             // Open smelter GUI and inventory
             renderer.getHUD().getSmelterGUI().setVisible(true);
             renderer.getHUD().getInventoryUI().setVisible(true);
-            System.out.println("Opening smelter GUI and inventory...");
         }
     }
 
