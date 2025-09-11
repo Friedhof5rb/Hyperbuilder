@@ -342,7 +342,7 @@ public class HUD {
             "TAB - Cycle View Dimension",
             "1-9 - Select Hotbar Slot",
             "Left Click - Destroy Block",
-            "Right Click - Place Block",
+            "Right Click - Place Block/Use",
             "I - Inventory",
             "C - Drop Item",
             "ESC - Exit Game"

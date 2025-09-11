@@ -14,7 +14,7 @@ import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
  */
 public class MainMenu extends JFrame {
     private static final String GAME_TITLE = "Hyperbuilder";
-    private static final String VERSION = "1.3.2";
+    public static final String VERSION = "1.3.2";
     
     private Game game;
     private WorldSaveManager saveManager;

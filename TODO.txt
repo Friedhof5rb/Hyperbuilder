@@ -1,0 +1,25 @@
+
+- Chests
+- Hot smelter (smelts faster) and Buffer smelter (smelts more items)
+- more Ores
+- Gameplayloop
+- Hunger and Thirst
+- glass
+- QOL items:
+ - double jump boots
+ - Armor
+ - special consumables
+ - backpack
+- Biomes
+- Castle structure
+- maze garden
+- weapons
+- multiple Biomes: Ocean, Desert, etc.
+- Day Night Cycle
+- Weather
+- Logic circuits, Pistons etc.
+- Water
+- Crops and fishing
+- waypoint sytem with Compass^2 where you can enter coordinates and a Name for Navigation (also add a bookmraking System)
+- Multiplayer
+- Enemies?

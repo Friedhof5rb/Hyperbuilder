@@ -57,7 +57,7 @@ public class Game {
         PAUSED
     }
     private static final String GAME_TITLE = "Hyperbuilder";
-    private static final String VERSION = "0.1.0";
+    private static final String VERSION = MainMenu.VERSION;
     
     // Window dimensions - automatically fit screen size with padding
     private static final Dimension SCREEN_SIZE = Toolkit.getDefaultToolkit().getScreenSize();
@@ -234,13 +234,14 @@ public class Game {
         
         // Give the player some starting blocks
         Inventory inventory = player.getInventory();
+        /* 
         inventory.addItem(Material.STONE_PICKAXE, 1);
         inventory.addItem(Material.STONE_SHOVEL, 1);
         inventory.addItem(Material.SMELTER, 5);
         inventory.addItem(Material.IRON_ORE, 10);
         inventory.addItem(Material.COPPER_ORE, 10);
         inventory.addItem(Material.COAL, 10);
-
+        */
         
         // Create a camera starting at the player's initial world position
         camera = new Camera(new Vector4D(0, 1, 0, 0));
