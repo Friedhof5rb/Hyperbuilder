@@ -7,7 +7,7 @@ import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 
 public class FlintPickaxeItem extends BaseItem implements IsTool{
     private int durability;
-    private final int maxDurability = 50;
+    private final int maxDurability = 100;
 
     public FlintPickaxeItem(int count) {
         super(Material.FLINT_PICKAXE, "Flint Pickaxe", 1, count);
@@ -45,25 +45,11 @@ public class FlintPickaxeItem extends BaseItem implements IsTool{
     }
  
     @Override
-    public boolean canMine(Block block) {
-      if(block.getBlockId() == Material.STONE
-        || block.getBlockId() == Material.SMELTER
-        ||block.getBlockId() == Material.SMELTER_POWERED) {
-            return true;
-        }
-        return false;
-    }
-    @Override
-    public float getMiningSpeed(Block block) {
-         if(block.getBlockId() == Material.STONE
-           || block.getBlockId() == Material.SMELTER
-        ||block.getBlockId() == Material.SMELTER_POWERED) {
-            return 2f;
-        }
-        return 1.0f;
-    }
-    @Override
     public String getToolType() {
         return "pickaxe";
+    }
+     @Override
+    public int getBreakTier() {
+        return 1;
     }
 }

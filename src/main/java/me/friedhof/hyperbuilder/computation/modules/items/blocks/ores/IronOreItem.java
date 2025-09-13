@@ -43,4 +43,12 @@ public class IronOreItem extends Block {
         }
         return drops;
     }
+    @Override
+    public int getBreakTier() {
+        return 2;
+    }
+    @Override
+    public String getBreakType() {
+        return "pickaxe";
+    }
 }

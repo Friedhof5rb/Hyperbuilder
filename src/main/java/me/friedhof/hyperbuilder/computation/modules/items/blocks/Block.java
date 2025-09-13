@@ -98,4 +98,14 @@ public class Block extends BaseItem implements IsPlaceable{
     public float getCollisionResistance() {
         return 1.0f; // Default full resistance
     }
+
+    @Override
+    public int getBreakTier() {
+        return 0;
+    }
+    @Override
+    public String getBreakType() {
+        return "none";
+    }
+
 }

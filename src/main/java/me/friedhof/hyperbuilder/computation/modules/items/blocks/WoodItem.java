@@ -50,4 +50,12 @@ public class WoodItem extends Block {
         }
         return drops;
     }
+    @Override
+    public int getBreakTier() {
+        return 1;
+    }
+    @Override
+    public String getBreakType() {
+        return "axe";
+    }
 }

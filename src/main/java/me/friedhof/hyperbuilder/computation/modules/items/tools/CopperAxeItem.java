@@ -44,26 +44,15 @@ private int durability;
         this.durability = Math.max(0, Math.min(durability, maxDurability));
     }
     
-    @Override
-    public boolean canMine(Block block) {
-        if(block.getBlockId() == Material.WOOD_LOG) {
-            return true;
-        }
-        return false;
-    }
 
-    @Override
-    public float getMiningSpeed(Block block) {
-        if(block.getBlockId() == Material.WOOD_LOG) {
-            return 7.0f;
-        }
-        return 1.0f;
-    }
     @Override
     public String getToolType() {
         return "axe";
     }
 
-
+    @Override
+    public int getBreakTier() {
+        return 2;
+    }
 
 }

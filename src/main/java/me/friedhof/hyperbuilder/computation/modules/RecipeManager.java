@@ -136,25 +136,6 @@ public class RecipeManager {
             .addIngredient(Material.STICKS, 1)
             .addIngredient(Material.PLANT_FIBER, 1));
 
-
-        // Stone Pickaxe
-        registerRecipe(new Recipe("stone_pickaxe", "Stone Pickaxe", Material.STONE_PICKAXE, 1)
-            .addIngredient(Material.STONE, 3)
-            .addIngredient(Material.STICKS, 1)
-            .addIngredient(Material.PLANT_FIBER, 1));
-
-        // Stone Shovel
-        registerRecipe(new Recipe("stone_shovel", "Stone Shovel", Material.STONE_SHOVEL, 1)
-            .addIngredient(Material.STONE, 1)
-            .addIngredient(Material.STICKS, 1)
-            .addIngredient(Material.PLANT_FIBER, 1));
-
-        // Stone Axe
-        registerRecipe(new Recipe("stone_axe", "Stone Axe", Material.STONE_AXE, 1)
-            .addIngredient(Material.STONE, 3)
-            .addIngredient(Material.STICKS, 1)
-            .addIngredient(Material.PLANT_FIBER, 1));
-
         // Smelter
         registerRecipe(new Recipe("smelter", "Smelter", Material.SMELTER, 1)
             .addIngredient(Material.STONE_BRICK, 80));

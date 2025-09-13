@@ -1,7 +1,5 @@
 package me.friedhof.hyperbuilder.computation.modules.interfaces;
 
-import me.friedhof.hyperbuilder.computation.modules.Material;
-import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
 import me.friedhof.hyperbuilder.computation.modules.World;
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import java.util.ArrayList;
@@ -26,5 +24,22 @@ public interface IsPlaceable {
     ArrayList<BaseItem> drops(BaseItem selectedItem);
 
 
+    /*
+     * Tier 0: No Tool
+     * Tier 1: Flint Tool
+     * Tier 2: Copper Tool
+     * Tier 3: Bronze (Copper + Tin)
+     * Tier 4: Iron Tool
+     * Tier 5: Titan
+     * Tier 6: Wolfram
+     * Tier 7: Mythril
+     * Tier 8  Adamantite
+     * Tier 9: Uranium
+     * Tier 10: Orichalkum
+     */
+    int getBreakTier();
+
+
+    String getBreakType();
 
 }

@@ -177,8 +177,8 @@ public class World {
         
         // Generate coal ore below the surface
         generateOre(chunk, position,Material.COAL_ORE,0.005,5,50);
-        generateOre(chunk, position,Material.COPPER_ORE,0.003,15,70);
-        generateOre(chunk, position,Material.IRON_ORE,0.001,30,150);
+        generateOre(chunk, position,Material.COPPER_ORE,0.0045,15,70);
+        generateOre(chunk, position,Material.IRON_ORE,0.004,30,150);
 
 
         // Generate trees for this chunk (highest priority)
@@ -403,6 +403,7 @@ public class World {
                         // Check if coal ore should spawn at this location
                         if (randomValue < oreChance) {
                             chunk.setBlock(x, y, z, w, ItemRegistry.createBlock(ore));
+                            System.out.println("Generated " + ore + " at " + worldX + ", " + worldY + ", " + worldZ + ", " + worldW);
                         }
                     }
                 }

@@ -187,4 +187,12 @@ public class SmelterItem extends Block{
     public static long getProcessingTime() {
         return PROCESSING_TIME;
     }
+    @Override
+    public int getBreakTier() {
+        return 1;
+    }
+    @Override
+    public String getBreakType() {
+        return "pickaxe";
+    }
 }

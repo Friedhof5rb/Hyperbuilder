@@ -21,9 +21,6 @@ import me.friedhof.hyperbuilder.computation.modules.items.blocks.ores.IronOreIte
 import me.friedhof.hyperbuilder.computation.modules.items.tools.FlintAxeItem;
 import me.friedhof.hyperbuilder.computation.modules.items.tools.FlintPickaxeItem;
 import me.friedhof.hyperbuilder.computation.modules.items.tools.FlintShovelItem;
-import me.friedhof.hyperbuilder.computation.modules.items.tools.StoneAxeItem;
-import me.friedhof.hyperbuilder.computation.modules.items.tools.StonePickaxeItem;
-import me.friedhof.hyperbuilder.computation.modules.items.tools.StoneShovelItem;
 import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterPoweredItem;
 import me.friedhof.hyperbuilder.computation.modules.items.tools.StoneChiselItem;
 import me.friedhof.hyperbuilder.computation.modules.items.StoneBricksItem;
@@ -134,9 +131,6 @@ public class ItemRegistry {
         registerItem(new FlintPickaxeItem());
         registerItem(new FlintAxeItem());
         registerItem(new FlintShovelItem());
-        registerItem(new StonePickaxeItem());
-        registerItem(new StoneAxeItem());
-        registerItem(new StoneShovelItem());
         registerItem(new CoalOreItem());
         registerItem(new CoalItem());
         registerItem(new CopperOreItem());

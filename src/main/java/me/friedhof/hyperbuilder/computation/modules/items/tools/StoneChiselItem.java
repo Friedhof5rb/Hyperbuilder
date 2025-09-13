@@ -49,14 +49,13 @@ public class StoneChiselItem extends BaseItem implements IsTool{
     public boolean canMine(Block block) {
         return false;
     }
-    @Override
-    public float getMiningSpeed(Block block) {
-        return 1.0f;
-    }
    
     @Override
     public String getToolType() {
         return "chisel";
     }
-
+    @Override
+    public int getBreakTier() {
+        return 1;
+    }
 }
