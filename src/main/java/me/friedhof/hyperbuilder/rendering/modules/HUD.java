@@ -79,6 +79,9 @@ public class HUD {
         // Draw direction indicator
         drawDirectionIndicator(g, camera);
         
+        // Draw slice size information
+        drawSliceSizeInfo(g);
+        
         // Draw controls information
         drawControls(g);
         
@@ -320,6 +323,46 @@ public class HUD {
         g.setFont(originalFont);
         g.setColor(originalColor);
         g.setStroke(originalStroke);
+    }
+    
+    /**
+     * Draws the slice size information.
+     * 
+     * @param g The graphics context
+     */
+    private void drawSliceSizeInfo(Graphics2D g) {
+        // Position on the left side, below coordinates
+        int leftMargin = 20;
+        int x = leftMargin;
+        int startY = 120; // Below coordinates info
+        
+        // Get current slice size
+        int sliceSize = SliceRenderer.getSliceSize();
+        
+        // Draw slice size info
+        String sliceSizeText = "Slice Size: " + sliceSize + "x" + sliceSize;
+        FontMetrics fm = g.getFontMetrics();
+        int textWidth = fm.stringWidth(sliceSizeText);
+        
+        // Draw semi-transparent background
+        Color originalColor = g.getColor();
+        g.setColor(new Color(0, 0, 0, 128));
+        g.fillRect(x - 5, startY - 15, textWidth + 15, 25);
+        
+        // Draw the text
+        g.setColor(Color.CYAN);
+        g.drawString(sliceSizeText, x, startY);
+        
+        // Draw zoom controls hint
+        String zoomHint = "Ctrl+Scroll: Zoom";
+        int hintWidth = fm.stringWidth(zoomHint);
+        g.setColor(new Color(0, 0, 0, 128));
+        g.fillRect(x - 5, startY + 10, hintWidth + 15, 20);
+        g.setColor(Color.LIGHT_GRAY);
+        g.drawString(zoomHint, x, startY + 25);
+        
+        // Restore original color
+        g.setColor(originalColor);
     }
     
     /**

@@ -503,32 +503,62 @@ public class Game {
     }
     
     /**
-     * Handles mouse wheel events for hotbar slot cycling.
+     * Handles mouse wheel events for hotbar slot cycling and zoom functionality.
      * 
      * @param wheelRotation The wheel rotation amount (negative = up, positive = down)
      */
     private void handleMouseWheel(int wheelRotation) {
-        // Get current hotbar
-        me.friedhof.hyperbuilder.rendering.modules.Hotbar hotbar = renderer.getHUD().getHotbar();
-        
-        // Get current selected slot
-        int currentSlot = hotbar.getSelectedSlot();
-        
-        // Calculate new slot (wheel up = previous slot, wheel down = next slot)
-        int newSlot;
-        if (wheelRotation < 0) {
-            // Wheel up - go to previous slot
-            newSlot = (currentSlot - 1 + 9) % 9; // Wrap around from 0 to 8
+        // Check if Ctrl is pressed for zoom functionality
+        if (pressedKeys.contains(KeyEvent.VK_CONTROL)) {
+            // Handle zoom functionality
+            boolean zoomChanged = false;
+            if (wheelRotation < 0) {
+                // Wheel up with Ctrl - zoom in (decrease slice size)
+                zoomChanged = SliceRenderer.zoomIn();
+            } else {
+                // Wheel down with Ctrl - zoom out (increase slice size)
+                zoomChanged = SliceRenderer.zoomOut();
+            }
+            
+            // If zoom changed, recalculate block size and update renderer
+             if (zoomChanged && renderer != null) {
+                 // Get current window dimensions
+                 int windowWidth = renderer.getFrame().getContentPane().getWidth();
+                 int windowHeight = renderer.getFrame().getContentPane().getHeight();
+                 
+                 // Recalculate block size with new slice size
+                 SliceRenderer.setDynamicBlockSize(windowWidth, windowHeight);
+                 
+                 // Update GridRenderer to handle slice size changes
+                 renderer.getGridRenderer().updateSliceSize();
+                 
+                 // Update renderer dimensions to apply the new block size
+                 renderer.updateDimensions(windowWidth, windowHeight);
+             }
         } else {
-            // Wheel down - go to next slot
-            newSlot = (currentSlot + 1) % 9; // Wrap around from 8 to 0
+            // Handle hotbar slot cycling (original functionality)
+            // Get current hotbar
+            me.friedhof.hyperbuilder.rendering.modules.Hotbar hotbar = renderer.getHUD().getHotbar();
+            
+            // Get current selected slot
+            int currentSlot = hotbar.getSelectedSlot();
+            
+            // Calculate new slot (wheel up = previous slot, wheel down = next slot)
+            int newSlot;
+            if (wheelRotation < 0) {
+                // Wheel up - go to previous slot
+                newSlot = (currentSlot - 1 + 9) % 9; // Wrap around from 0 to 8
+            } else {
+                // Wheel down - go to next slot
+                newSlot = (currentSlot + 1) % 9; // Wrap around from 8 to 0
+            }
+            
+            // Set the new selected slot
+            hotbar.setSelectedSlot(newSlot, player.getInventory());
+            
+            // Reset block breaking progress when switching items
+            resetBreakingProgressOnItemSwitch();
         }
-        
-        // Set the new selected slot
-        hotbar.setSelectedSlot(newSlot, player.getInventory());
-        
-        // Reset block breaking progress when switching items
-        resetBreakingProgressOnItemSwitch();
     }
     
     /**

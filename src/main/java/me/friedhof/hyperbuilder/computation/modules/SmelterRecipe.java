@@ -1,7 +1,6 @@
 package me.friedhof.hyperbuilder.computation.modules;
 
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
-import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 
 import java.util.HashMap;
 import java.util.Map;

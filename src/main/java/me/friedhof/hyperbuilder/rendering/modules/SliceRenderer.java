@@ -4,6 +4,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
 import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
@@ -23,11 +26,14 @@ import me.friedhof.hyperbuilder.Game;
  * Renders a single 2D slice of the 4D world.
  */
 public class SliceRenderer {
-    // The size of each slice (7x7 blocks)
-    private static final int SLICE_SIZE = 7;
+    // The size of each slice (can be changed for zoom functionality)
+    private static int SLICE_SIZE = 7;
     
     // The size of each block in pixels (calculated dynamically)
     private static int BLOCK_SIZE = 32;
+    
+    // Static list to track all SliceRenderer instances
+    private static final List<SliceRenderer> instances = Collections.synchronizedList(new ArrayList<>());
     
     // The rendered image
     private BufferedImage sliceImage;
@@ -54,6 +60,47 @@ public class SliceRenderer {
      public static int getSliceCenter() {
         return (int) Math.floor(SLICE_SIZE/2);
     }
+    
+    /**
+     * Sets the slice size for zoom functionality.
+     * Only accepts odd numbers between 3 and 13.
+     * 
+     * @param newSize The new slice size
+     */
+    public static void setSliceSize(int newSize) {
+        // Ensure the size is odd and within bounds
+        if (newSize >= 3 && newSize <= 13 && newSize % 2 == 1) {
+            SLICE_SIZE = newSize;
+        }
+    }
+    
+    /**
+     * Zooms in (decreases slice size) if possible.
+     * 
+     * @return true if zoom in was successful, false otherwise
+     */
+    public static boolean zoomIn() {
+        if (SLICE_SIZE > 3) {
+            setSliceSize(SLICE_SIZE - 2); // Decrease by 2 to maintain odd numbers
+            notifySliceSizeChanged();
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Zooms out (increases slice size) if possible.
+     * 
+     * @return true if zoom out was successful, false otherwise
+     */
+    public static boolean zoomOut() {
+        if (SLICE_SIZE < 13) {
+            setSliceSize(SLICE_SIZE + 2); // Increase by 2 to maintain odd numbers
+            notifySliceSizeChanged();
+            return true;
+        }
+        return false;
+    }
     /**
      * Sets the block size based on window dimensions.
      * This ensures the 7x7 grid of slices fills as much of the window as possible.
@@ -74,8 +121,8 @@ public class SliceRenderer {
         BLOCK_SIZE = Math.min(maxBlockSizeFromWidth, maxBlockSizeFromHeight);
         
         // Ensure minimum block size for visibility
-        if (BLOCK_SIZE < 8) {
-            BLOCK_SIZE = 8;
+        if (BLOCK_SIZE < 1) {
+            BLOCK_SIZE = 1;
         }
         /* 
         System.out.println("Window size: " + windowWidth + "x" + windowHeight);
@@ -98,6 +145,8 @@ public class SliceRenderer {
     public SliceRenderer() {
         createSliceImage();
         loadTextures();
+        // Register this instance
+        instances.add(this);
     }
     
     /**
@@ -149,6 +198,26 @@ public class SliceRenderer {
      */
     public void updateBlockSize() {
         createSliceImage();
+    }
+    
+    /**
+     * Updates the slice renderer when slice size changes.
+     */
+    public void updateSliceSize() {
+        createSliceImage();
+    }
+    
+    /**
+     * Static method to notify that slice size has changed.
+     * This should be called by GridRenderer or other managers.
+     */
+    public static void notifySliceSizeChanged() {
+        // Update all registered SliceRenderer instances
+        synchronized(instances) {
+            for (SliceRenderer renderer : instances) {
+                renderer.updateSliceSize();
+            }
+        }
     }
     
     /**
@@ -758,5 +827,7 @@ public class SliceRenderer {
      */
     public void dispose() {
         graphics.dispose();
+        // Unregister this instance
+        instances.remove(this);
     }
 }

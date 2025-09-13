@@ -9,8 +9,8 @@ import me.friedhof.hyperbuilder.computation.modules.World;
  * Renders a 7x7 grid of 2D slices representing the 4D world.
  */
 public class GridRenderer {
-    // The size of the grid (7x7)
-    private static final int GRID_SIZE = SliceRenderer.getSliceSize();
+    // Grid size (number of slices in each dimension) - now dynamic
+    private int GRID_SIZE;
     
     // The padding between slices (minimal padding to maximize slice size)
     private static final int SLICE_PADDING = 0;
@@ -32,6 +32,9 @@ public class GridRenderer {
      * Creates a new grid renderer.
      */
     public GridRenderer() {
+        // Initialize grid size
+        GRID_SIZE = SliceRenderer.getSliceSize();
+        
         // Create the slice renderer
         sliceRenderer = new SliceRenderer();
         
@@ -81,8 +84,19 @@ public class GridRenderer {
      */
     public void updateBlockSize() {
         updateSizing();
-        sliceRenderer.updateBlockSize();
         createGridImage();
+        sliceRenderer.updateBlockSize();
+    }
+    
+    /**
+     * Updates the grid renderer when slice size changes.
+     */
+    public void updateSliceSize() {
+        // Update grid size to match new slice size
+        GRID_SIZE = SliceRenderer.getSliceSize();
+        updateSizing();
+        createGridImage();
+        sliceRenderer.updateSliceSize();
     }
     
     /**

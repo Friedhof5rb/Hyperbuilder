@@ -4,7 +4,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import me.friedhof.hyperbuilder.computation.modules.Inventory;
 import me.friedhof.hyperbuilder.computation.modules.items.BaseItem;
-import me.friedhof.hyperbuilder.computation.modules.Material;
 import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
 import me.friedhof.hyperbuilder.computation.modules.Vector4DInt;
 import me.friedhof.hyperbuilder.computation.modules.World;
@@ -13,7 +12,6 @@ import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterItem;
 import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterPoweredItem;
 import me.friedhof.hyperbuilder.computation.modules.SmelterInventory;
 import me.friedhof.hyperbuilder.computation.modules.SmelterRecipe;
-import me.friedhof.hyperbuilder.rendering.modules.InventoryUI;
 
 /**
  * GUI component for the smelter interface.
@@ -286,7 +284,6 @@ public class SmelterGUI {
             return;
         }
         
-        SmelterPoweredItem poweredSmelter = (SmelterPoweredItem) smelterBlock;
         
         // Draw power bar background
         g.setColor(POWER_BURN_BAR_BACKGROUND);

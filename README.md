@@ -1,7 +1,6 @@
 # Hyperbuilder
-## Version 1.3.2
 
-![Hyperbuilder Screenshot](images/game1.png)
+![Hyperbuilder Screenshot Version 1.3.2](images/game1.png)
 
 ## Gameplay
 This is a 4D game where you can build in 4 dimensions.
@@ -38,3 +37,8 @@ You can imagine taking each 2D Grid and putting it on top of each other.
 Then you have a 3D Cube. 
 You can do the same for each Row or Column. There are 14 different Possibilities to do this for View Distance 3.
 If you combine all 14 different 3D Cubes you get a 4D Cube. That would be the view Distance of the Player: 3 Blocks in all 4 Directions.
+
+## Requirements
+
+You will need to have at least Java 17 installed.
+Java: https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
