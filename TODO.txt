@@ -1,6 +1,8 @@
 
 - Chests
-- Copper Tools
+- Sand
+- Wood Bucket?
+- Water
 
 - Hot smelter (smelts faster) and Buffer smelter (smelts more items)
 - more Ores
@@ -20,7 +22,6 @@
 - Day Night Cycle
 - Weather
 - Logic circuits, Pistons etc.
-- Water
 - Crops and fishing
 - waypoint sytem with Compass^2 where you can enter coordinates and a Name for Navigation (also add a bookmraking System)
 - Multiplayer

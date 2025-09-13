@@ -403,7 +403,7 @@ public class World {
                         // Check if coal ore should spawn at this location
                         if (randomValue < oreChance) {
                             chunk.setBlock(x, y, z, w, ItemRegistry.createBlock(ore));
-                            System.out.println("Generated " + ore + " at " + worldX + ", " + worldY + ", " + worldZ + ", " + worldW);
+                           // System.out.println("Generated " + ore + " at " + worldX + ", " + worldY + ", " + worldZ + ", " + worldW);
                         }
                     }
                 }

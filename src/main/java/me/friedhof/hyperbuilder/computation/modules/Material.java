@@ -33,8 +33,9 @@ public enum Material {
     STONE_BRICK("stone_brick"),
     COPPER_PICKAXE("copper_pickaxe"),
     COPPER_AXE("copper_axe"),
-    COPPER_SHOVEL("copper_shovel");
-
+    COPPER_SHOVEL("copper_shovel"),
+    BUCKET("bucket"),
+    BUCKET_WATER("bucket_water");
 
 
     private final String id;
