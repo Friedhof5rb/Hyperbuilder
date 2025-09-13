@@ -171,6 +171,27 @@ public class RecipeManager {
             .addIngredient(Material.STICKS, 1)
             .addIngredient(Material.PLANT_FIBER, 1));
  
+        // Copper Pickaxe
+        registerRecipe(new Recipe("copper_pickaxe", "Copper Pickaxe", Material.COPPER_PICKAXE, 1)
+            .addIngredient(Material.COPPER_INGOT, 3)
+            .addIngredient(Material.STICKS, 1)
+            .addIngredient(Material.PLANT_FIBER, 1));
+
+        // Copper Shovel
+        registerRecipe(new Recipe("copper_shovel", "Copper Shovel", Material.COPPER_SHOVEL, 1)
+            .addIngredient(Material.COPPER_INGOT, 1)
+            .addIngredient(Material.STICKS, 1)
+            .addIngredient(Material.PLANT_FIBER, 1));
+
+          // Copper Axe
+        registerRecipe(new Recipe("copper_axe", "Copper Axe", Material.COPPER_AXE, 1)
+            .addIngredient(Material.COPPER_INGOT, 3)
+            .addIngredient(Material.STICKS, 1)
+            .addIngredient(Material.PLANT_FIBER, 1));
+
+
+
+
         initialized = true;
         System.out.println("RecipeManager initialized with " + recipeList.size() + " recipes");
     }

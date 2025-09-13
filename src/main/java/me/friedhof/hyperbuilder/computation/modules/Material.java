@@ -34,7 +34,12 @@ public enum Material {
     SMELTER("smelter"),
     SMELTER_POWERED("smelter_powered"),
     STONE_CHISEL("stone_chisel"),
-    STONE_BRICK("stone_brick");
+    STONE_BRICK("stone_brick"),
+    COPPER_PICKAXE("copper_pickaxe"),
+    COPPER_AXE("copper_axe"),
+    COPPER_SHOVEL("copper_shovel");
+
+
 
     private final String id;
     

@@ -340,7 +340,7 @@ public class HUD {
         int sliceSize = SliceRenderer.getSliceSize();
         
         // Draw slice size info
-        String sliceSizeText = "Slice Size: " + sliceSize + "x" + sliceSize;
+        String sliceSizeText = "View Distance: " + sliceSize;
         FontMetrics fm = g.getFontMetrics();
         int textWidth = fm.stringWidth(sliceSizeText);
         
@@ -352,14 +352,6 @@ public class HUD {
         // Draw the text
         g.setColor(Color.CYAN);
         g.drawString(sliceSizeText, x, startY);
-        
-        // Draw zoom controls hint
-        String zoomHint = "Ctrl+Scroll: Zoom";
-        int hintWidth = fm.stringWidth(zoomHint);
-        g.setColor(new Color(0, 0, 0, 128));
-        g.fillRect(x - 5, startY + 10, hintWidth + 15, 20);
-        g.setColor(Color.LIGHT_GRAY);
-        g.drawString(zoomHint, x, startY + 25);
         
         // Restore original color
         g.setColor(originalColor);
@@ -388,6 +380,8 @@ public class HUD {
             "Right Click - Place Block/Use",
             "I - Inventory",
             "C - Drop Item",
+            "CRTL - Cycle Hotbar",
+            "CRTL + Scroll - Zoom",
             "ESC - Exit Game"
         };
         

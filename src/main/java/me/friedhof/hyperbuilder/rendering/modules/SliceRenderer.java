@@ -69,7 +69,7 @@ public class SliceRenderer {
      */
     public static void setSliceSize(int newSize) {
         // Ensure the size is odd and within bounds
-        if (newSize >= 3 && newSize <= 13 && newSize % 2 == 1) {
+        if (newSize >= 3 && newSize <= 11 && newSize % 2 == 1) {
             SLICE_SIZE = newSize;
         }
     }
@@ -94,7 +94,7 @@ public class SliceRenderer {
      * @return true if zoom out was successful, false otherwise
      */
     public static boolean zoomOut() {
-        if (SLICE_SIZE < 13) {
+        if (SLICE_SIZE < 11) {
             setSliceSize(SLICE_SIZE + 2); // Increase by 2 to maintain odd numbers
             notifySliceSizeChanged();
             return true;
@@ -156,12 +156,14 @@ public class SliceRenderer {
         
            for(Material s : ItemRegistry.itemFactories.keySet()){
                 if(ItemRegistry.itemFactories.get(s) instanceof IsPlaceable){
-                    try {
-                        texturelist.put(s, TextureManager.loadTexture4D(s + ".png"));
-                    } catch (IOException e) {
-                        System.err.println("Failed to load texture for item " + s + ": " + e.getMessage());
-                         texturelist.put(s, null);
-                    }       
+                    if(ItemRegistry.itemFactories.get(s).hasTexture()){
+                        try {
+                            texturelist.put(s, TextureManager.loadTexture4D(s + ".png"));
+                        } catch (IOException e) {
+                            System.err.println("Failed to load texture for item " + s + ": " + e.getMessage());
+                            texturelist.put(s, null);
+                        }   
+                    }
                 }
             }
         

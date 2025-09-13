@@ -1,8 +1,6 @@
 
 - Chests
 - Copper Tools
-- Zoom
-
 
 - Hot smelter (smelts faster) and Buffer smelter (smelts more items)
 - more Ores
