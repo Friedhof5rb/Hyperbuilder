@@ -5,6 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterItem;
@@ -12,6 +16,8 @@ import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterPoweredI
 import me.friedhof.hyperbuilder.computation.modules.items.blocks.Water;
 import me.friedhof.hyperbuilder.computation.modules.SmelterInventory;
 import me.friedhof.hyperbuilder.save.LazyChunkLoader;
+import me.friedhof.hyperbuilder.computation.modules.ItemRegistry;
+import me.friedhof.hyperbuilder.computation.modules.Material;
 import java.util.Random;
 /**
  * Represents the 4D world containing chunks and entities.
@@ -42,10 +48,26 @@ public class World {
     // Lazy chunk loader for loading chunks on-demand
     private LazyChunkLoader chunkLoader;
     
-    // Block update timing - update blocks only every 100ms (10th of a second)
-    private static final long BLOCK_UPDATE_INTERVAL_MS = 100;
+    // Random tick system
+    private static final int RANDOM_TICKS_PER_CHUNK = 3; // Number of random blocks to tick per chunk per update
+    private static final long BLOCK_UPDATE_INTERVAL_MS = 50; // Reduced to 50ms for more responsive updates
     private long lastBlockUpdateTime = 0;
+    private final Random random;
     
+    // Block update queue for neighbor notifications
+    private final Queue<Vector4DInt> blockUpdateQueue;
+    
+    // Set to track chunks that need random ticking (near players)
+    private final Set<Vector4DInt> activeChunks;
+    
+    // Render distance for chunk loading/unloading
+    private static final int CHUNK_RENDER_DISTANCE = 1;
+    
+    // Per-chunk smelter tracking for continuous updates
+    private final Map<Vector4DInt, java.util.List<Vector4DInt>> chunkSmelters;
+    
+    int tick = 0;
+
     /**
      * Creates a new world with the specified name and seed.
      * 
@@ -60,6 +82,10 @@ public class World {
         this.entities = new ConcurrentHashMap<>();
         this.nextEntityId = 1;
         this.lastBlockUpdateTime = System.currentTimeMillis();
+        this.random = new Random(seed);
+        this.blockUpdateQueue = new ConcurrentLinkedQueue<>();
+        this.activeChunks = ConcurrentHashMap.newKeySet();
+        this.chunkSmelters = new ConcurrentHashMap<>();
     }
     
     /**
@@ -417,91 +443,130 @@ public class World {
      * Currently handles powered smelter power expiration.
      */
     private void updateBlocks() {
-        // Iterate through all loaded chunks
-        for (Chunk4D chunk : chunks.values()) {
-            updateChunkBlocks(chunk);
+        if(tick % 5 == 0){
+            // Process queued block updates (neighbor notifications)
+            processBlockUpdateQueue();
+        }
+        tick++;
+        if(tick > 1000){
+            tick = 0;
+        }
+
+
+        // Update smelters continuously (they need constant processing)
+        updateSmelters();
+        
+        // Update chunks near players
+        updateChunksNearPlayers();
+    }
+    
+    /**
+     * Updates all smelters continuously for item processing.
+     */
+    private void updateSmelters() {
+        for (Map.Entry<Vector4DInt, java.util.List<Vector4DInt>> entry : chunkSmelters.entrySet()) {
+            Vector4DInt chunkPos = entry.getKey();
+            java.util.List<Vector4DInt> smelterPositions = entry.getValue();
+            
+            // Only update smelters in loaded chunks
+            if (chunks.containsKey(chunkPos)) {
+                for (Vector4DInt smelterPos : smelterPositions) {
+                    Block block = getBlock(smelterPos);
+                    if (block instanceof SmelterItem || block instanceof SmelterPoweredItem) {
+                        // Process smelter logic (same as random tick but continuous)
+                        performBlockTick(block, smelterPos);
+                    }
+                }
+            }
         }
     }
     
     /**
-     * Updates all blocks in a specific chunk.
-     * 
-     * @param chunk The chunk to update blocks in
+     * Processes the block update queue for neighbor notifications.
      */
-    private void updateChunkBlocks(Chunk4D chunk) {
-        
-
-        
-        // First loop: Remove water blocks that are already marked for removal
-        for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
-            for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
-                for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
-                    for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
-                        Block block = chunk.getBlock(x, y, z, w);
-                        
-                        // Remove water blocks that are already marked for removal
-                        if (block instanceof Water) {
-                            Water waterBlock = (Water) block;
-                            if (waterBlock.isMarkedForRemoval()) {
-                               chunk.setBlock(x,y,z,w,ItemRegistry.createBlock(Material.AIR));
-                            }
-                        }
-                    }
+    private void processBlockUpdateQueue() {
+        Queue<Vector4DInt> blockUpdateQueueCopy = new ConcurrentLinkedQueue<>();
+        blockUpdateQueueCopy.addAll(blockUpdateQueue);
+        System.out.println(blockUpdateQueueCopy.size());
+        while (!blockUpdateQueueCopy.isEmpty() ) {
+            Vector4DInt position = blockUpdateQueueCopy.poll();
+            blockUpdateQueue.remove(position);
+            if (position != null) {
+                Block block = getBlock(position);
+                if (block != null) {
+                    // Notify block of neighbor change
+                    notifyBlockUpdate(position, block);
                 }
             }
         }
+    }
     
+
+    
+    /**
+     * Performs tick on a specific block.
+     */
+    private void performBlockTick(Block block, Vector4DInt position) {
+       if (block instanceof SmelterPoweredItem) {
+            SmelterPoweredItem poweredSmelter = (SmelterPoweredItem) block;
+            boolean stillPowered = poweredSmelter.update();
+            
+            if (!stillPowered) {
+                convertPoweredSmelterToRegular(position, poweredSmelter);
+            }
+        } else if (block instanceof SmelterItem) {
+            ((SmelterItem) block).update();
+        }
+    }
+    
+    /**
+     * Updates chunks near players to keep them active and unloads distant chunks.
+     */
+    private void updateChunksNearPlayers() {
+        Set<Vector4DInt> newActiveChunks = ConcurrentHashMap.newKeySet();
         
-        // Second loop: Update all blocks and mark new water blocks for removal
-        for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
-            for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
-                for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
-                    for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
-                        Block block = chunk.getBlock(x, y, z, w);
-                        
-                        // Check if this is a powered smelter that needs updating
-                        if (block instanceof SmelterPoweredItem) {
-                            SmelterPoweredItem poweredSmelter = (SmelterPoweredItem) block;
-                            boolean stillPowered = poweredSmelter.update();
-                            
-                            // If power expired, convert back to regular smelter
-                            if (!stillPowered) {
-                                // Calculate world position
-                                Vector4DInt chunkPos = chunk.getPosition();
-                                Vector4DInt worldPos = new Vector4DInt(
-                                    chunkPos.getX() * Chunk4D.CHUNK_SIZE + x,
-                                    chunkPos.getY() * Chunk4D.CHUNK_SIZE + y,
-                                    chunkPos.getZ() * Chunk4D.CHUNK_SIZE + z,
-                                    chunkPos.getW() * Chunk4D.CHUNK_SIZE + w
+        // Collect all chunks that should be active (near players)
+        for (Entity entity : entities.values()) {
+            if (entity instanceof Player) {
+                Player player = (Player) entity;
+                Vector4D playerPos = player.getPosition();
+                Vector4DInt playerChunk = getChunkPosition(playerPos);
+                
+                // Add chunks within render distance
+                for (int dx = -CHUNK_RENDER_DISTANCE; dx <= CHUNK_RENDER_DISTANCE; dx++) {
+                    for (int dy = -CHUNK_RENDER_DISTANCE; dy <= CHUNK_RENDER_DISTANCE; dy++) {
+                        for (int dz = -CHUNK_RENDER_DISTANCE; dz <= CHUNK_RENDER_DISTANCE; dz++) {
+                            for (int dw = -CHUNK_RENDER_DISTANCE; dw <= CHUNK_RENDER_DISTANCE; dw++) {
+                                Vector4DInt chunkPos = new Vector4DInt(
+                                    playerChunk.getX() + dx,
+                                    playerChunk.getY() + dy,
+                                    playerChunk.getZ() + dz,
+                                    playerChunk.getW() + dw
                                 );
-                                
-                                convertPoweredSmelterToRegular(worldPos, poweredSmelter);
+                                newActiveChunks.add(chunkPos);
                             }
-                        }
-                        // Update regular smelters too for processing
-                        else if (block instanceof SmelterItem) {
-                            ((SmelterItem) block).update();
-                        }
-                        // Update water blocks for flow mechanics
-                        else if (block instanceof Water) {
-                            Water waterBlock = (Water) block;
-                            
-                            // Calculate world position
-                            Vector4DInt chunkPos = chunk.getPosition();
-                            Vector4DInt worldPos = new Vector4DInt(
-                                chunkPos.getX() * Chunk4D.CHUNK_SIZE + x,
-                                chunkPos.getY() * Chunk4D.CHUNK_SIZE + y,
-                                chunkPos.getZ() * Chunk4D.CHUNK_SIZE + z,
-                                chunkPos.getW() * Chunk4D.CHUNK_SIZE + w
-                            );
-                            
-                            waterBlock.updateFlow(this, worldPos);
-                            
                         }
                     }
                 }
             }
         }
+        
+        // Unload chunks that are no longer needed
+        java.util.List<Vector4DInt> chunksToUnload = new ArrayList<>();
+        for (Vector4DInt loadedChunk : chunks.keySet()) {
+            if (!newActiveChunks.contains(loadedChunk)) {
+                chunksToUnload.add(loadedChunk);
+            }
+        }
+        
+        // Actually unload the chunks
+        for (Vector4DInt chunkToUnload : chunksToUnload) {
+            unloadChunk(chunkToUnload);
+        }
+        
+        // Update active chunks
+        activeChunks.clear();
+        activeChunks.addAll(newActiveChunks);
     }
     
     /**
@@ -995,7 +1060,55 @@ public class World {
         }
         
         // Set the block
-        return chunk.setBlock(localPos, block);
+        boolean success = chunk.setBlock(localPos, block);
+        
+        if (success) {
+            // Queue position for neighbor notification processing (avoid infinite loops)
+            queueNotification(position);
+        }
+        
+        return success;
+    }
+    
+    /**
+     * Queues a position for neighbor notification processing to avoid infinite loops.
+     */
+    private void queueNotification(Vector4DInt position) {
+        blockUpdateQueue.offer(position);
+    }
+    
+    
+    
+    /**
+     * Notifies a specific block of a neighbor change.
+     */
+    private void notifyBlockUpdate(Vector4DInt position, Block block) {
+        // Handle water flow updates
+        if (block instanceof Water) {
+            Water waterBlock = (Water) block;
+            waterBlock.updateFlow(this, position);
+            // Check if water should be removed after update
+            if (waterBlock.isMarkedForRemoval()) {
+                setBlock(position, ItemRegistry.createBlock(Material.AIR));
+            }
+        }
+        
+        // Handle smelter tracking for chunk-based updates
+        Vector4DInt chunkPos = getChunkPosition(new Vector4D(position.getX(), position.getY(), position.getZ(), position.getW()));
+        
+        if (block instanceof SmelterItem || block instanceof SmelterPoweredItem) {
+            // Add smelter to chunk tracking
+            chunkSmelters.computeIfAbsent(chunkPos, k -> new java.util.ArrayList<>()).add(position);
+        } else {
+            // Remove smelter from chunk tracking if it was replaced
+            java.util.List<Vector4DInt> smelters = chunkSmelters.get(chunkPos);
+            if (smelters != null) {
+                smelters.remove(position);
+                if (smelters.isEmpty()) {
+                    chunkSmelters.remove(chunkPos);
+                }
+            }
+        }
     }
     
     /**

@@ -15,7 +15,6 @@ import java.util.List;
 public class Water extends Block {
     private int flowLevel; // 0-7, where 7 is source block
     private boolean isSource; // true if this is a source block
-    private long lastUpdateTime;
     private Vector4DInt originPosition; // Position of the water block this one originated from
     private boolean markedForRemoval; // Flag to mark this water block for removal
     
@@ -23,7 +22,6 @@ public class Water extends Block {
         super(Material.WATER, "Water", 999, 1);
         this.flowLevel = 7; // Default to source block
         this.isSource = true;
-        this.lastUpdateTime = System.currentTimeMillis();
         this.originPosition = null; // Source blocks have no origin
         this.markedForRemoval = false;
     }
@@ -32,7 +30,6 @@ public class Water extends Block {
         super(Material.WATER, "Water", 999, count);
         this.flowLevel = 7; // Default to source block
         this.isSource = true;
-        this.lastUpdateTime = System.currentTimeMillis();
         this.originPosition = null; // Source blocks have no origin
         this.markedForRemoval = false;
     }
@@ -41,7 +38,6 @@ public class Water extends Block {
         super(Material.WATER, "Water", 999, 1);
         this.flowLevel = Math.max(0, Math.min(7, flowLevel));
         this.isSource = isSource;
-        this.lastUpdateTime = System.currentTimeMillis();
         this.originPosition = null; // Will be set when water flows
         this.markedForRemoval = false;
     }
@@ -50,7 +46,6 @@ public class Water extends Block {
         super(Material.WATER, "Water", 999, 1);
         this.flowLevel = Math.max(0, Math.min(7, flowLevel));
         this.isSource = isSource;
-        this.lastUpdateTime = System.currentTimeMillis();
         this.originPosition = originPosition;
         this.markedForRemoval = false;
     }
@@ -142,15 +137,7 @@ public class Water extends Block {
      * @return true if water should continue to exist, false if it should be removed
      */
     public void updateFlow(World world, Vector4DInt position) {
-        long currentTime = System.currentTimeMillis();
-        
-
-        // Only update every 500ms to prevent too rapid flow
-        if (currentTime - lastUpdateTime < 500) {
-            return;
-        }
-        lastUpdateTime = currentTime;
-
+    
         // Phase 1: Check removal conditions but don't remove yet
         // Check if this water block should be marked for removal due to broken origin chain
         if (originPosition != null) {
@@ -162,7 +149,7 @@ public class Water extends Block {
         }
         
         // If flow level is 0, mark for removal
-        if (flowLevel <= 0) {
+        if (flowLevel < 0) {
             markedForRemoval = true;
         }
         
@@ -211,16 +198,20 @@ public class Water extends Block {
                 return; // Don't flow horizontally, just down
             }
         } else if (belowBlock instanceof Water) {
+            // Don't create new water if water already exists below!
+            // This was causing infinite water generation and massive lag
+            Water belowWater = (Water) belowBlock;
             
-             // Flow down with level 7 (water flowing down is always at maximum level)
-            Water downwardWater = new Water(7, false, position);
-            world.setBlock(belowPos, downwardWater);
+            // Only fill if the water below has less than level 7
+            if (belowWater.getFlowLevel() < 7) {
+                belowWater.setFlowLevel(7);
+                belowWater.setSource(false);
+            }
             
             // Non-source blocks should only flow down if there's no block beneath
             if (!isSource) {
                 return; // Don't flow horizontally, just down
             }
-            
         }
         
       
@@ -347,7 +338,7 @@ public class Water extends Block {
                 
                 // Flow to empty space with decreased level, always as non-source
                 int newLevel = flowLevel - 1;
-                if (newLevel > 0) {
+                if (newLevel >= 0) {
                     Water newWater = new Water(newLevel, false, position);
                     world.setBlock(targetPos, newWater);
                 }
@@ -356,30 +347,21 @@ public class Water extends Block {
                 
                 // Only flow if this water has higher level (water flows downhill)
                 if (flowLevel > targetWater.getFlowLevel()) {
-                    // Calculate level difference and flow amount
-                    int levelDifference = flowLevel - targetWater.getFlowLevel();
-                    int flowAmount = Math.min(levelDifference / 2, flowLevel - 1); // Flow half the difference, but keep at least 1 level
+                   
+                    // Transfer water
+                    int newTargetLevel = flowLevel - 1;
                     
-                    if (flowAmount > 0) {
-                        // Transfer water
-                        int newTargetLevel = Math.min(7, targetWater.getFlowLevel() + flowAmount);
-                        int actualFlow = newTargetLevel - targetWater.getFlowLevel();
-                        
-                        targetWater.setFlowLevel(newTargetLevel);
-                        this.flowLevel = Math.max(0, this.flowLevel - actualFlow);
-                        
-                        // Handle source block logic
-                        if (isSource && targetWater.isSource() && newTargetLevel >= 6) {
-                            targetWater.setSource(true);
-                            targetWater.setFlowLevel(7);
-                        } else {
-                            targetWater.setSource(false);
-                        }
+                    targetWater.setFlowLevel(newTargetLevel);
+                    // Handle source block logic
+                    if (isSource && targetWater.isSource() && newTargetLevel >= 6) {
+                        targetWater.setFlowLevel(7);
+                    } else {
+                        targetWater.setSource(false);
                     }
+                
                 }
             }
         }
     }
     
-
 }
