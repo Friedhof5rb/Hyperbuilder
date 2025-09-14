@@ -242,7 +242,9 @@ public class Game {
         inventory.addItem(Material.COPPER_ORE, 10);
         inventory.addItem(Material.COAL, 10);
         */
-        
+        inventory.addItem(Material.WATER, 64);
+
+
         // Create a camera starting at the player's initial world position
         camera = new Camera(new Vector4D(0, 1, 0, 0));
         System.out.println("DEBUG: Created camera: " + (camera != null));

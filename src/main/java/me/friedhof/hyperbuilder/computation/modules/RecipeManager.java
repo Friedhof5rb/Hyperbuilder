@@ -170,7 +170,9 @@ public class RecipeManager {
             .addIngredient(Material.STICKS, 1)
             .addIngredient(Material.PLANT_FIBER, 1));
 
-
+        registerRecipe(new DurabilityRecipe("bucket", "Bucket", Material.BUCKET, 1)
+            .addToolIngredient(Material.STONE_CHISEL, 1,1)
+            .addIngredient(Material.WOOD_LOG, 1));
 
 
         initialized = true;
