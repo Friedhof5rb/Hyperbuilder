@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import me.friedhof.hyperbuilder.computation.modules.items.blocks.Block;
 import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterItem;
 import me.friedhof.hyperbuilder.computation.modules.items.blocks.SmelterPoweredItem;
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Water;
 import me.friedhof.hyperbuilder.computation.modules.SmelterInventory;
 import me.friedhof.hyperbuilder.save.LazyChunkLoader;
 import java.util.Random;
@@ -428,6 +429,9 @@ public class World {
      * @param chunk The chunk to update blocks in
      */
     private void updateChunkBlocks(Chunk4D chunk) {
+        // Collect water blocks that need to be removed after update
+        java.util.List<Vector4DInt> waterBlocksToRemove = new ArrayList<>();
+        
         // Iterate through all blocks in the chunk
         for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
             for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
@@ -458,9 +462,36 @@ public class World {
                         else if (block instanceof SmelterItem) {
                             ((SmelterItem) block).update();
                         }
+                        // Update water blocks for flow mechanics
+                        else if (block instanceof Water) {
+                            Water waterBlock = (Water) block;
+                            
+                            // Calculate world position
+                            Vector4DInt chunkPos = chunk.getPosition();
+                            Vector4DInt worldPos = new Vector4DInt(
+                                chunkPos.getX() * Chunk4D.CHUNK_SIZE + x,
+                                chunkPos.getY() * Chunk4D.CHUNK_SIZE + y,
+                                chunkPos.getZ() * Chunk4D.CHUNK_SIZE + z,
+                                chunkPos.getW() * Chunk4D.CHUNK_SIZE + w
+                            );
+                            
+                            // Update water flow
+                            boolean shouldKeepWater = waterBlock.updateFlow(this, worldPos);
+                            
+                            // If water should be removed (flow level reached 0)
+                            if (!shouldKeepWater) {
+                                waterBlocksToRemove.add(new Vector4DInt(x, y, z, w));
+                            }
+                        }
                     }
                 }
             }
+        }
+        
+        // Remove water blocks that have dried up
+        for (Vector4DInt localPos : waterBlocksToRemove) {
+            chunk.setBlock(localPos.getX(), localPos.getY(), localPos.getZ(), localPos.getW(), 
+                          ItemRegistry.createBlock(Material.AIR));
         }
     }
     
