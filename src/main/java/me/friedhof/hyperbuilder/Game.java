@@ -234,15 +234,14 @@ public class Game {
         
         // Give the player some starting blocks
         Inventory inventory = player.getInventory();
-        /* 
-        inventory.addItem(Material.STONE_PICKAXE, 1);
-        inventory.addItem(Material.STONE_SHOVEL, 1);
+         
+        inventory.addItem(Material.COPPER_PICKAXE, 1);
+        inventory.addItem(Material.COPPER_SHOVEL, 1);
         inventory.addItem(Material.SMELTER, 5);
         inventory.addItem(Material.IRON_ORE, 10);
         inventory.addItem(Material.COPPER_ORE, 10);
         inventory.addItem(Material.COAL, 10);
-        */
-        inventory.addItem(Material.WATER, 64);
+        inventory.addItem(Material.WATER, 10);
 
 
         // Create a camera starting at the player's initial world position

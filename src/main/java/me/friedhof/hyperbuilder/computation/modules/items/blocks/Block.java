@@ -37,7 +37,7 @@ public class Block extends BaseItem implements IsPlaceable{
     public boolean canPlaceAt(int x, int y, int z, int w, World world) {
         Material material = world.getBlock(new Vector4DInt(x,y,z,w)).getBlockId();
 
-        if(material== Material.AIR){
+        if(material== Material.AIR || material == Material.WATER){
             return true;
         }
         return false;

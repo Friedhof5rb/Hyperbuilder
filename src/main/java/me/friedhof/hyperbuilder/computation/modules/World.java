@@ -429,10 +429,30 @@ public class World {
      * @param chunk The chunk to update blocks in
      */
     private void updateChunkBlocks(Chunk4D chunk) {
-        // Collect water blocks that need to be removed after update
-        java.util.List<Vector4DInt> waterBlocksToRemove = new ArrayList<>();
         
-        // Iterate through all blocks in the chunk
+
+        
+        // First loop: Remove water blocks that are already marked for removal
+        for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
+            for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
+                for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
+                    for (int w = 0; w < Chunk4D.CHUNK_SIZE; w++) {
+                        Block block = chunk.getBlock(x, y, z, w);
+                        
+                        // Remove water blocks that are already marked for removal
+                        if (block instanceof Water) {
+                            Water waterBlock = (Water) block;
+                            if (waterBlock.isMarkedForRemoval()) {
+                               chunk.setBlock(x,y,z,w,ItemRegistry.createBlock(Material.AIR));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    
+        
+        // Second loop: Update all blocks and mark new water blocks for removal
         for (int x = 0; x < Chunk4D.CHUNK_SIZE; x++) {
             for (int y = 0; y < Chunk4D.CHUNK_SIZE; y++) {
                 for (int z = 0; z < Chunk4D.CHUNK_SIZE; z++) {
@@ -475,23 +495,12 @@ public class World {
                                 chunkPos.getW() * Chunk4D.CHUNK_SIZE + w
                             );
                             
-                            // Update water flow
-                            boolean shouldKeepWater = waterBlock.updateFlow(this, worldPos);
+                            waterBlock.updateFlow(this, worldPos);
                             
-                            // If water should be removed (flow level reached 0)
-                            if (!shouldKeepWater) {
-                                waterBlocksToRemove.add(new Vector4DInt(x, y, z, w));
-                            }
                         }
                     }
                 }
             }
-        }
-        
-        // Remove water blocks that have dried up
-        for (Vector4DInt localPos : waterBlocksToRemove) {
-            chunk.setBlock(localPos.getX(), localPos.getY(), localPos.getZ(), localPos.getW(), 
-                          ItemRegistry.createBlock(Material.AIR));
         }
     }
     
@@ -960,6 +969,7 @@ public class World {
      * @return true if the block was set, false otherwise
      */
     public boolean setBlock(Vector4DInt position, Block block) {
+        
         // Calculate the chunk position
         Vector4DInt chunkPos = new Vector4DInt(
             Math.floorDiv(position.getX(), Chunk4D.CHUNK_SIZE),

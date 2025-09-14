@@ -16,12 +16,16 @@ public class Water extends Block {
     private int flowLevel; // 0-7, where 7 is source block
     private boolean isSource; // true if this is a source block
     private long lastUpdateTime;
+    private Vector4DInt originPosition; // Position of the water block this one originated from
+    private boolean markedForRemoval; // Flag to mark this water block for removal
     
     public Water() {
         super(Material.WATER, "Water", 999, 1);
         this.flowLevel = 7; // Default to source block
         this.isSource = true;
         this.lastUpdateTime = System.currentTimeMillis();
+        this.originPosition = null; // Source blocks have no origin
+        this.markedForRemoval = false;
     }
     
     public Water(int count) {
@@ -29,13 +33,26 @@ public class Water extends Block {
         this.flowLevel = 7; // Default to source block
         this.isSource = true;
         this.lastUpdateTime = System.currentTimeMillis();
+        this.originPosition = null; // Source blocks have no origin
+        this.markedForRemoval = false;
     }
     
     public Water(int flowLevel, boolean isSource) {
-        super(Material.WATER, "Water", 1, 1);
+        super(Material.WATER, "Water", 999, 1);
         this.flowLevel = Math.max(0, Math.min(7, flowLevel));
         this.isSource = isSource;
         this.lastUpdateTime = System.currentTimeMillis();
+        this.originPosition = null; // Will be set when water flows
+        this.markedForRemoval = false;
+    }
+    
+    public Water(int flowLevel, boolean isSource, Vector4DInt originPosition) {
+        super(Material.WATER, "Water", 999, 1);
+        this.flowLevel = Math.max(0, Math.min(7, flowLevel));
+        this.isSource = isSource;
+        this.lastUpdateTime = System.currentTimeMillis();
+        this.originPosition = originPosition;
+        this.markedForRemoval = false;
     }
     
     @Override
@@ -89,25 +106,73 @@ public class Water extends Block {
         this.isSource = source;
     }
     
+    public Vector4DInt getOriginPosition() {
+        return originPosition;
+    }
+    
+    public void setOriginPosition(Vector4DInt originPosition) {
+        this.originPosition = originPosition;
+    }
+    
+    public boolean isMarkedForRemoval() {
+        return markedForRemoval;
+    }
+    
+    public void setMarkedForRemoval(boolean markedForRemoval) {
+        this.markedForRemoval = markedForRemoval;
+    }
+    
+    @Override
+    public String getTextureVariant() {
+        // Return texture variant based on flow level for transparency
+        // Flow level 7 (source) = no transparency
+        // Flow level 6 = 1 pixel missing from top
+        // Flow level 5 = 2 pixels missing from top, etc.
+        if (flowLevel == 7) {
+            return null; // Default texture (no transparency)
+        } else {
+            return "flow_" + flowLevel; // e.g., "flow_6", "flow_5", etc.
+        }
+    }
+    
     /**
      * Updates water flow mechanics
      * @param world The world instance
      * @param position Current position of this water block
      * @return true if water should continue to exist, false if it should be removed
      */
-    public boolean updateFlow(World world, Vector4DInt position) {
+    public void updateFlow(World world, Vector4DInt position) {
         long currentTime = System.currentTimeMillis();
         
+
         // Only update every 500ms to prevent too rapid flow
         if (currentTime - lastUpdateTime < 500) {
-            return true;
+            return;
         }
         lastUpdateTime = currentTime;
-        
-        // If flow level is 0, remove this water block
-        if (flowLevel <= 0) {
-            return false;
+
+        // Phase 1: Check removal conditions but don't remove yet
+        // Check if this water block should be marked for removal due to broken origin chain
+        if (originPosition != null) {
+            Block originBlock = world.getBlock(originPosition);
+            if (!(originBlock instanceof Water)) {
+                // Origin block is no longer water, mark for removal
+                markedForRemoval = true;
+            }
         }
+        
+        // If flow level is 0, mark for removal
+        if (flowLevel <= 0) {
+            markedForRemoval = true;
+        }
+        
+        // Phase 2: Handle actual removal after all blocks have been checked
+        if (markedForRemoval) {
+            return; // Remove this water block
+        }
+        
+        
+      
         
         // Check if there's space below - water flows down first
         Vector4DInt belowPos = new Vector4DInt(position.getX(), position.getY() - 1, position.getZ(), position.getW());
@@ -137,40 +202,39 @@ public class Water extends Block {
                 }
             }
             
-            // Flow down without decreasing level, but always as non-source
-            Water downwardWater = new Water(flowLevel, false);
+            // Flow down with level 7 (water flowing down is always at maximum level)
+            Water downwardWater = new Water(7, false, position);
             world.setBlock(belowPos, downwardWater);
             
             // Non-source blocks should only flow down if there's no block beneath
             if (!isSource) {
-                return true; // Don't flow horizontally, just down
+                return; // Don't flow horizontally, just down
             }
         } else if (belowBlock instanceof Water) {
-            Water belowWater = (Water) belowBlock;
-            // Merge with water below if this has higher level
-            if (flowLevel > belowWater.getFlowLevel()) {
-                belowWater.setFlowLevel(Math.max(belowWater.getFlowLevel(), flowLevel));
-                // Only create source if BOTH blocks are source blocks
-                if (isSource && belowWater.isSource() && flowLevel >= 6 && belowWater.getFlowLevel() >= 6) {
-                    belowWater.setSource(true);
-                    belowWater.setFlowLevel(7);
-                } else {
-                    // Otherwise, keep as non-source
-                    belowWater.setSource(false);
-                }
+            
+             // Flow down with level 7 (water flowing down is always at maximum level)
+            Water downwardWater = new Water(7, false, position);
+            world.setBlock(belowPos, downwardWater);
+            
+            // Non-source blocks should only flow down if there's no block beneath
+            if (!isSource) {
+                return; // Don't flow horizontally, just down
             }
+            
         }
         
-        // Flow horizontally based on block type:
+      
+        
+        // Flow logic:
         // - Source blocks: flow horizontally if all sides are free or can't flow down
         // - Non-source blocks: only flow horizontally if there's a solid block beneath (not water)
-        boolean canFlowDown = (belowBlock != null && belowBlock.getBlockId().equals(Material.AIR));
-        boolean hasSolidBelow = (belowBlock != null && !belowBlock.getBlockId().equals(Material.AIR) && !(belowBlock instanceof Water));
+        boolean canFlowDown = (belowBlock != null && canFlowInto(belowBlock));
+        boolean hasSolidBelow = (belowBlock != null && !canFlowInto(belowBlock) && !(belowBlock instanceof Water));
         
         if (isSource) {
-            // Source blocks flow horizontally when they can't flow down or when all sides are free
+            // Source blocks flow horizontally when they can't flow down or when at least one side is free
             // But not if there's water below (water below doesn't count as support)
-            if ((!canFlowDown && !(belowBlock instanceof Water)) || allSidesFree(world, position)) {
+            if ((!canFlowDown && !(belowBlock instanceof Water)) || hasAtLeastOneFreeSide(world, position)) {
                 flowHorizontally(world, position);
             }
         } else {
@@ -180,39 +244,46 @@ public class Water extends Block {
             }
         }
         
-        return true;
+        return;
     }
-    
-    /**
-     * Checks if all horizontal sides around this position are free (air)
-     */
-    private boolean allSidesFree(World world, Vector4DInt position) {
-        Vector4DInt[] directions = {
-            new Vector4DInt(1, 0, 0, 0),   // +X
-            new Vector4DInt(-1, 0, 0, 0),  // -X
-            new Vector4DInt(0, 0, 1, 0),   // +Z
-            new Vector4DInt(0, 0, -1, 0),  // -Z
-            new Vector4DInt(0, 0, 0, 1),   // +W
-            new Vector4DInt(0, 0, 0, -1)   // -W
-        };
-        
-        for (Vector4DInt direction : directions) {
-            Vector4DInt checkPos = new Vector4DInt(
-                position.getX() + direction.getX(),
-                position.getY() + direction.getY(),
-                position.getZ() + direction.getZ(),
-                position.getW() + direction.getW()
-            );
-            
-            Block checkBlock = world.getBlock(checkPos);
-             if (checkBlock == null || !canFlowInto(checkBlock)) {
-                 return false; // Found a block that water can't flow into
-             }
-        }
-        
-        return true; // All sides are free
-     }
      
+
+    
+
+
+     /**
+      * Checks if water has at least one free side where it can flow horizontally
+      */
+     private boolean hasAtLeastOneFreeSide(World world, Vector4DInt position) {
+         // Define horizontal directions (X, Z, W)
+         Vector4DInt[] directions = {
+             new Vector4DInt(1, 0, 0, 0),   // +X
+             new Vector4DInt(-1, 0, 0, 0),  // -X
+             new Vector4DInt(0, 0, 1, 0),   // +Z
+             new Vector4DInt(0, 0, -1, 0),  // -Z
+             new Vector4DInt(0, 0, 0, 1),   // +W
+             new Vector4DInt(0, 0, 0, -1)   // -W
+         };
+         
+         for (Vector4DInt direction : directions) {
+             Vector4DInt neighborPos = new Vector4DInt(
+                 position.getX() + direction.getX(),
+                 position.getY() + direction.getY(),
+                 position.getZ() + direction.getZ(),
+                 position.getW() + direction.getW()
+             );
+             
+             Block neighborBlock = world.getBlock(neighborPos);
+             
+             // Check if this direction has a free space where water can flow
+             if (canFlowInto(neighborBlock)) {
+                 return true;
+             }
+         }
+         
+         return false;
+     }
+
      /**
       * Checks if water can flow into a block (treats Air, Grass, and Flint as flowable)
       */
@@ -228,7 +299,7 @@ public class Water extends Block {
      * Handles horizontal water flow in X, Z, W directions
      */
     private void flowHorizontally(World world, Vector4DInt position) {
-        if (flowLevel <= 1) return; // Can't flow if level is too low
+        if (flowLevel <= 0) return; // Can't flow if level is too low
         
         // Define horizontal directions (X, Z, W)
         Vector4DInt[] directions = {
@@ -277,25 +348,38 @@ public class Water extends Block {
                 // Flow to empty space with decreased level, always as non-source
                 int newLevel = flowLevel - 1;
                 if (newLevel > 0) {
-                    Water newWater = new Water(newLevel, false);
+                    Water newWater = new Water(newLevel, false, position);
                     world.setBlock(targetPos, newWater);
                 }
             } else if (targetBlock instanceof Water) {
                 Water targetWater = (Water) targetBlock;
-                // Merge flows - if both are high level, create source
-                if (isSource && targetWater.isSource() && flowLevel >= 6 && targetWater.getFlowLevel() >= 6) {
-                    targetWater.setSource(true);
-                    targetWater.setFlowLevel(7);
-                } else if (flowLevel > targetWater.getFlowLevel()) {
-                    // Equalize levels
-                    int avgLevel = (flowLevel + targetWater.getFlowLevel()) / 2;
-                    targetWater.setFlowLevel(avgLevel);
-                    // Keep as non-source unless both original blocks are sources
-                    if (!(isSource && targetWater.isSource())) {
-                        targetWater.setSource(false);
+                
+                // Only flow if this water has higher level (water flows downhill)
+                if (flowLevel > targetWater.getFlowLevel()) {
+                    // Calculate level difference and flow amount
+                    int levelDifference = flowLevel - targetWater.getFlowLevel();
+                    int flowAmount = Math.min(levelDifference / 2, flowLevel - 1); // Flow half the difference, but keep at least 1 level
+                    
+                    if (flowAmount > 0) {
+                        // Transfer water
+                        int newTargetLevel = Math.min(7, targetWater.getFlowLevel() + flowAmount);
+                        int actualFlow = newTargetLevel - targetWater.getFlowLevel();
+                        
+                        targetWater.setFlowLevel(newTargetLevel);
+                        this.flowLevel = Math.max(0, this.flowLevel - actualFlow);
+                        
+                        // Handle source block logic
+                        if (isSource && targetWater.isSource() && newTargetLevel >= 6) {
+                            targetWater.setSource(true);
+                            targetWater.setFlowLevel(7);
+                        } else {
+                            targetWater.setSource(false);
+                        }
                     }
                 }
             }
         }
     }
+    
+
 }

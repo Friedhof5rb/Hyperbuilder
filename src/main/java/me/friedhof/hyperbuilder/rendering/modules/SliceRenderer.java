@@ -21,7 +21,7 @@ import me.friedhof.hyperbuilder.computation.modules.Entity;
 import me.friedhof.hyperbuilder.computation.modules.DroppedItem;
 import me.friedhof.hyperbuilder.computation.modules.interfaces.IsTool;
 import me.friedhof.hyperbuilder.Game;
-
+import me.friedhof.hyperbuilder.computation.modules.items.blocks.Water;
 /**
  * Renders a single 2D slice of the 4D world.
  */
@@ -441,7 +441,12 @@ public class SliceRenderer {
             for(Material s : texturelist.keySet()){
                 if(s.equals(blockId)){
                     if(texturelist.get(s) != null){
-                        drawTexturedBlock(g, pixelX, pixelY, texturelist.get(s), blockPos, fracZ, fracW);
+                        // Special handling for water blocks with flow level transparency
+                        if (blockId == Material.WATER && block instanceof Water) {
+                            drawWaterBlockWithTransparency(g, pixelX, pixelY, texturelist.get(s), blockPos, fracZ, fracW, (me.friedhof.hyperbuilder.computation.modules.items.blocks.Water) block);
+                        } else {
+                            drawTexturedBlock(g, pixelX, pixelY, texturelist.get(s), blockPos, fracZ, fracW);
+                        }
                     }else{
                         g.setColor(new Color(255, 0, 220));
                         g.fillRect(pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE);
@@ -591,6 +596,59 @@ public class SliceRenderer {
         
         // Scale and draw the texture to fit the block size
         g.drawImage(textureSlice, pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE, null);
+    }
+    
+    /**
+     * Draws a water block with transparency based on flow level.
+     * Flow level 7 (source) = no transparency
+     * Flow level 6 = 1 pixel missing from top
+     * Flow level 5 = 2 pixels missing from top, etc.
+     * 
+     * @param g The graphics context
+     * @param pixelX The X pixel coordinate to draw at
+     * @param pixelY The Y pixel coordinate to draw at
+     * @param texture The 4D texture to use
+     * @param blockPos The 4D position of the block (used for texture coordinates)
+     * @param fracZ The fractional Z coordinate
+     * @param fracW The fractional W coordinate
+     * @param waterBlock The water block instance
+     */
+    private void drawWaterBlockWithTransparency(Graphics2D g, int pixelX, int pixelY, Texture4D texture, Vector4DInt blockPos, double fracZ, double fracW, me.friedhof.hyperbuilder.computation.modules.items.blocks.Water waterBlock) {
+        // Calculate fractional texture coordinates for smooth transitions
+        double textureZ = blockPos.getZ() + fracZ * 8.0;
+        double textureW = blockPos.getW() + fracW * 8.0;
+        
+        // Get the interpolated 2D texture slice using fractional coordinates
+        BufferedImage textureSlice = texture.getSlice2DFractional(textureZ, textureW);
+        
+        int flowLevel = waterBlock.getFlowLevel();
+        
+        if (flowLevel == 7) {
+            // Source block - draw normally with no transparency
+            g.drawImage(textureSlice, pixelX, pixelY, BLOCK_SIZE, BLOCK_SIZE, null);
+        } else {
+            // Non-source block - create modified texture with transparent top pixels
+            int pixelsToMakeTransparent = 7 - flowLevel; // 6->1, 5->2, 4->3, etc.
+            
+            // Scale the pixels to make transparent based on block size
+            int scaledPixelsTransparent = (pixelsToMakeTransparent * BLOCK_SIZE) / 8; // Scale from 8x8 to BLOCK_SIZE
+            
+            // Create a modified image with transparent top pixels
+            BufferedImage modifiedTexture = new BufferedImage(BLOCK_SIZE, BLOCK_SIZE, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D tempG = modifiedTexture.createGraphics();
+            
+            // Draw the original texture scaled to block size
+            tempG.drawImage(textureSlice, 0, 0, BLOCK_SIZE, BLOCK_SIZE, null);
+            
+            // Make the top pixels transparent by setting them to transparent
+            tempG.setComposite(AlphaComposite.Clear);
+            tempG.fillRect(0, 0, BLOCK_SIZE, scaledPixelsTransparent);
+            
+            tempG.dispose();
+            
+            // Draw the modified texture
+            g.drawImage(modifiedTexture, pixelX, pixelY, null);
+        }
     }
     
     /**
